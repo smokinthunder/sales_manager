@@ -20,6 +20,7 @@ class AuthRepositoryLocal extends AuthRepository {
     return _isAuthenticated ?? false;
   }
 
+/// It takes phoneNumber and otp as arguments, and returns a Result object if success it sets isAuthenticated to true
   @override
   Future<Result<String>> loginWithOtp({
     required String phoneNumber,
@@ -44,6 +45,7 @@ class AuthRepositoryLocal extends AuthRepository {
     }
   }
 
+  /// It sets the _isAuthenticated variable to false
   @override
   Future<Result<void>> logout() async {
     _log.info('User logged out');

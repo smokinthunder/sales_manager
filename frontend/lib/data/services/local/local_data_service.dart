@@ -7,6 +7,8 @@ import 'package:sales_manager/utils/result.dart';
 import 'models/login_request/login_request.dart';
 
 class LocalDataService {
+
+  /// validates the input with the values in local asset
   Future<Result<String>> loginWithOtp(LoginRequest loginRequest) async {
     final json = await _loadStringAsset(Assets.localAuthData);
     final List<LoginRequest> localLoginData = json
@@ -19,6 +21,7 @@ class LocalDataService {
     }
   }
 
+/// Loads json assets from the input folder and convert to List of Map
   Future<List<Map<String, dynamic>>> _loadStringAsset(String asset) async {
     final localData = await rootBundle.loadString(asset);
     return (jsonDecode(localData) as List).cast<Map<String, dynamic>>();
