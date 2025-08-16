@@ -10,7 +10,7 @@ class LoginScreen extends StatefulWidget {
 class _LoginScreenState extends State<LoginScreen> {
   String accountType = "Executive";
 
-  final TextEditingController nameController = TextEditingController();
+  // final TextEditingController nameController = TextEditingController();
   final TextEditingController phoneController = TextEditingController();
 
   @override
@@ -133,7 +133,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 width: double.infinity,
                 child: ElevatedButton(
                   onPressed: () {
-                    // Handle login
+                    //TODO: Handle login
                   },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color.fromARGB(255, 32, 129, 191),

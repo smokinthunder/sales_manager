@@ -1,6 +1,7 @@
 abstract class AppRoutes {
-  static const loading =
-      '/'; // Use this screen figuring out user state and redirecting.
+  //loading for
+  static const loading = '/';
   static const login = '/login';
+  static const otp = '/o';
   // static String quizDetail(String id) => '/quiz/$id';
 }
