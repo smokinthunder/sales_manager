@@ -26,12 +26,14 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
     ref.listen(authViewModelProvider, (_, next) {
       next?.when(
-        data: (data) {
-          showSnackBar(context, "OTP sent to ${phoneController.text}");
+        data: (data) async {
           context.go(AppRoutes.otp, extra: phoneController.text);
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            showSnackBar(context, "OTP sent to ${phoneController.text}");
+          });
         },
         error: (error, st) {
-          showSnackBar(context, error.toString());
+          showSnackBar(context, error.toString(), true);
         },
         loading: () {},
       );
