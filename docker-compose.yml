@@ -1,0 +1,123 @@
+version: '3.8'
+
+services:
+  # MySQL Database
+  mysql:
+    image: mysql:8.0
+    container_name: sales_manager_mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpassword
+      MYSQL_DATABASE: sales_manager
+      MYSQL_USER: sales_user
+      MYSQL_PASSWORD: sales_password
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./backend/init.sql:/docker-entrypoint-initdb.d/init.sql
+    command: --default-authentication-plugin=mysql_native_password
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      timeout: 20s
+      retries: 10
+
+  # Redis for caching and sessions
+  redis:
+    image: redis:7-alpine
+    container_name: sales_manager_redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      timeout: 20s
+      retries: 10
+
+  # FastAPI Backend
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: sales_manager_backend
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    environment:
+      - DEBUG=true
+      - ENVIRONMENT=development
+      - DB_HOST=mysql
+      - DB_PORT=3306
+      - DB_USERNAME=sales_user
+      - DB_PASSWORD=sales_password
+      - DB_NAME=sales_manager
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - SECRET_KEY=your-super-secret-key-for-development-only-change-in-production
+      - DATA_LAYER_URL=http://data-layer:8001
+      - IS_DEVELOPMENT=true
+    volumes:
+      - ./backend:/app
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      timeout: 20s
+      retries: 10
+
+  # Mock Data Layer Service (for development)
+  data-layer:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: sales_manager_data_layer
+    restart: unless-stopped
+    ports:
+      - "8001:8000"
+    environment:
+      - DEBUG=true
+      - ENVIRONMENT=development
+      - DB_HOST=mysql
+      - DB_PORT=3306
+      - DB_USERNAME=sales_user
+      - DB_PASSWORD=sales_password
+      - DB_NAME=sales_manager
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - SECRET_KEY=your-super-secret-key-for-development-only-change-in-production
+      - IS_DEVELOPMENT=true
+    volumes:
+      - ./backend:/app
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    command: ["uvicorn", "app.data_layer:app", "--host", "0.0.0.0", "--port", "8000"]
+
+  # Mock Client Finance API (Tally-like)
+  mock-client-api:
+    image: python:3.11-slim
+    container_name: sales_manager_mock_client_api
+    restart: unless-stopped
+    ports:
+      - "8002:8000"
+    working_dir: /app
+    volumes:
+      - ./mock_client_api:/app
+    command: >
+      sh -c "pip install fastapi uvicorn &&
+             python -m uvicorn main:app --host 0.0.0.0 --port 8000"
+
+volumes:
+  mysql_data:
+  redis_data:
+
+networks:
+  default:
+    name: sales_manager_network
