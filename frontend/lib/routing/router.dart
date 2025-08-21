@@ -5,13 +5,18 @@ import 'package:sales_manager/domain/models/user/user.dart';
 import 'package:sales_manager/routing/routes.dart';
 import 'package:sales_manager/ui/auth/login_screen.dart';
 import 'package:sales_manager/ui/auth/otp_screen.dart';
+import 'package:sales_manager/ui/executive/analytics.dart';
+import 'package:sales_manager/ui/executive/home.dart';
+import 'package:sales_manager/ui/executive/outstanding.dart';
+import 'package:sales_manager/ui/executive/profile.dart';
+import 'package:sales_manager/ui/executive/scaffold.dart';
 import 'package:sales_manager/ui/loading_screen.dart';
 
 final routerProvider = Provider<GoRouter>((ref) {
   final user = ref.watch(authStreamProvider).valueOrNull;
 
   return GoRouter(
-    initialLocation: AppRoutes.loading,
+    initialLocation: AppRoutes.login,
     routes: [
       GoRoute(
         path: AppRoutes.loading,
@@ -22,21 +27,48 @@ final routerProvider = Provider<GoRouter>((ref) {
         path: AppRoutes.otp,
         builder: (c, s) => const OtpVerificationScreen(),
       ),
+      ShellRoute(
+        builder: (context, state, child) {
+          return ExecutiveScaffold(child: child);
+        },
+        routes: [
+          GoRoute(
+            path: AppRoutes.executiveHome,
+            builder: (context, state) => ExecutiveHome(),
+          ),
+          GoRoute(
+            path: AppRoutes.executiveAnalytics,
+            builder: (context, state) => ExecutiveAnalytics(),
+          ),
+          GoRoute(
+            path: AppRoutes.executiveOutStanding,
+            builder: (context, state) => ExecutiveOutStanding(),
+          ),
+          GoRoute(
+            path: AppRoutes.executiveProfile,
+            builder: (context, state) => ExecutiveProfile(),
+          ),
+        ],
+      ),
     ],
     redirect: (context, state) {
-      final atLogin = state.matchedLocation == AppRoutes.login;
+      // final isLoggingIn =
+      //     state.matchedLocation == AppRoutes.login ||
+      //     state.matchedLocation == AppRoutes.otp;
 
-      if (user == null) return atLogin ? null : AppRoutes.otp;
+      // // 1. User not logged in → force login unless already at login/otp
+      // if (user == null) {
+      //   return isLoggingIn ? null : AppRoutes.login;
+      // }
 
-      if (user.type == UserType.areaManager &&
-          !state.matchedLocation.startsWith('/student')) {
-        return '/student';
-      }
-      if (user.type == UserType.executive &&
-          !state.matchedLocation.startsWith('/teacher')) {
-        return '/teacher';
-      }
+      // if (user.type == UserType.executive) {
+      //   if (!state.matchedLocation.startsWith(AppRoutes.executive) ||
+      //       state.matchedLocation == AppRoutes.executive) {
+      //     return AppRoutes.executiveHome;
+      //   }
+      // }
 
+      // 3. Already in right place → no redirect
       return null;
     },
   );

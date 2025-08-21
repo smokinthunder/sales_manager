@@ -108,7 +108,7 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
                     //TODO: Handle verify
                   },
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color.fromARGB(255, 32, 129, 191),
+                    backgroundColor: Theme.of(context).primaryColor,
                     padding: const EdgeInsets.symmetric(vertical: 15),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(10),
