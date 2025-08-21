@@ -1,0 +1,48 @@
+[
+    {
+      "id": "1",
+      "firstname": "John",
+      "lastname": "Doe",
+      "email": "john.doe@example.com",
+      "phone_number": "1234567890",
+      "picture": "https://example.com/images/john.jpg",
+      "type": "areaManager"
+    },
+    {
+      "id": "2",
+      "firstname": "Jane",
+      "lastname": "Smith",
+      "email": "jane.smith@example.com",
+      "phone_number": "0987654321",
+      "picture": "https://example.com/images/jane.jpg",
+      "type": "executive"
+    },
+    {
+      "id": "3",
+      "firstname": "Alice",
+      "lastname": "Johnson",
+      "email": "alice.johnson@example.com",
+      "phone_number": "5555555555",
+      "picture": "https://example.com/images/alice.jpg",
+      "type": "executive"
+    },
+    {
+      "id": "4",
+      "firstname": "Bob",
+      "lastname": "Williams",
+      "email": "bob.williams@example.com",
+      "phone_number": "4444444444",
+      "picture": "https://example.com/images/bob.jpg",
+      "type": "areaManager"
+    },
+    {
+      "id": "5",
+      "firstname": "Carol",
+      "lastname": "Taylor",
+      "email": "carol.taylor@example.com",
+      "phone_number": "3333333333",
+      "picture": "https://example.com/images/carol.jpg",
+      "type": "executive"
+    }
+  ]
+  
