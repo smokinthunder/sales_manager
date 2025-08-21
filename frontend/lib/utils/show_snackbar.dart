@@ -1,5 +1,6 @@
 import 'package:another_flushbar/flushbar.dart';
 import 'package:flutter/material.dart';
+import 'package:sales_manager/ui/core/colors.dart';
 
 // void showSnackBar(BuildContext context, String content) {
 //   ScaffoldMessenger.of(context)
@@ -7,53 +8,13 @@ import 'package:flutter/material.dart';
 //     ..showSnackBar(SnackBar(content: Text(content)));
 // }
 
-// void showSuccessSnackBar(BuildContext context, String content) {
-//   ScaffoldMessenger.of(context)
-//     ..hideCurrentSnackBar()
-//     ..showSnackBar(
-//       SnackBar(
-//         content: Column(
-//           children: [
-//             Container(
-//               alignment: Alignment.topCenter,
-//               child: Column(
-//                 crossAxisAlignment: CrossAxisAlignment.center,
-//                 children: [
-//                   Row(
-//                     mainAxisAlignment: MainAxisAlignment.center,
-//                     children: [
-//                       Icon(
-//                         Icons.check_circle_outline_rounded,
-//                         color: Colors.green,
-//                         size: 15,
-//                       ),
-//                       Text(
-//                         "Success !",
-//                         textAlign: TextAlign.center,
-//                         style: TextStyle(color: Colors.green, fontSize: 20),
-//                       ),
-//                     ],
-//                   ),
-//                   Text(content, style: TextStyle(color: Colors.black)),
-//                 ],
-//               ),
-//             ),
-//           ],
-//         ),
-
-//         backgroundColor: Colors.white,
-//         behavior: SnackBarBehavior.floating,
-//         dismissDirection: DismissDirection.horizontal,
-//       ),
-//     );
-// }
-
+/// Displays a customizable snackbar with a message and an icon.
 Future<void> showSnackBar(
   BuildContext context,
   String content, [
   bool isError = false,
 ]) async {
-  Color headerColor = isError ? Colors.red : Colors.green;
+  Color headerColor = isError ? AppColors.red : AppColors.green;
 
   Flushbar(
     titleText: Row(
