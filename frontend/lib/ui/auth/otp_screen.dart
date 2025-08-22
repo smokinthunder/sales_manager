@@ -29,10 +29,7 @@ class _OtpVerificationScreenState extends ConsumerState<OtpVerificationScreen> {
     ref.listen(authViewModelProvider, (_, next) {
       next?.when(
         data: (data) {
-          context.go(AppRoutes.loading);
-          WidgetsBinding.instance.addPostFrameCallback((_) {
             showSnackBar(context, "Authentication successful");
-          });
         },
         error: (error, st) {
           showSnackBar(context, error.toString(), true);
