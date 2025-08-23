@@ -107,11 +107,13 @@ final ThemeData appTheme = ThemeData(
       fontWeight: FontWeight.w400,
       color: AppColors.darkGrey,
     ),
+    // 14sp, w400
     labelLarge: GoogleFonts.poppins(
       fontSize: 14,
       fontWeight: FontWeight.w400,
       color: AppColors.grey,
     ),
+    // 10sp, w400
     labelSmall: GoogleFonts.poppins(
       fontSize: 10,
       fontWeight: FontWeight.w400,
