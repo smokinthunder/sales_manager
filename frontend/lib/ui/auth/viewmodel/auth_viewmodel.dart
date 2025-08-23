@@ -30,7 +30,7 @@ class AuthViewModel extends _$AuthViewModel {
       case Ok():
         _log.info("Otp send to $phoneNumber");
         // _phoneNumberStore = phoneNumber;
-        state = AsyncData(AppUser(id: "", type: UserType.executive));
+        state = AsyncData(AppUser(id: "", type: UserType.executive, name: ''));
       case Error():
         state = AsyncError(res.error, StackTrace.current);
     }

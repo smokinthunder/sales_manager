@@ -1,20 +1,16 @@
 import 'package:flutter/material.dart';
-import 'package:sales_manager/ui/theme.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:sales_manager/config/providers/current_user_notifier.dart';
+import 'package:sales_manager/ui/core/colors.dart';
 
-class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
+class CustomAppBar extends ConsumerWidget implements PreferredSizeWidget {
   const CustomAppBar({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final user = ref.watch(currentUserNotifierProvider);
     return Container(
-      decoration: const BoxDecoration(
-        gradient: LinearGradient(
-          colors: [AppColors.blue, AppColors.green], // blue → green
-          begin: Alignment.centerLeft,
-          end: Alignment.centerRight,
-          stops: [0.0, 1.0],
-        ),
-      ),
+      decoration: const BoxDecoration(gradient: AppColors.blueGreenGradient),
       child: Container(
         height: preferredSize.height,
         decoration: BoxDecoration(
@@ -52,13 +48,13 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
                       ).textTheme.bodySmall?.copyWith(color: Colors.white),
                     ),
                     Text(
-                      "Sidharth G K",
+                      user?.name ?? "User Name",
                       style: Theme.of(
                         context,
                       ).textTheme.bodyLarge?.copyWith(color: Colors.white),
                     ),
                     Text(
-                      "Executive",
+                      user?.userTypetoString() ?? "User Type",
                       style: TextStyle(color: Colors.white70, fontSize: 10),
                     ),
                   ],

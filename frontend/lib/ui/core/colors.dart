@@ -30,9 +30,10 @@ class AppColors {
     colors: [blue, green],
     begin: Alignment.centerLeft,
     end: Alignment.centerRight,
+    stops: [0.0, 1.0],
   );
 
   // Custom colors
   /// Engineering Orange
-  static const Color red = Color(0xFFD00000);
+  static const Color red = Color(0xFFff383c);
 }

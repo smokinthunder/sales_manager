@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:sales_manager/routing/router.dart';
-import 'package:sales_manager/ui/theme.dart';
+import 'package:sales_manager/ui/core/theme.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -16,6 +16,7 @@ class MyApp extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final router = ref.watch(routerProvider);
     return MaterialApp.router(
+      debugShowCheckedModeBanner: false,
       routerConfig: router,
       title: 'AquaStar',
       theme: appTheme,

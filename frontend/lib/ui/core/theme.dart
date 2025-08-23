@@ -1,16 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-
-class AppColors {
-  static const Color blue = Color(0xFF2081bf);
-  static const Color green = Color(0xFF9dc54a);
-  static const Color black = Color(0xFF010101);
-  static const Color white = Color(0xFFFFFFFF);
-  static const Color grey = Color(0xFF999999);
-  static const Color lightGrey = Color(0xFFE6E6E6);
-  static const Color darkGrey = Color(0xFF484c52);
-  static const Color red = Color(0xFFff383c);
-}
+import 'colors.dart';
 
 final ThemeData appTheme = ThemeData(
   primaryColor: AppColors.blue,
@@ -25,7 +15,7 @@ final ThemeData appTheme = ThemeData(
       color: AppColors.white,
     ),
   ),
-  colorScheme: const ColorScheme(
+  colorScheme: ColorScheme(
     brightness: Brightness.light,
     primary: AppColors.blue,
     onPrimary: AppColors.white,
@@ -33,9 +23,9 @@ final ThemeData appTheme = ThemeData(
     onSecondary: AppColors.black,
     error: AppColors.red,
     onError: AppColors.white,
-    surface: AppColors.lightGrey,
-    onSurface: AppColors.darkGrey,
-    tertiary: AppColors.grey,
+    surface: AppColors.offWhite,
+    onSurface: AppColors.slate,
+    tertiary: AppColors.gray,
   ),
   inputDecorationTheme: InputDecorationTheme(
     border: OutlineInputBorder(borderRadius: BorderRadius.circular(4)),
@@ -43,12 +33,12 @@ final ThemeData appTheme = ThemeData(
     labelStyle: GoogleFonts.poppins(
       fontSize: 14,
       fontWeight: FontWeight.w500,
-      color: AppColors.darkGrey,
+      color: AppColors.slate,
     ),
     hintStyle: GoogleFonts.poppins(
       fontSize: 14,
       fontWeight: FontWeight.w400,
-      color: AppColors.grey,
+      color: AppColors.gray,
     ),
     errorStyle: GoogleFonts.poppins(
       fontSize: 10,
@@ -98,26 +88,26 @@ final ThemeData appTheme = ThemeData(
     bodyMedium: GoogleFonts.poppins(
       fontSize: 14,
       fontWeight: FontWeight.w500,
-      color: AppColors.darkGrey,
+      color: AppColors.slate,
     ),
 
     // 12sp, w400
     bodySmall: GoogleFonts.poppins(
       fontSize: 12,
       fontWeight: FontWeight.w400,
-      color: AppColors.darkGrey,
+      color: AppColors.slate,
     ),
     // 14sp, w400
     labelLarge: GoogleFonts.poppins(
       fontSize: 14,
       fontWeight: FontWeight.w400,
-      color: AppColors.grey,
+      color: AppColors.gray,
     ),
     // 10sp, w400
     labelSmall: GoogleFonts.poppins(
       fontSize: 10,
       fontWeight: FontWeight.w400,
-      color: AppColors.grey,
+      color: AppColors.gray,
     ),
   ),
 );
