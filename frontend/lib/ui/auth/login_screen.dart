@@ -13,7 +13,7 @@ class LoginScreen extends ConsumerStatefulWidget {
 }
 
 class _LoginScreenState extends ConsumerState<LoginScreen> {
-  String accountType = "Executive";
+  // String accountType = "Executive";
 
   // final TextEditingController nameController = TextEditingController();
   final TextEditingController phoneController = TextEditingController();

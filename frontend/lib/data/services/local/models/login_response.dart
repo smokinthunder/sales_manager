@@ -26,7 +26,7 @@ class LoginResponse {
       phoneNumber: json['phone_number'] as String,
       picture: json['picture'] as String,
       type: UserType.values.firstWhere(
-        (e) => e.toString() == 'UserType.${json['type']}',
+        (e) => e.typeName == json['type'] as String,
       ),
     );
   }

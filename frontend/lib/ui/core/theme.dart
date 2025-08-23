@@ -14,6 +14,7 @@ final ThemeData appTheme = ThemeData(
       fontWeight: FontWeight.w500,
       color: AppColors.white,
     ),
+    iconTheme: const IconThemeData(color: AppColors.white, size: 18),
   ),
   colorScheme: ColorScheme(
     brightness: Brightness.light,
@@ -44,6 +45,21 @@ final ThemeData appTheme = ThemeData(
       fontSize: 10,
       fontWeight: FontWeight.w400,
       color: AppColors.red,
+    ),
+  ),
+  bottomNavigationBarTheme: BottomNavigationBarThemeData(
+    backgroundColor: AppColors.white,
+    selectedItemColor: AppColors.blue,
+    unselectedItemColor: AppColors.slate,
+    selectedLabelStyle: GoogleFonts.poppins(
+      fontSize: 12,
+      fontWeight: FontWeight.w500,
+      color: AppColors.blue,
+    ),
+    unselectedLabelStyle: GoogleFonts.poppins(
+      fontSize: 12,
+      fontWeight: FontWeight.w400,
+      color: AppColors.slate,
     ),
   ),
   elevatedButtonTheme: ElevatedButtonThemeData(

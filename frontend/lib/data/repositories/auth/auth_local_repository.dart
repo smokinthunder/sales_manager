@@ -40,7 +40,11 @@ class AuthLocalRepository {
         final appUser = AppUser(
           id: user.id,
           type: user.type,
-          name: "${user.firstName} ${user.lastName}",
+          firstName: user.firstName,
+          lastName: user.lastName,
+          email: user.email,
+          phoneNumber: user.phoneNumber,
+          pictureUrl: user.picture,
         );
         return Result.ok(appUser);
       case Error():

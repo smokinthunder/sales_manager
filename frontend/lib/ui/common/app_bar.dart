@@ -42,20 +42,26 @@ class CustomAppBar extends ConsumerWidget implements PreferredSizeWidget {
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Text(
-                      "Hello",
-                      style: Theme.of(
-                        context,
-                      ).textTheme.bodySmall?.copyWith(color: Colors.white),
+                      "Hello,",
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: Colors.white,
+                        height: 1,
+                      ),
                     ),
                     Text(
-                      user?.name ?? "User Name",
-                      style: Theme.of(
-                        context,
-                      ).textTheme.bodyLarge?.copyWith(color: Colors.white),
+                      user?.firstName ?? "User Name",
+                      style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                        color: Colors.white,
+                        height: 1,
+                      ),
                     ),
                     Text(
-                      user?.userTypetoString() ?? "User Type",
-                      style: TextStyle(color: Colors.white70, fontSize: 10),
+                      user?.toString() ?? "User Type",
+                      style: TextStyle(
+                        color: Colors.white70,
+                        fontSize: 10,
+                        height: 1.6,
+                      ),
                     ),
                   ],
                 ),

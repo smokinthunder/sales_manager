@@ -8,20 +8,28 @@ class ExecutiveScaffold extends StatelessWidget {
   const ExecutiveScaffold({super.key, required this.child});
 
   static const tabs = [
-    _NavTab(label: 'Home', icon: Icons.home, route: AppRoutes.executiveHome),
+    _NavTab(
+      label: 'Home',
+      title: 'Home',
+      icon: Icons.home_outlined,
+      route: AppRoutes.executiveHome,
+    ),
     _NavTab(
       label: 'Analytics',
-      icon: Icons.pie_chart,
+      title: 'Analytics',
+      icon: Icons.pie_chart_outline,
       route: AppRoutes.executiveAnalytics,
     ),
     _NavTab(
       label: 'Outstanding',
+      title: 'Outstanding',
       icon: Icons.access_time,
       route: AppRoutes.executiveOutStanding,
     ),
     _NavTab(
       label: 'Profile',
-      icon: Icons.person,
+      title: 'Profile Editing',
+      icon: Icons.person_outline_rounded,
       route: AppRoutes.executiveProfile,
     ),
   ];
@@ -37,7 +45,18 @@ class ExecutiveScaffold extends StatelessWidget {
     return Scaffold(
       backgroundColor: Theme.of(context).colorScheme.surface,
       body: child,
-      appBar: const CustomAppBar(),
+      appBar: (tabs[safeIndex].route == AppRoutes.executiveHome)
+          ? CustomAppBar()
+          : AppBar(
+              title: Text(tabs[safeIndex].title),
+              leading: IconButton(
+                icon: const Icon(Icons.arrow_back_ios_new),
+                onPressed: () {
+                  context.go(AppRoutes.executiveHome);
+                },
+              ),
+              centerTitle: true,
+            ),
       bottomNavigationBar: BottomNavigationBar(
         type: BottomNavigationBarType.fixed,
         onTap: (index) {
@@ -58,5 +77,11 @@ class _NavTab {
   final String label;
   final IconData icon;
   final String route;
-  const _NavTab({required this.label, required this.icon, required this.route});
+  final String title;
+  const _NavTab({
+    required this.label,
+    required this.icon,
+    required this.route,
+    required this.title,
+  });
 }
