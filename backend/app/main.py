@@ -1,8 +1,9 @@
 """
-Main FastAPI application entry point.
+Main FastAPI application entry point - Server C (Backend API Gateway).
 
 Configures the application with middleware, CORS, and route registration.
-Implements the three-layer architecture with proper error handling.
+Implements the three-layer architecture where this service communicates
+with the Data Layer (Server B) and never directly with the database (Server A).
 """
 
 from contextlib import asynccontextmanager
@@ -14,10 +15,11 @@ from fastapi.exceptions import RequestValidationError
 from starlette.exceptions import HTTPException as StarletteHTTPException
 import time
 import structlog
+import httpx
+import os
 
 from app.core.config import settings
 from app.core.logging import setup_logging, get_logger
-from app.core.database import init_db, close_db
 from app.api.deps import get_current_user
 
 
@@ -25,42 +27,50 @@ from app.api.deps import get_current_user
 setup_logging(debug=settings.debug)
 logger = get_logger(__name__)
 
+# Data Layer service configuration
+DATA_LAYER_URL = os.getenv("DATA_LAYER_URL", "http://data-layer:8000")
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """
     Application lifespan manager.
     
-    Handles startup and shutdown events for database
-    connections and other resources.
+    Handles startup and shutdown events for the backend service.
+    Note: No direct database initialization - that's handled by the Data Layer.
     """
     # Startup
-    logger.info("Starting Sales Manager API", version=settings.version, environment=settings.environment)
+    logger.info("Starting Sales Manager Backend API", version=settings.version, environment=settings.environment)
     
     try:
-        # Initialize database
-        init_db()
-        logger.info("Database initialized successfully")
+        # Verify Data Layer service is accessible
+        async with httpx.AsyncClient() as client:
+            response = await client.get(f"{DATA_LAYER_URL}/health")
+            if response.status_code == 200:
+                logger.info("Data Layer service is accessible")
+            else:
+                logger.warning("Data Layer service health check failed", status_code=response.status_code)
     except Exception as e:
-        logger.error("Failed to initialize database", error=str(e))
-        raise
+        logger.warning("Could not verify Data Layer service", error=str(e))
     
     yield
     
     # Shutdown
-    logger.info("Shutting down Sales Manager API")
+    logger.info("Shutting down Sales Manager Backend API")
     try:
-        close_db()
-        logger.info("Database connections closed")
+        # Close Data Layer client
+        from app.services import close_data_layer_client
+        await close_data_layer_client()
+        logger.info("Data Layer client closed")
     except Exception as e:
-        logger.error("Error closing database connections", error=str(e))
+        logger.error("Error closing Data Layer client", error=str(e))
 
 
 # Create FastAPI application
 app = FastAPI(
     title=settings.app_name,
     version=settings.version,
-    description="Sales Executive Management Platform API",
+    description="Sales Executive Management Platform API - Backend Gateway (Server C)",
     docs_url="/docs" if settings.debug else None,
     redoc_url="/redoc" if settings.debug else None,
     lifespan=lifespan
@@ -241,7 +251,10 @@ async def root():
         "app": settings.app_name,
         "version": settings.version,
         "environment": settings.environment,
-        "status": "healthy"
+        "status": "healthy",
+        "architecture": "three-layer",
+        "service": "backend-gateway",
+        "data_layer_url": DATA_LAYER_URL
     }
 
 
@@ -253,22 +266,31 @@ async def health_check():
     Returns:
         dict: Health status information
     """
+    # Check Data Layer service health
+    data_layer_healthy = False
+    try:
+        async with httpx.AsyncClient() as client:
+            response = await client.get(f"{DATA_LAYER_URL}/health", timeout=5.0)
+            data_layer_healthy = response.status_code == 200
+    except Exception as e:
+        logger.warning("Data Layer health check failed", error=str(e))
+    
     return {
-        "status": "healthy",
+        "status": "healthy" if data_layer_healthy else "degraded",
         "timestamp": time.time(),
-        "version": settings.version
+        "version": settings.version,
+        "service": "backend-gateway",
+        "data_layer": {
+            "status": "healthy" if data_layer_healthy else "unhealthy",
+            "url": DATA_LAYER_URL
+        }
     }
 
 
 # Import and include API routers
-# These will be added as we create the route modules
-# from app.api.v1.auth import router as auth_router
-# from app.api.v1.users import router as users_router
-# from app.api.v1.tenants import router as tenants_router
+from app.api.v1 import users_router
 
-# app.include_router(auth_router, prefix=settings.api_prefix)
-# app.include_router(users_router, prefix=settings.api_prefix)
-# app.include_router(tenants_router, prefix=settings.api_prefix)
+app.include_router(users_router, prefix="/api/v1/users", tags=["users"])
 
 
 if __name__ == "__main__":
