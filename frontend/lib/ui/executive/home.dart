@@ -1,16 +1,35 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:sales_manager/config/providers/login_message_provider.dart';
 import 'package:sales_manager/ui/core/colors.dart';
+import 'package:sales_manager/utils/show_snackbar.dart';
 
-class ExecutiveHome extends StatefulWidget {
+class ExecutiveHome extends ConsumerStatefulWidget {
   const ExecutiveHome({super.key});
 
   @override
-  State<ExecutiveHome> createState() => _ExecutiveHomeState();
+  ConsumerState<ExecutiveHome> createState() => _ExecutiveHomeState();
 }
 
-class _ExecutiveHomeState extends State<ExecutiveHome> {
+class _ExecutiveHomeState extends ConsumerState<ExecutiveHome> {
   bool isSpecialRouteExpanded = false;
   bool isViewAllExpanded = false;
+  bool _isMessageShown = false;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+
+    final loginMessage = ref.read(loginMessageProvider);
+
+    if (!_isMessageShown && loginMessage != null) {
+      _isMessageShown = true;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        showSnackBar(context, loginMessage);
+        ref.read(loginMessageProvider.notifier).state = null;
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {

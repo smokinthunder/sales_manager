@@ -51,7 +51,6 @@ class AuthViewModel extends _$AuthViewModel {
 
   AsyncValue<AppUser>? _verifyOtpSuccess(AppUser user) {
     _currentUserNotifier.addUser(user);
-    print("User type is ${user.type.toString()}");
     _log.info("Current user updated: ${_currentUserNotifier.state}");
     return state = AsyncData(user);
   }

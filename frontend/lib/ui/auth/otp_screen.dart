@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
-import 'package:sales_manager/routing/routes.dart';
+import 'package:sales_manager/config/providers/login_message_provider.dart';
 import 'package:sales_manager/ui/auth/viewmodel/auth_viewmodel.dart';
 import 'package:sales_manager/ui/core/colors.dart';
 import 'package:sales_manager/utils/show_snackbar.dart';
@@ -29,7 +28,9 @@ class _OtpVerificationScreenState extends ConsumerState<OtpVerificationScreen> {
     ref.listen(authViewModelProvider, (_, next) {
       next?.when(
         data: (data) {
-            showSnackBar(context, "Authentication successful");
+          ref.read(loginMessageProvider.notifier).state =
+              'Authentication successful';
+          
         },
         error: (error, st) {
           showSnackBar(context, error.toString(), true);
