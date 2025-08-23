@@ -51,11 +51,12 @@ class _ExecutiveProfileState extends ConsumerState<ExecutiveProfile> {
             gradient: LinearGradient(
               colors: [
                 AppColors.blue,
+                AppColors.green,
                 AppColors.white,
               ], //TODO: fix/make consistent with design
               begin: Alignment.topCenter,
               end: Alignment.bottomCenter,
-              stops: [0.0, 1.0],
+              stops: [0.0, 0.7, 1.0],
             ),
           ),
         ),
