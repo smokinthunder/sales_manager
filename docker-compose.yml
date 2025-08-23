@@ -1,7 +1,7 @@
 version: '3.8'
 
 services:
-  # MySQL Database
+  # Server A: MySQL Database (completely isolated)
   mysql:
     image: mysql:8.0
     container_name: sales_manager_mysql
@@ -21,6 +21,8 @@ services:
       test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
       timeout: 20s
       retries: 10
+    networks:
+      - database_network
 
   # Redis for caching and sessions
   redis:
@@ -35,70 +37,65 @@ services:
       test: ["CMD", "redis-cli", "ping"]
       timeout: 20s
       retries: 10
+    networks:
+      - backend_network
 
-  # FastAPI Backend
-  backend:
+  # Server B: Data Layer Service (has database access)
+  data-layer:
     build:
-      context: ./backend
+      context: ./data-layer
       dockerfile: Dockerfile
-    container_name: sales_manager_backend
+    container_name: sales_manager_data_layer
     restart: unless-stopped
-    ports:
-      - "8000:8000"
     environment:
-      - DEBUG=true
-      - ENVIRONMENT=development
       - DB_HOST=mysql
       - DB_PORT=3306
       - DB_USERNAME=sales_user
       - DB_PASSWORD=sales_password
       - DB_NAME=sales_manager
-      - REDIS_HOST=redis
-      - REDIS_PORT=6379
-      - SECRET_KEY=your-super-secret-key-for-development-only-change-in-production
-      - DATA_LAYER_URL=http://data-layer:8001
-      - IS_DEVELOPMENT=true
-    volumes:
-      - ./backend:/app
+      - SERVICE_TYPE=data-layer
+    ports:
+      - "8001:8000"
     depends_on:
       mysql:
         condition: service_healthy
-      redis:
-        condition: service_healthy
+    networks:
+      - database_network
+      - backend_network
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
       timeout: 20s
       retries: 10
 
-  # Mock Data Layer Service (for development)
-  data-layer:
+  # Server C: Backend API Gateway (communicates with Data Layer)
+  backend:
     build:
       context: ./backend
-      dockerfile: Dockerfile
-    container_name: sales_manager_data_layer
+      dockerfile: Dockerfile.backend
+    container_name: sales_manager_backend
     restart: unless-stopped
-    ports:
-      - "8001:8000"
     environment:
       - DEBUG=true
       - ENVIRONMENT=development
-      - DB_HOST=mysql
-      - DB_PORT=3306
-      - DB_USERNAME=sales_user
-      - DB_PASSWORD=sales_password
-      - DB_NAME=sales_manager
       - REDIS_HOST=redis
       - REDIS_PORT=6379
       - SECRET_KEY=your-super-secret-key-for-development-only-change-in-production
       - IS_DEVELOPMENT=true
-    volumes:
-      - ./backend:/app
+      - DATA_LAYER_URL=http://data-layer:8000
+      - SERVICE_TYPE=backend
+    ports:
+      - "8000:8000"
     depends_on:
-      mysql:
+      data-layer:
         condition: service_healthy
       redis:
         condition: service_healthy
-    command: ["uvicorn", "app.data_layer:app", "--host", "0.0.0.0", "--port", "8000"]
+    networks:
+      - backend_network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      timeout: 20s
+      retries: 10
 
   # Mock Client Finance API (Tally-like)
   mock-client-api:
@@ -113,11 +110,17 @@ services:
     command: >
       sh -c "pip install fastapi uvicorn &&
              python -m uvicorn main:app --host 0.0.0.0 --port 8000"
+    networks:
+      - backend_network
 
 volumes:
   mysql_data:
   redis_data:
 
 networks:
-  default:
-    name: sales_manager_network
+  database_network:
+    name: sales_manager_database_network
+    driver: bridge
+  backend_network:
+    name: sales_manager_backend_network
+    driver: bridge

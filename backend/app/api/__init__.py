@@ -1,6 +1,5 @@
 """
-API layer containing FastAPI routes and endpoints.
+API package for the Sales Manager Backend.
 
-Implements the presentation layer with proper validation,
-authentication, and business logic orchestration.
+This package contains all API-related modules.
 """
