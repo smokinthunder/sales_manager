@@ -45,6 +45,7 @@ class AuthLocalRepository {
           email: user.email,
           phoneNumber: user.phoneNumber,
           pictureUrl: user.picture,
+          location: "TODO", //TODO: add location field to LoginResponse
         );
         return Result.ok(appUser);
       case Error():

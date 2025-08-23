@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:sales_manager/config/providers/current_user_notifier.dart';
 import 'package:sales_manager/domain/models/user/user.dart';
+import 'package:sales_manager/ui/core/colors.dart';
 
 class ExecutiveProfile extends ConsumerStatefulWidget {
   const ExecutiveProfile({super.key});
@@ -12,21 +13,11 @@ class ExecutiveProfile extends ConsumerStatefulWidget {
 
 class _ExecutiveProfileState extends ConsumerState<ExecutiveProfile> {
   AppUser? user;
-  final TextEditingController firstNameController = TextEditingController(
-    text: "Sidharth",
-  );
-  final TextEditingController lastNameController = TextEditingController(
-    text: "GK",
-  );
-  final TextEditingController emailController = TextEditingController(
-    text: "sidharthgk123@gmail.com",
-  );
-  final TextEditingController phoneController = TextEditingController(
-    text: "+91 8921784905",
-  );
-  final TextEditingController locationController = TextEditingController(
-    text: "Ernakulam",
-  );
+  final TextEditingController firstNameController = TextEditingController();
+  final TextEditingController lastNameController = TextEditingController();
+  final TextEditingController emailController = TextEditingController();
+  final TextEditingController phoneController = TextEditingController();
+  final TextEditingController locationController = TextEditingController();
 
   @override
   void initState() {
@@ -35,7 +26,7 @@ class _ExecutiveProfileState extends ConsumerState<ExecutiveProfile> {
     lastNameController.text = user?.lastName ?? "";
     emailController.text = user?.email ?? "";
     phoneController.text = user?.phoneNumber ?? "";
-    locationController.text = "Ernakulam";
+    locationController.text = user?.location ?? "";
     super.initState();
   }
 
@@ -57,7 +48,15 @@ class _ExecutiveProfileState extends ConsumerState<ExecutiveProfile> {
         Container(
           height: 160,
           decoration: const BoxDecoration(
-            color: Color(0xFF2081bf), // blue background
+            gradient: LinearGradient(
+              colors: [
+                AppColors.blue,
+                AppColors.white,
+              ], //TODO: fix/make consistent with design
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+              stops: [0.0, 1.0],
+            ),
           ),
         ),
         SingleChildScrollView(
@@ -76,7 +75,7 @@ class _ExecutiveProfileState extends ConsumerState<ExecutiveProfile> {
                         user?.pictureUrl ??
                             "https://www.gravatar.com/avatar/placeholder",
                       ),
-                      // Replace with NetworkImage if using online images
+                      //TODO: Clean up above line
                     ),
                   ),
                   const SizedBox(height: 8),

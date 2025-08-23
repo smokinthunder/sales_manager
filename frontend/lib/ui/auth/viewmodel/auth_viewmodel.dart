@@ -39,6 +39,7 @@ class AuthViewModel extends _$AuthViewModel {
             email: '',
             phoneNumber: '',
             pictureUrl: '',
+            location: '',
           ),
         );
       case Error():

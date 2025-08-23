@@ -11,6 +11,7 @@ import 'package:sales_manager/ui/executive/home.dart';
 import 'package:sales_manager/ui/executive/outstanding.dart';
 import 'package:sales_manager/ui/executive/profile.dart';
 import 'package:sales_manager/ui/executive/scaffold.dart';
+import 'package:sales_manager/ui/executive/top_customers.dart';
 import 'package:sales_manager/ui/loading_screen.dart';
 
 final routerProvider = Provider<GoRouter>((ref) {
@@ -59,6 +60,12 @@ final routerProvider = Provider<GoRouter>((ref) {
         path: AppRoutes.executiveAddShop,
         builder: (c, s) {
           return const AddNewShopScreen();
+        },
+      ),
+      GoRoute(
+        path: AppRoutes.executiveTopCustomers,
+        builder: (c, s) {
+          return const TopCustomersScreen();
         },
       ),
     ],

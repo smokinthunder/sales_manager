@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:intl/intl.dart';
 import 'package:sales_manager/config/providers/login_message_provider.dart';
 import 'package:sales_manager/ui/core/colors.dart';
 import 'package:sales_manager/utils/show_snackbar.dart';
@@ -15,7 +16,7 @@ class ExecutiveHome extends ConsumerStatefulWidget {
 
 class _ExecutiveHomeState extends ConsumerState<ExecutiveHome> {
   bool isSpecialRouteExpanded = false;
-  bool isViewAllExpanded = false;
+
   bool _isMessageShown = false;
 
   @override
@@ -66,8 +67,11 @@ class _ExecutiveHomeState extends ConsumerState<ExecutiveHome> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text("Today Route", style: textTheme.bodyLarge),
-              Text("17-05-2024", style: textTheme.labelLarge),
+              Text("Today's Route", style: textTheme.bodyLarge),
+              Text(
+                DateFormat('dd-MM-yyyy').format(DateTime.now()),
+                style: textTheme.labelLarge,
+              ),
             ],
           ),
           const SizedBox(height: 8),
@@ -197,34 +201,26 @@ class _ExecutiveHomeState extends ConsumerState<ExecutiveHome> {
           const SizedBox(height: 10),
 
           // ExpansionTile for View All
-          ExpansionTile(
-            title: SizedBox(
-              width: double.infinity,
-              child: const Text(
-                "View all",
-                textAlign: TextAlign.end,
-                style: TextStyle(color: Colors.blue),
-              ),
-            ),
-            initiallyExpanded: isViewAllExpanded,
-            onExpansionChanged: (val) {
-              setState(() => isViewAllExpanded = val);
+          InkWell(
+            onTap: () {
+              context.push(AppRoutes.executiveTopCustomers);
             },
-            children: [
-              //TODO: Replace with dynamic data, griedview like above
-              _CustomerCard(
-                name: "Athira Metals",
-                location: "Aluva",
-                phone: "+91 8432518902",
-                value: "2300",
-              ),
-              _CustomerCard(
-                name: "SAM Traders",
-                location: "Vyttila",
-                phone: "+91 8432518902",
-                value: "1200",
-              ),
-            ],
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                Text(
+                  "View all",
+                  style: textTheme.bodyMedium?.copyWith(
+                    color: theme.colorScheme.primary,
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Icon(
+                  Icons.keyboard_arrow_down,
+                  color: theme.colorScheme.primary,
+                ),
+              ],
+            ),
           ),
           CategoryScroll(),
         ],

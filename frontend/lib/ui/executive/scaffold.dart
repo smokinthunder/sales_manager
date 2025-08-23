@@ -41,11 +41,14 @@ class ExecutiveScaffold extends StatelessWidget {
       (tab) => location.startsWith(tab.route),
     );
     final safeIndex = currentIndex == -1 ? 0 : currentIndex;
+    final isHome = tabs[safeIndex].route == AppRoutes.executiveHome;
 
     return Scaffold(
-      backgroundColor: Theme.of(context).colorScheme.surface,
+      backgroundColor: isHome
+          ? Theme.of(context).colorScheme.surface
+          : Theme.of(context).colorScheme.onPrimary,
       body: child,
-      appBar: (tabs[safeIndex].route == AppRoutes.executiveHome)
+      appBar: (isHome)
           ? CustomAppBar()
           : AppBar(
               title: Text(tabs[safeIndex].title),

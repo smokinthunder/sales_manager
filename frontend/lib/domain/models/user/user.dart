@@ -17,6 +17,7 @@ class AppUser {
   final String email;
   final String phoneNumber;
   final String pictureUrl;
+  final String location;
 
   final UserType type;
   AppUser({
@@ -27,5 +28,6 @@ class AppUser {
     required this.id,
     required this.type,
     required this.firstName,
+    required this.location,
   });
 }
