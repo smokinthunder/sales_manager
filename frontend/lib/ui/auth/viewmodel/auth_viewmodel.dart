@@ -30,7 +30,7 @@ class AuthViewModel extends _$AuthViewModel {
       case Ok():
         _log.info("Otp send to $phoneNumber");
         // _phoneNumberStore = phoneNumber;
-        state = AsyncData(AppUser(id: "", type: UserType.executive));
+        state = AsyncData(AppUser(id: "", type: UserType.executive, name: ''));
       case Error():
         state = AsyncError(res.error, StackTrace.current);
     }
@@ -51,6 +51,7 @@ class AuthViewModel extends _$AuthViewModel {
 
   AsyncValue<AppUser>? _verifyOtpSuccess(AppUser user) {
     _currentUserNotifier.addUser(user);
+    print("User type is ${user.type.toString()}");
     _log.info("Current user updated: ${_currentUserNotifier.state}");
     return state = AsyncData(user);
   }

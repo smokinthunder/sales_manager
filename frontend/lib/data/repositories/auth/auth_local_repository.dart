@@ -37,7 +37,11 @@ class AuthLocalRepository {
       case Ok():
         _log.info('OTP verified successfully for $phoneNumber');
         final user = result.value;
-        final appUser = AppUser(id: user.id, type: user.type);
+        final appUser = AppUser(
+          id: user.id,
+          type: user.type,
+          name: "${user.firstName} ${user.lastName}",
+        );
         return Result.ok(appUser);
       case Error():
         _log.warning(

@@ -56,21 +56,21 @@ final routerProvider = Provider<GoRouter>((ref) {
       ),
     ],
     redirect: (context, state) {
-      // final isLoggingIn =
-      //     state.matchedLocation == AppRoutes.login ||
-      //     state.matchedLocation == AppRoutes.otp;
-
+      final isLoggingIn =
+          state.matchedLocation == AppRoutes.login ||
+          state.matchedLocation == AppRoutes.otp;
+      
       // // 1. User not logged in → force login unless already at login/otp
-      // if (user == null) {
-      //   return isLoggingIn ? null : AppRoutes.login;
-      // }
+      if (user == null) {
+        return isLoggingIn ? null : AppRoutes.login;
+      }
 
-      // if (user.type == UserType.executive) {
-      //   if (!state.matchedLocation.startsWith(AppRoutes.executive) ||
-      //       state.matchedLocation == AppRoutes.executive) {
-      //     return AppRoutes.executiveHome;
-      //   }
-      // }
+      else if (user.type == UserType.executive) {
+        if (!state.matchedLocation.startsWith(AppRoutes.executive) ||
+            state.matchedLocation == AppRoutes.executive) {
+          return AppRoutes.executiveHome;
+        }
+      }
 
       // 3. Already in right place → no redirect
       return null;

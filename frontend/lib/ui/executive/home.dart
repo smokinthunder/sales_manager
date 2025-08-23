@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/widgets.dart';
-import 'package:sales_manager/ui/theme.dart';
+import 'package:sales_manager/ui/core/colors.dart';
 
 class ExecutiveHome extends StatefulWidget {
   const ExecutiveHome({super.key});
@@ -331,7 +330,7 @@ class _CategoryScrollState extends State<CategoryScroll> {
                 child: Text(
                   category,
                   style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                    color: isSelected ? AppColors.blue : AppColors.grey,
+                    color: isSelected ? AppColors.blue : AppColors.gray,
                   ),
                 ),
                 onPressed: () {
