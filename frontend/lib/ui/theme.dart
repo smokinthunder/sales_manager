@@ -9,14 +9,21 @@ class AppColors {
   static const Color grey = Color(0xFF999999);
   static const Color lightGrey = Color(0xFFE6E6E6);
   static const Color darkGrey = Color(0xFF484c52);
+  static const Color red = Color(0xFFff383c);
 }
 
 final ThemeData appTheme = ThemeData(
   primaryColor: AppColors.blue,
   scaffoldBackgroundColor: AppColors.white,
-  appBarTheme: const AppBarTheme(
+
+  appBarTheme: AppBarTheme(
     backgroundColor: AppColors.blue,
     foregroundColor: AppColors.white,
+    titleTextStyle: GoogleFonts.poppins(
+      fontSize: 16,
+      fontWeight: FontWeight.w500,
+      color: AppColors.white,
+    ),
   ),
   colorScheme: const ColorScheme(
     brightness: Brightness.light,
@@ -24,11 +31,39 @@ final ThemeData appTheme = ThemeData(
     onPrimary: AppColors.white,
     secondary: AppColors.green,
     onSecondary: AppColors.black,
-    error: Colors.red,
+    error: AppColors.red,
     onError: AppColors.white,
     surface: AppColors.lightGrey,
     onSurface: AppColors.darkGrey,
     tertiary: AppColors.grey,
+  ),
+  inputDecorationTheme: InputDecorationTheme(
+    border: OutlineInputBorder(borderRadius: BorderRadius.circular(4)),
+    contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+    labelStyle: GoogleFonts.poppins(
+      fontSize: 14,
+      fontWeight: FontWeight.w500,
+      color: AppColors.darkGrey,
+    ),
+    hintStyle: GoogleFonts.poppins(
+      fontSize: 14,
+      fontWeight: FontWeight.w400,
+      color: AppColors.grey,
+    ),
+    errorStyle: GoogleFonts.poppins(
+      fontSize: 10,
+      fontWeight: FontWeight.w400,
+      color: AppColors.red,
+    ),
+  ),
+  elevatedButtonTheme: ElevatedButtonThemeData(
+    style: ElevatedButton.styleFrom(
+      backgroundColor: AppColors.blue, // Blue
+      foregroundColor: AppColors.white, // Text color
+      padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      textStyle: GoogleFonts.poppins(fontSize: 16, fontWeight: FontWeight.w500),
+    ),
   ),
   textTheme: TextTheme(
     // 24sp, w500
@@ -74,6 +109,11 @@ final ThemeData appTheme = ThemeData(
     ),
     labelLarge: GoogleFonts.poppins(
       fontSize: 14,
+      fontWeight: FontWeight.w400,
+      color: AppColors.grey,
+    ),
+    labelSmall: GoogleFonts.poppins(
+      fontSize: 10,
       fontWeight: FontWeight.w400,
       color: AppColors.grey,
     ),

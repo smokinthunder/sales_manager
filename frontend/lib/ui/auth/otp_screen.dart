@@ -3,7 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:sales_manager/routing/routes.dart';
 import 'package:sales_manager/ui/auth/viewmodel/auth_viewmodel.dart';
-import 'package:sales_manager/ui/core/colors.dart';
 import 'package:sales_manager/utils/show_snackbar.dart';
 
 class OtpVerificationScreen extends ConsumerStatefulWidget {
@@ -149,17 +148,7 @@ class _OtpVerificationScreenState extends ConsumerState<OtpVerificationScreen> {
                                 otp: otpValue,
                               );
                         },
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: AppColors.blue,
-                          padding: const EdgeInsets.symmetric(vertical: 15),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                        ),
-                        child: const Text(
-                          "Verify",
-                          style: TextStyle(fontSize: 16, color: Colors.white),
-                        ),
+                        child: const Text("Verify"),
                       ),
                     ),
                   ), // Verify button

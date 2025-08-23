@@ -5,6 +5,7 @@ import 'package:sales_manager/domain/models/user/user.dart';
 import 'package:sales_manager/routing/routes.dart';
 import 'package:sales_manager/ui/auth/login_screen.dart';
 import 'package:sales_manager/ui/auth/otp_screen.dart';
+import 'package:sales_manager/ui/executive/add_new_shop.dart';
 import 'package:sales_manager/ui/executive/analytics.dart';
 import 'package:sales_manager/ui/executive/home.dart';
 import 'package:sales_manager/ui/executive/outstanding.dart';
@@ -54,23 +55,29 @@ final routerProvider = Provider<GoRouter>((ref) {
           ),
         ],
       ),
+      GoRoute(
+        path: AppRoutes.executiveAddShop,
+        builder: (c, s) {
+          return const AddNewShopScreen();
+        },
+      ),
     ],
     redirect: (context, state) {
-      // final isLoggingIn =
-      //     state.matchedLocation == AppRoutes.login ||
-      //     state.matchedLocation == AppRoutes.otp;
+      final isLoggingIn =
+          state.matchedLocation == AppRoutes.login ||
+          state.matchedLocation == AppRoutes.otp;
 
-      // // 1. User not logged in → force login unless already at login/otp
-      // if (user == null) {
-      //   return isLoggingIn ? null : AppRoutes.login;
-      // }
+      // 1. User not logged in → force login unless already at login/otp
+      if (user == null) {
+        return isLoggingIn ? null : AppRoutes.login;
+      }
 
-      // if (user.type == UserType.executive) {
-      //   if (!state.matchedLocation.startsWith(AppRoutes.executive) ||
-      //       state.matchedLocation == AppRoutes.executive) {
-      //     return AppRoutes.executiveHome;
-      //   }
-      // }
+      if (user.type == UserType.executive) {
+        if (!state.matchedLocation.startsWith(AppRoutes.executive) ||
+            state.matchedLocation == AppRoutes.executive) {
+          return AppRoutes.executiveHome;
+        }
+      }
 
       // 3. Already in right place → no redirect
       return null;

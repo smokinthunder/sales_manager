@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/widgets.dart';
+import 'package:go_router/go_router.dart';
+import 'package:sales_manager/routing/routes.dart';
 import 'package:sales_manager/ui/theme.dart';
 
 class ExecutiveHome extends StatefulWidget {
@@ -29,7 +30,7 @@ class _ExecutiveHomeState extends State<ExecutiveHome> {
               Text("Total Customers : 58", style: textTheme.headlineSmall),
               TextButton(
                 onPressed: () {
-                  //TODO: implement on pressed
+                  context.push(AppRoutes.executiveAddShop);
                 },
                 child: Text(
                   "Add new customer",
