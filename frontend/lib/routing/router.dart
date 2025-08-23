@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:sales_manager/config/providers/current_user_notifier.dart';
+import 'package:sales_manager/domain/models/shops/shop.dart';
 import 'package:sales_manager/domain/models/user/user.dart';
 import 'package:sales_manager/routing/routes.dart';
 import 'package:sales_manager/ui/auth/login_screen.dart';
@@ -8,6 +9,7 @@ import 'package:sales_manager/ui/auth/otp_screen.dart';
 import 'package:sales_manager/ui/executive/add_new_shop.dart';
 import 'package:sales_manager/ui/executive/analytics.dart';
 import 'package:sales_manager/ui/executive/home.dart';
+import 'package:sales_manager/ui/executive/not_visiting.dart';
 import 'package:sales_manager/ui/executive/outstanding.dart';
 import 'package:sales_manager/ui/executive/profile.dart';
 import 'package:sales_manager/ui/executive/scaffold.dart';
@@ -66,6 +68,13 @@ final routerProvider = Provider<GoRouter>((ref) {
         path: AppRoutes.executiveTopCustomers,
         builder: (c, s) {
           return const TopCustomersScreen();
+        },
+      ),
+      GoRoute(
+        path: AppRoutes.executiveNotVisiting,
+        builder: (c, s) {
+          final shop = s.extra as Shop;
+          return ReasonForNotVisitingScreen(shop: shop);
         },
       ),
     ],

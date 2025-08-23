@@ -20,14 +20,14 @@ class _ExecutiveProfileState extends ConsumerState<ExecutiveProfile> {
   final TextEditingController locationController = TextEditingController();
 
   @override
-  void initState() {
+  didChangeDependencies() {
     user = ref.watch(currentUserNotifierProvider);
     firstNameController.text = user?.firstName ?? "";
     lastNameController.text = user?.lastName ?? "";
     emailController.text = user?.email ?? "";
     phoneController.text = user?.phoneNumber ?? "";
     locationController.text = user?.location ?? "";
-    super.initState();
+    super.didChangeDependencies();
   }
 
   @override

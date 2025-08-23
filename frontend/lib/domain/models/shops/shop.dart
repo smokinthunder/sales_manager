@@ -5,10 +5,16 @@ class Shop {
   final String phoneNumber;
   final String logoUrl;
   final int points;
-  final bool needsVisiting;
   final DateTime lastVisted;
 
+  /// Indicates if the shop needs to be visited : to be placed in not visited list if true, else visited shops
+  final bool needsVisiting;
+  final bool isNewShop;
+  final bool isBestCustomer;
+
   Shop({
+    this.isBestCustomer = false,
+    this.isNewShop = false,
     required this.logoUrl,
     this.needsVisiting = false,
     required this.id,
@@ -18,19 +24,6 @@ class Shop {
     required this.points,
     required this.lastVisted,
   });
-
-  factory Shop.fromJson(Map<String, dynamic> json) {
-    return Shop(
-      id: json['id'] as String,
-      name: json['name'] as String,
-      location: json['location'] as String,
-      phoneNumber: json['phoneNumber'] as String,
-      logoUrl: json['logoUrl'] as String,
-      points: json['points'] as int,
-      needsVisiting: json['needsVisiting'] as bool? ?? false,
-      lastVisted: DateTime.parse(json['lastVisted'] as String),
-    );
-  }
 }
 
 final List<Shop> testShops = [
@@ -42,6 +35,7 @@ final List<Shop> testShops = [
     logoUrl: 'https://example.com/logos/supermart.png',
     points: 120,
     needsVisiting: true,
+    isNewShop: true,
     lastVisted: DateTime.now().subtract(Duration(days: 2)),
   ),
   Shop(
@@ -69,6 +63,7 @@ final List<Shop> testShops = [
     name: 'BookNook',
     location: '321 Book St',
     phoneNumber: '555-3456',
+    isBestCustomer: true,
     logoUrl: 'https://example.com/logos/booknook.png',
     points: 60,
     needsVisiting: false,
@@ -79,6 +74,7 @@ final List<Shop> testShops = [
     name: 'GadgetWorld',
     location: '654 Gadget Ave',
     phoneNumber: '555-7890',
+    isNewShop: true,
     logoUrl: 'https://example.com/logos/gadgetworld.png',
     points: 150,
     needsVisiting: true,
@@ -88,6 +84,7 @@ final List<Shop> testShops = [
     id: '6',
     name: 'ClothCorner',
     location: '987 Fashion Blvd',
+    isBestCustomer: true,
     phoneNumber: '555-2345',
     logoUrl: 'https://example.com/logos/clothcorner.png',
     points: 90,

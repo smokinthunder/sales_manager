@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:sales_manager/config/providers/login_message_provider.dart';
-import 'package:sales_manager/ui/core/colors.dart';
+import 'package:sales_manager/domain/models/shops/shop.dart';
 import 'package:sales_manager/utils/show_snackbar.dart';
 import 'package:go_router/go_router.dart';
 import 'package:sales_manager/routing/routes.dart';
@@ -222,7 +222,7 @@ class _ExecutiveHomeState extends ConsumerState<ExecutiveHome> {
               ],
             ),
           ),
-          CategoryScroll(),
+          CategoryScroll(shops: testShops),
         ],
       ),
     );
@@ -308,46 +308,56 @@ class _CustomerCard extends StatelessWidget {
 }
 
 class CategoryScroll extends StatefulWidget {
-  const CategoryScroll({super.key});
+  final List<Shop> shops;
+
+  const CategoryScroll({super.key, required this.shops});
 
   @override
   State<CategoryScroll> createState() => _CategoryScrollState();
 }
 
 class _CategoryScrollState extends State<CategoryScroll> {
-  final List<String> categories = [
-    "All",
-    "Technology",
-    "Science",
-    "Business",
-    "Art",
-    "Sports",
-    "Health",
-    "Music",
-    "Travel",
-  ];
+  ShopCategory selectedCategory = ShopCategory.newShops;
 
-  String selectedCategory = "All";
+  List<Shop> getFilteredShops() {
+    switch (selectedCategory) {
+      case ShopCategory.newShops:
+        return widget.shops.where((shop) => shop.isNewShop).toList();
+      case ShopCategory.bestCustomers:
+        return widget.shops.where((shop) => shop.isBestCustomer).toList();
+      case ShopCategory.visitedShops:
+        return widget.shops.where((shop) => !shop.needsVisiting).toList();
+      case ShopCategory.notVisited:
+        return widget.shops.where((shop) => shop.needsVisiting).toList();
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final filteredShops = getFilteredShops();
+
     return Column(
       children: [
+        // Category tabs
         SizedBox(
-          height: 50,
+          height: 46,
           child: ListView.separated(
             scrollDirection: Axis.horizontal,
-            itemCount: categories.length,
-            separatorBuilder: (_, __) => const SizedBox(width: 8),
+            itemCount: ShopCategory.values.length,
+            separatorBuilder: (_, __) => const SizedBox(width: 2),
             itemBuilder: (context, index) {
-              final category = categories[index];
+              final category = ShopCategory.values[index];
               final isSelected = category == selectedCategory;
 
               return TextButton(
                 child: Text(
-                  category,
+                  category.label,
                   style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                    color: isSelected ? AppColors.blue : AppColors.gray,
+                    color: isSelected
+                        ? colorScheme.primary
+                        : colorScheme.tertiary,
+                    fontWeight: isSelected ? FontWeight.bold : null,
                   ),
                 ),
                 onPressed: () {
@@ -359,26 +369,58 @@ class _CategoryScrollState extends State<CategoryScroll> {
             },
           ),
         ),
+
+        // Shop list
         ListView.separated(
           shrinkWrap: true,
-          physics: NeverScrollableScrollPhysics(),
-          itemCount: 2,
+          physics: const NeverScrollableScrollPhysics(),
+          itemCount: filteredShops.length,
           itemBuilder: (context, index) {
+            Widget? trailing;
+            final shop = filteredShops[index];
+            if (selectedCategory == ShopCategory.visitedShops) {
+              trailing = Text(
+                DateFormat('dd-MM-yyyy').format(shop.lastVisted),
+                style: Theme.of(context).textTheme.bodySmall,
+              );
+            } else if (selectedCategory == ShopCategory.notVisited) {
+              trailing = IconButton(
+                icon: const Icon(Icons.chat_outlined),
+                onPressed: () {
+                  setState(() {
+                    context.push(AppRoutes.executiveNotVisiting, extra: shop);
+                  });
+                },
+              );
+            } else {
+              trailing = null;
+            }
             return ListTile(
               title: Text(
-                "Bindu metals",
+                shop.name,
                 style: Theme.of(context).textTheme.bodyLarge,
               ),
               subtitle: Text(
-                "kalamassery",
+                shop.location,
                 style: Theme.of(context).textTheme.bodySmall,
               ),
+              trailing: trailing,
             );
           },
           separatorBuilder: (context, index) =>
-              Divider(color: Colors.grey[300], thickness: 1, height: 1),
+              Divider(color: colorScheme.tertiary, thickness: 0.5, height: 0),
         ),
       ],
     );
   }
+}
+
+enum ShopCategory {
+  newShops("New Shops"),
+  bestCustomers("Best Customer"),
+  visitedShops("Visited Shop"),
+  notVisited("Not Visited");
+
+  final String label;
+  const ShopCategory(this.label);
 }

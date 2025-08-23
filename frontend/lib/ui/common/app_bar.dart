@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:sales_manager/config/assets.dart';
 import 'package:sales_manager/config/providers/current_user_notifier.dart';
 import 'package:sales_manager/ui/core/colors.dart';
 
@@ -15,9 +16,7 @@ class CustomAppBar extends ConsumerWidget implements PreferredSizeWidget {
         height: preferredSize.height,
         decoration: BoxDecoration(
           image: DecorationImage(
-            image: AssetImage(
-              "assets/images/app_bar_bg.jpg",
-            ), // your PNG pattern
+            image: AssetImage(Assets.appBarBg), // your PNG pattern
             fit: BoxFit.cover,
             opacity: 0.2,
           ),

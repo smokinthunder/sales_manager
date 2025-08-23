@@ -64,6 +64,7 @@ final ThemeData appTheme = ThemeData(
   ),
   elevatedButtonTheme: ElevatedButtonThemeData(
     style: ElevatedButton.styleFrom(
+      minimumSize: const Size(140, 36),
       backgroundColor: AppColors.blue, // Blue
       foregroundColor: AppColors.white, // Text color
       padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
