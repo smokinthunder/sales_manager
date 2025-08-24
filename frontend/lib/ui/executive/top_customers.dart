@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 import 'package:sales_manager/domain/models/shops/shop.dart';
 import 'package:sales_manager/routing/routes.dart';
 
+///Provide sorted list for this widget
 class TopCustomersScreen extends StatelessWidget {
   const TopCustomersScreen({super.key});
 

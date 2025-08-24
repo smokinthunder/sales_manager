@@ -15,6 +15,7 @@ import 'package:sales_manager/ui/executive/profile.dart';
 import 'package:sales_manager/ui/executive/scaffold.dart';
 import 'package:sales_manager/ui/executive/top_customers.dart';
 import 'package:sales_manager/ui/common/screens/loading_screen.dart';
+import 'package:sales_manager/ui/executive/wait_for_approval.dart';
 
 final routerProvider = Provider<GoRouter>((ref) {
   // final user = ref.watch(authStreamProvider).valueOrNull;
@@ -75,6 +76,12 @@ final routerProvider = Provider<GoRouter>((ref) {
         builder: (c, s) {
           final shop = s.extra as Shop;
           return ReasonForNotVisitingScreen(shop: shop);
+        },
+      ),
+      GoRoute(
+        path: AppRoutes.executiveWaitForApproval,
+        builder: (context, state) {
+          return WaitForApprovalScreen();
         },
       ),
     ],
