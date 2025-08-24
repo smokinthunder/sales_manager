@@ -51,7 +51,7 @@ class _ShopDetailScreenState extends State<ShopDetailScreen> {
                 decoration: BoxDecoration(
                   color: colorScheme.onPrimary,
                   borderRadius: BorderRadius.circular(8),
-                  border: Border.all(width: 2, color: colorScheme.tertiary),
+                  border: Border.all(width: 1, color: colorScheme.tertiary),
                 ),
                 child: DropdownButton<String>(
                   isDense: true,
@@ -224,7 +224,8 @@ class _ShopDetailScreenState extends State<ShopDetailScreen> {
             const SizedBox(height: 8),
             TextField(
               maxLines: 5,
-              decoration: const InputDecoration(
+              decoration: InputDecoration(
+                fillColor: colorScheme.onPrimary,
                 hintText:
                     "Please provide the reason why this store does not sell the product.",
               ),

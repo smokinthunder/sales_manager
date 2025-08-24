@@ -31,6 +31,7 @@ final ThemeData appTheme = ThemeData(
   ),
   inputDecorationTheme: InputDecorationTheme(
     border: OutlineInputBorder(borderRadius: BorderRadius.circular(4)),
+    fillColor: AppColors.white,
     contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
     labelStyle: GoogleFonts.poppins(
       fontSize: 14,
@@ -46,6 +47,18 @@ final ThemeData appTheme = ThemeData(
       fontSize: 10,
       fontWeight: FontWeight.w400,
       color: AppColors.red,
+    ),
+  ),
+  dropdownMenuTheme: DropdownMenuThemeData(
+    inputDecorationTheme: InputDecorationTheme(
+      isDense: true,
+      contentPadding: EdgeInsets.symmetric(horizontal: 8, vertical: 0),
+      constraints: BoxConstraints(minHeight: 0, minWidth: 0),
+      fillColor: AppColors.white, // background
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(8),
+        borderSide: BorderSide(color: AppColors.gray, width: 1),
+      ),
     ),
   ),
   bottomNavigationBarTheme: BottomNavigationBarThemeData(
