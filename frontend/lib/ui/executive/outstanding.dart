@@ -21,15 +21,18 @@ class _ExecutiveOutStandingState extends State<ExecutiveOutStanding> {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
     final textTheme = theme.textTheme;
-    return Padding(
-      padding: const EdgeInsets.all(8.0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          SizedBox(height: 20),
-          Text("Select Shop", style: textTheme.bodyLarge),
-          SizedBox(height: 8),
-          Row(
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        SizedBox(height: 20),
+        Padding(
+          padding: const EdgeInsets.all(8.0),
+          child: Text("Select Shop", style: textTheme.bodyLarge),
+        ),
+        SizedBox(height: 8),
+        Padding(
+          padding: const EdgeInsets.all(8.0),
+          child: Row(
             spacing: 16,
             children: [
               Expanded(
@@ -103,10 +106,16 @@ class _ExecutiveOutStandingState extends State<ExecutiveOutStanding> {
               ),
             ],
           ),
-          SizedBox(height: 30),
-          Text("Credit list", style: textTheme.bodyLarge),
+        ),
+        SizedBox(height: 30),
+        Padding(
+          padding: const EdgeInsets.all(8.0),
+          child: Text("Credit list", style: textTheme.bodyLarge),
+        ),
 
-          Container(
+        Padding(
+          padding: const EdgeInsets.all(8.0),
+          child: Container(
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(16),
               border: BoxBorder.all(color: selectedType.color),
@@ -154,25 +163,28 @@ class _ExecutiveOutStandingState extends State<ExecutiveOutStanding> {
               }).toList(),
             ),
           ),
-          SizedBox(height: 20),
-          Expanded(
-            child: PageView.builder(
-              onPageChanged: (value) {
-                setState(() {
-                  selectedType = CreditType.values[value];
-                });
-              },
-              controller: _controller,
-              scrollDirection: Axis.horizontal,
-              itemCount: CreditType.values.length,
-              itemBuilder: (context, index) {
-                return OutstandingTable(color: CreditType.values[index].color);
-              },
-            ),
+        ),
+        SizedBox(height: 20),
+        Expanded(
+          child: PageView.builder(
+            onPageChanged: (value) {
+              setState(() {
+                selectedType = CreditType.values[value];
+              });
+            },
+            controller: _controller,
+            scrollDirection: Axis.horizontal,
+            itemCount: CreditType.values.length,
+            itemBuilder: (context, index) {
+              return Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: OutstandingTable(color: CreditType.values[index].color),
+              );
+            },
           ),
-          Center(child: Icon(Icons.more_horiz, size: 32)),
-        ],
-      ),
+        ),
+        Center(child: Icon(Icons.more_horiz, size: 32)),
+      ],
     );
   }
 }
