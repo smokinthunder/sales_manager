@@ -14,7 +14,7 @@ import 'package:sales_manager/ui/executive/outstanding.dart';
 import 'package:sales_manager/ui/executive/profile.dart';
 import 'package:sales_manager/ui/executive/scaffold.dart';
 import 'package:sales_manager/ui/executive/top_customers.dart';
-import 'package:sales_manager/ui/loading_screen.dart';
+import 'package:sales_manager/ui/common/screens/loading_screen.dart';
 
 final routerProvider = Provider<GoRouter>((ref) {
   // final user = ref.watch(authStreamProvider).valueOrNull;
