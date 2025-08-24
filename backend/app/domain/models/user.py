@@ -6,10 +6,10 @@ and multi-tenant support.
 """
 
 from datetime import datetime
-from typing import Optional
+from typing import Optional, List
 from enum import Enum
 from sqlmodel import SQLModel, Field, Relationship
-from pydantic import EmailStr, validator
+from pydantic import validator
 
 
 class UserRole(str, Enum):
@@ -33,7 +33,7 @@ class UserBase(SQLModel):
     
     phone: str = Field(..., description="Phone number as primary identifier")
     name: str = Field(..., description="Full name of the user")
-    email: Optional[EmailStr] = Field(None, description="Email address")
+    email: Optional[str] = Field(None, description="Email address")
     role: UserRole = Field(..., description="User role in the system")
     status: UserStatus = Field(default=UserStatus.PENDING_APPROVAL, description="Account status")
     tenant_id: str = Field(..., description="Tenant identifier for multi-tenancy")
@@ -85,7 +85,7 @@ class UserUpdate(SQLModel):
     """Model for updating existing users."""
     
     name: Optional[str] = None
-    email: Optional[EmailStr] = None
+    email: Optional[str] = None
     role: Optional[UserRole] = None
     status: Optional[UserStatus] = None
 
