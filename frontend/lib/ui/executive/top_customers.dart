@@ -54,89 +54,84 @@ class _PaginatedListState extends State<PaginatedList> {
     return widget.items.sublist(start, end);
   }
 
+  Widget _buildNavButton({
+    required bool enabled,
+    required VoidCallback? onTap,
+    required IconData icon,
+    required Color color,
+    required Color iconColor,
+  }) {
+    return InkWell(
+      onTap: enabled ? onTap : null,
+      child: Container(
+        padding: const EdgeInsets.all(4.0),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(4),
+          color: enabled ? color : color.withAlpha(128),
+        ),
+        child: Icon(icon, color: iconColor),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
-    final primaryColor = Theme.of(context).colorScheme.primary;
-    final onPrimary = Theme.of(context).colorScheme.onPrimary;
+    final colors = Theme.of(context).colorScheme;
+
     return Column(
       children: [
+        // Main paged list
         Expanded(
           child: PageView.builder(
             controller: _pageController,
             itemCount: totalPages,
-            onPageChanged: (index) {
-              setState(() => currentPage = index);
-            },
+            onPageChanged: (index) => setState(() => currentPage = index),
             itemBuilder: (context, pageIndex) {
               final pageItems = getPageItems(pageIndex);
-              return ListView.builder(
+              return ListView.separated(
                 itemCount: pageItems.length,
-                itemBuilder: (context, index) => Padding(
-                  padding: const EdgeInsets.only(bottom: 12.0),
-                  child: InkWell(
-                    onTap: () {
-                      //TODO: implement navigation
-                    },
-                    child: ShopCard(shop: pageItems[index]),
-                  ),
+                separatorBuilder: (_, __) => const SizedBox(height: 12),
+                itemBuilder: (context, index) => InkWell(
+                  onTap: () {
+                    // TODO: implement navigation
+                  },
+                  child: ShopCard(shop: pageItems[index]),
                 ),
               );
             },
           ),
         ),
+
         const SizedBox(height: 8),
+
+        // Navigation buttons
         Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: InkWell(
-                onTap: currentPage > 0
-                    ? () {
-                        _pageController.previousPage(
-                          duration: const Duration(milliseconds: 300),
-                          curve: Curves.easeInOut,
-                        );
-                      }
-                    : null,
-                child: Container(
-                  padding: const EdgeInsets.all(4.0),
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(4),
-                    color: currentPage > 0
-                        ? primaryColor
-                        : primaryColor.withAlpha(128),
-                  ),
-                  child: Icon(Icons.arrow_back_ios_new, color: onPrimary),
-                ),
+            _buildNavButton(
+              enabled: currentPage > 0,
+              onTap: () => _pageController.previousPage(
+                duration: const Duration(milliseconds: 300),
+                curve: Curves.easeInOut,
               ),
+              icon: Icons.arrow_back_ios_new,
+              color: colors.primary,
+              iconColor: colors.onPrimary,
             ),
-            Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: InkWell(
-                onTap: currentPage < totalPages - 1
-                    ? () {
-                        _pageController.nextPage(
-                          duration: const Duration(milliseconds: 300),
-                          curve: Curves.easeInOut,
-                        );
-                      }
-                    : null,
-                child: Container(
-                  padding: const EdgeInsets.all(4.0),
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(4),
-                    color: currentPage < totalPages - 1
-                        ? primaryColor
-                        : primaryColor.withAlpha(128),
-                  ),
-
-                  child: Icon(Icons.arrow_forward_ios, color: onPrimary),
-                ),
+            const SizedBox(width: 16),
+            _buildNavButton(
+              enabled: currentPage < totalPages - 1,
+              onTap: () => _pageController.nextPage(
+                duration: const Duration(milliseconds: 300),
+                curve: Curves.easeInOut,
               ),
+              icon: Icons.arrow_forward_ios,
+              color: colors.primary,
+              iconColor: colors.onPrimary,
             ),
           ],
         ),
+
         const SizedBox(height: 12),
       ],
     );
