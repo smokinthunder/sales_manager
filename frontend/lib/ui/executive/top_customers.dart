@@ -95,7 +95,7 @@ class _PaginatedListState extends State<PaginatedList> {
                 itemBuilder: (context, index) => InkWell(
                   onTap: () {
                     // TODO: implement navigation
-                    context.go(AppRoutes.executiveShopDetails);
+                    context.push(AppRoutes.executiveShopDetails);
                   },
                   child: ShopCard(shop: pageItems[index]),
                 ),
@@ -142,7 +142,8 @@ class _PaginatedListState extends State<PaginatedList> {
 
 class ShopCard extends StatelessWidget {
   final Shop shop;
-  const ShopCard({super.key, required this.shop});
+  final bool isDisplay;
+  const ShopCard({super.key, required this.shop, this.isDisplay = false});
 
   @override
   Widget build(BuildContext context) {
@@ -150,8 +151,18 @@ class ShopCard extends StatelessWidget {
     final colorScheme = Theme.of(context).colorScheme;
     return Container(
       decoration: BoxDecoration(
-        border: Border.all(color: Colors.grey.shade300),
+        border: Border.all(color: colorScheme.surface),
         borderRadius: BorderRadius.circular(8),
+        color: isDisplay ? colorScheme.onPrimary : null,
+        boxShadow: isDisplay
+            ? [
+                BoxShadow(
+                  offset: Offset(0, 4),
+                  spreadRadius: 2,
+                  color: colorScheme.onSurface.withAlpha(12),
+                ),
+              ]
+            : null,
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.center,
@@ -159,8 +170,9 @@ class ShopCard extends StatelessWidget {
           Padding(
             padding: const EdgeInsets.all(8.0),
             child: CircleAvatar(
-              radius: 32,
+              radius: isDisplay ? 42 : 32,
               backgroundImage: NetworkImage(shop.logoUrl),
+
               //TODO: Clean up above line
             ),
           ),
@@ -181,7 +193,9 @@ class ShopCard extends StatelessWidget {
             padding: const EdgeInsets.all(16.0),
             child: Text(
               shop.points.toString(),
-              style: textTheme.bodyLarge?.copyWith(color: colorScheme.primary),
+              style:
+                  (isDisplay ? textTheme.headlineMedium : textTheme.bodyLarge)
+                      ?.copyWith(color: colorScheme.primary),
             ),
           ),
         ],

@@ -1,8 +1,20 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:sales_manager/domain/models/shops/shop.dart';
+import 'package:sales_manager/ui/executive/top_customers.dart';
 
-class ShopDetailScreen extends StatelessWidget {
+class ShopDetailScreen extends StatefulWidget {
   const ShopDetailScreen({super.key});
+
+  @override
+  State<ShopDetailScreen> createState() => _ShopDetailScreenState();
+}
+
+class _ShopDetailScreenState extends State<ShopDetailScreen> {
+  String? selectedValue;
+
+  final List<String> options = ["Option 1", "Option 2", "Option 3"];
 
   @override
   Widget build(BuildContext context) {
@@ -28,114 +40,176 @@ class ShopDetailScreen extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             /// Shop Card
-            Card(
-              color: colorScheme.onPrimary,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: ListTile(
-                leading: CircleAvatar(
-                  radius: 28,
-                  backgroundColor: Colors.green.shade900,
-                  child: const Text(
-                    "M",
-                    style: TextStyle(fontSize: 28, color: Colors.amber),
-                  ),
-                ),
-                title: Text("M K Enterprises", style: textTheme.bodyLarge),
-                subtitle: Text(
-                  "Ernakulam\n+91 8432514901",
-                  style: textTheme.bodySmall,
-                ),
-                trailing: Text(
-                  "2400",
-                  style: theme.textTheme.titleLarge?.copyWith(
-                    color: colorScheme.primary,
-                  ),
-                ),
-              ),
-            ),
+            ShopCard(shop: testShops[0], isDisplay: true),
             const SizedBox(height: 16),
 
             /// Sort Dropdown
-            Row(
-              mainAxisAlignment: MainAxisAlignment.end,
-              children: [
-                OutlinedButton.icon(
-                  onPressed: () {},
-                  icon: const Icon(Icons.sort),
-                  label: const Text("Sort by"),
+            Align(
+              alignment: Alignment.centerRight,
+              child: Container(
+                padding: EdgeInsets.symmetric(vertical: 4, horizontal: 8),
+                decoration: BoxDecoration(
+                  color: colorScheme.onPrimary,
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(width: 2, color: colorScheme.tertiary),
                 ),
-              ],
+                child: DropdownButton<String>(
+                  isDense: true,
+                  underline: SizedBox.shrink(),
+                  value: selectedValue,
+                  hint: Text(
+                    "Sort by",
+                    style: textTheme.bodyLarge?.copyWith(
+                      color: colorScheme.tertiary,
+                    ),
+                  ),
+                  icon: Padding(
+                    padding: const EdgeInsets.only(left: 8.0),
+                    child: Icon(
+                      CupertinoIcons.chevron_down,
+                      size: 18,
+                      color: colorScheme.tertiary,
+                    ),
+                  ),
+                  items: options.map((String value) {
+                    return DropdownMenuItem<String>(
+                      value: value,
+                      child: Text(value),
+                    );
+                  }).toList(),
+                  onChanged: (String? newValue) {
+                    setState(() {
+                      selectedValue = newValue!;
+                      //TODO
+                    });
+                  },
+                ),
+              ),
             ),
 
             const SizedBox(height: 16),
 
             /// Purchase History
             Text("Purchase History", style: textTheme.bodyLarge),
-            const SizedBox(height: 8),
+            const SizedBox(height: 20),
 
             HistroyTable(),
 
-            const SizedBox(height: 12),
+            const SizedBox(height: 16),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: const [
+              children: [
                 Row(
                   children: [
-                    Icon(Icons.download, size: 18),
+                    Text("Download List", style: textTheme.bodySmall),
                     SizedBox(width: 6),
-                    Text("Download List"),
+                    Icon(Icons.file_download_outlined, size: 24),
                   ],
                 ),
-                Text("See more", style: TextStyle(color: Colors.blue)),
+                Text(
+                  "See more",
+                  style: textTheme.bodyMedium?.copyWith(
+                    color: colorScheme.primary,
+                  ),
+                ),
               ],
             ),
 
-            const SizedBox(height: 20),
+            const SizedBox(height: 60),
 
             /// Sales Analysis
-            Text("Sales Analysis", style: theme.textTheme.titleMedium),
-            const SizedBox(height: 8),
-            Card(
-              margin: EdgeInsets.zero,
-              child: Padding(
-                padding: const EdgeInsets.all(16),
-                child: Column(
-                  children: [
-                    _buildKeyValue("Total sales :", "20,14,548"),
-                    _buildKeyValue("Pending Amounts :", "5,47,239"),
-                    const Divider(),
-                    _buildOutstandingTable(),
-                  ],
-                ),
+            Text("Sales Analysis", style: theme.textTheme.bodyLarge),
+            const SizedBox(height: 18),
+            Container(
+              padding: EdgeInsets.symmetric(horizontal: 8),
+              decoration: BoxDecoration(
+                color: colorScheme.onPrimary,
+                border: Border.all(width: 1, color: colorScheme.tertiary),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Column(
+                children: [
+                  ConsolidatedValueRow(
+                    title: "Total sales :",
+                    value: "20,14,548",
+                  ),
+                  ConsolidatedValueRow(
+                    title: "Pending Amounts :",
+                    value: "5,47,239",
+                  ),
+                ],
               ),
             ),
 
             const SizedBox(height: 20),
+            OutStandingTable(),
+
+            const SizedBox(height: 40),
 
             /// Add shop location
-            Text("Add shop location", style: theme.textTheme.titleMedium),
-            const SizedBox(height: 8),
-            TextFormField(
-              readOnly: true,
-              initialValue: "21-10-2025 | 10:45PM",
-              decoration: const InputDecoration(
-                labelText: "Last visit",
-                border: OutlineInputBorder(),
+            Text("Add shop location", style: theme.textTheme.bodyLarge),
+            const SizedBox(height: 12),
+            Container(
+              padding: EdgeInsets.symmetric(vertical: 8, horizontal: 16),
+              decoration: BoxDecoration(
+                color: colorScheme.onPrimary,
+                border: Border.all(color: colorScheme.tertiary, width: 1),
+                borderRadius: BorderRadius.circular(16),
+              ),
+              child: Row(
+                children: [
+                  Text("Last visit", style: textTheme.bodyLarge),
+                  Spacer(),
+                  Text("21-10-2025 | 10:45PM", style: textTheme.labelLarge),
+                ],
               ),
             ),
+
             const SizedBox(height: 12),
-            OutlinedButton.icon(
-              onPressed: () {},
-              icon: const Icon(Icons.location_on_outlined),
-              label: const Text("Add location"),
+
+            Text(
+              'Upload photo & location',
+              style: textTheme.bodySmall?.copyWith(
+                color: colorScheme.onSecondary,
+              ),
             ),
+
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 4.0),
+              child: Text(
+                'Upload timestamped photos displaying both the date and time',
+                style: textTheme.bodySmall,
+              ),
+            ),
+            Container(
+              padding: EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                border: Border.all(color: colorScheme.tertiary, width: 1),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Row(
+                children: [
+                  Text("Add location", style: textTheme.bodyMedium),
+                  Spacer(),
+                  Icon(Icons.my_location_outlined, color: colorScheme.tertiary),
+                ],
+              ),
+            ),
+
             const SizedBox(height: 12),
-            OutlinedButton.icon(
-              onPressed: () {},
-              icon: const Icon(Icons.camera_alt_outlined),
-              label: const Text("Add photo"),
+            Container(
+              padding: EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                border: Border.all(color: colorScheme.tertiary, width: 1),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Row(
+                children: [
+                  Text("Add photo", style: textTheme.bodyMedium),
+                  Spacer(),
+                  Icon(Icons.camera_alt_outlined, color: colorScheme.tertiary),
+                ],
+              ),
             ),
 
             const SizedBox(height: 20),
@@ -143,25 +217,25 @@ class ShopDetailScreen extends StatelessWidget {
             /// Reason for not placing order
             Text(
               "Reason for not placing order",
-              style: theme.textTheme.titleMedium,
+              style: theme.textTheme.bodyLarge?.copyWith(
+                fontWeight: FontWeight.w400,
+              ),
             ),
             const SizedBox(height: 8),
             TextField(
-              maxLines: 4,
+              maxLines: 5,
               decoration: const InputDecoration(
                 hintText:
                     "Please provide the reason why this store does not sell the product.",
-                border: OutlineInputBorder(),
               ),
             ),
             const SizedBox(height: 16),
             SizedBox(
               width: double.infinity,
               child: ElevatedButton(
-                onPressed: () {},
-                style: ElevatedButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(vertical: 14),
-                ),
+                onPressed: () {
+                  //TODO: implement
+                },
                 child: const Text("Send"),
               ),
             ),
@@ -170,21 +244,15 @@ class ShopDetailScreen extends StatelessWidget {
       ),
     );
   }
+}
 
-  Widget _buildKeyValue(String key, String value) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 6),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Text(key),
-          Text(value, style: const TextStyle(fontWeight: FontWeight.bold)),
-        ],
-      ),
-    );
-  }
+class OutStandingTable extends StatelessWidget {
+  const OutStandingTable({super.key});
 
-  Widget _buildOutstandingTable() {
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
     final rows = [
       ["17-04-2025", "37200.00", "10 days"],
       ["16-04-2025", "46200.00", "09 days"],
@@ -192,35 +260,52 @@ class ShopDetailScreen extends StatelessWidget {
       ["14-04-2025", "24200.00", "09 days"],
     ];
     return Table(
-      border: TableBorder.all(color: Colors.grey.shade300),
+      border: TableBorder(
+        verticalInside: BorderSide(color: colorScheme.tertiary, width: 1.5),
+      ),
       columnWidths: const {
         0: FlexColumnWidth(2),
         1: FlexColumnWidth(2),
         2: FlexColumnWidth(2),
       },
       children: [
-        const TableRow(
-          decoration: BoxDecoration(color: Color(0xFFF5F5F5)),
+        TableRow(
+          decoration: BoxDecoration(
+            border: Border(
+              bottom: BorderSide(color: colorScheme.tertiary, width: 1.5),
+            ),
+          ),
           children: [
             Padding(
               padding: EdgeInsets.all(8),
               child: Text(
                 "Date",
-                style: TextStyle(fontWeight: FontWeight.bold),
+                style: textTheme.labelLarge?.copyWith(
+                  color: colorScheme.onSecondary,
+                ),
               ),
             ),
-            Padding(
-              padding: EdgeInsets.all(8),
-              child: Text(
-                "Amount",
-                style: TextStyle(fontWeight: FontWeight.bold),
+            Center(
+              child: Padding(
+                padding: EdgeInsets.all(8),
+                child: Text(
+                  "Amount",
+                  style: textTheme.labelLarge?.copyWith(
+                    color: colorScheme.onSecondary,
+                  ),
+                ),
               ),
             ),
-            Padding(
-              padding: EdgeInsets.all(8),
-              child: Text(
-                "Due date",
-                style: TextStyle(fontWeight: FontWeight.bold),
+            Align(
+              alignment: Alignment.centerRight,
+              child: Padding(
+                padding: EdgeInsets.all(8),
+                child: Text(
+                  "Due date",
+                  style: textTheme.labelLarge?.copyWith(
+                    color: colorScheme.onSecondary,
+                  ),
+                ),
               ),
             ),
           ],
@@ -228,12 +313,71 @@ class ShopDetailScreen extends StatelessWidget {
         for (var r in rows)
           TableRow(
             children: [
-              Padding(padding: const EdgeInsets.all(8), child: Text(r[0])),
-              Padding(padding: const EdgeInsets.all(8), child: Text(r[1])),
-              Padding(padding: const EdgeInsets.all(8), child: Text(r[2])),
+              Padding(
+                padding: const EdgeInsets.all(8),
+                child: Text(
+                  r[0],
+                  style: textTheme.bodySmall?.copyWith(
+                    color: colorScheme.onSecondary,
+                  ),
+                ),
+              ),
+              Center(
+                child: Padding(
+                  padding: const EdgeInsets.all(8),
+                  child: Text(
+                    r[1],
+                    style: textTheme.bodySmall?.copyWith(
+                      color: colorScheme.onSecondary,
+                    ),
+                  ),
+                ),
+              ),
+              Align(
+                alignment: Alignment.centerRight,
+                child: Padding(
+                  padding: const EdgeInsets.all(8),
+                  child: Text(
+                    r[2],
+                    style: textTheme.bodySmall?.copyWith(
+                      color: colorScheme.onSecondary,
+                    ),
+                  ),
+                ),
+              ),
             ],
           ),
       ],
+    );
+  }
+}
+
+class ConsolidatedValueRow extends StatelessWidget {
+  const ConsolidatedValueRow({
+    super.key,
+    required this.title,
+    required this.value,
+  });
+
+  final String title;
+  final String value;
+
+  @override
+  Widget build(BuildContext context) {
+    final textTheme = Theme.of(context).textTheme;
+    final colorScheme = Theme.of(context).colorScheme;
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(title, style: textTheme.bodyLarge),
+          Text(
+            value,
+            style: textTheme.labelLarge?.copyWith(color: colorScheme.onSurface),
+          ),
+        ],
+      ),
     );
   }
 }
@@ -252,10 +396,12 @@ class HistroyTable extends StatelessWidget {
       ["21-06-2025", "Aqua Star (160MM) Stop End", "21230"],
       ["21-06-2025", "Aqua Star 45 Elbow", "216789"],
     ];
-    return Card(
+    return ClipRRect(
+      borderRadius: BorderRadiusGeometry.circular(8),
       child: Table(
         border: TableBorder(
           top: BorderSide(color: colorScheme.tertiary, width: 1),
+          borderRadius: BorderRadius.circular(8),
         ),
         // border: TableBorder.all(color: Colors.grey.shade300),
         columnWidths: const {
@@ -266,7 +412,7 @@ class HistroyTable extends StatelessWidget {
         children: [
           TableRow(
             decoration: BoxDecoration(
-              color: Color(0xFFF5F5F5),
+              color: colorScheme.onPrimary,
               border: BoxBorder.all(color: colorScheme.tertiary, width: 1),
               borderRadius: BorderRadius.circular(8),
             ),
@@ -293,7 +439,12 @@ class HistroyTable extends StatelessWidget {
           ),
           for (var r in rows)
             TableRow(
-              decoration: BoxDecoration(color: Color(0xFFF5F5F5)),
+              decoration: BoxDecoration(
+                color: colorScheme.onPrimary,
+                border: (r != rows[0])
+                    ? Border(top: BorderSide(color: colorScheme.onSurface))
+                    : null,
+              ),
               children: [
                 Center(
                   child: Padding(
