@@ -95,6 +95,7 @@ class _PaginatedListState extends State<PaginatedList> {
                 itemBuilder: (context, index) => InkWell(
                   onTap: () {
                     // TODO: implement navigation
+                    context.go(AppRoutes.executiveShopDetails);
                   },
                   child: ShopCard(shop: pageItems[index]),
                 ),

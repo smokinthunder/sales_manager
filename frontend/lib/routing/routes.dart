@@ -13,7 +13,7 @@ abstract class AppRoutes {
   static const executiveNotVisiting =
       '/executive/not_visiting'; //Rewrite with shop_id as argument?
   static const executiveAddShop = '/executive/add_shop';
-  static const executiveWaitForApproval = '/executive/wait_for_approval'; //TODO
+  static const executiveWaitForApproval = '/executive/wait_for_approval';
   static const executiveTopCustomers = '/executive/top_customers';
   static const executiveShopDetails = '/executive/shop_details'; //TODO
 

@@ -16,6 +16,7 @@ final ThemeData appTheme = ThemeData(
     ),
     iconTheme: const IconThemeData(color: AppColors.white, size: 18),
   ),
+  cardColor: AppColors.white,
   colorScheme: ColorScheme(
     brightness: Brightness.light,
     primary: AppColors.blue,
