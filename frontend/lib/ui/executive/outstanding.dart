@@ -119,7 +119,11 @@ class _ExecutiveOutStandingState extends State<ExecutiveOutStanding> {
                   onTap: () {
                     setState(() {
                       selectedType = e;
-                      _controller.jumpToPage(e.index);
+                      _controller.animateToPage(
+                        e.index,
+                        duration: Duration(milliseconds: 200),
+                        curve: TreeSliver.defaultAnimationCurve,
+                      );
                     });
                   },
                   child: Padding(
