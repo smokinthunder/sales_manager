@@ -240,7 +240,7 @@ class PurchaseAnalysis extends StatelessWidget {
           ],
         ),
         SizedBox(height: 20),
-        MonthlyBarChart(
+        PurchaseAnalysisBarChart(
           monthlyData: [
             MonthlyMap("Jan", true),
             MonthlyMap("Feb", false),
@@ -292,10 +292,10 @@ class MonthlyMap {
   const MonthlyMap(this.monthLabel, this.hasPurchased);
 }
 
-class MonthlyBarChart extends StatelessWidget {
+class PurchaseAnalysisBarChart extends StatelessWidget {
   final List<MonthlyMap> monthlyData;
 
-  const MonthlyBarChart({super.key, required this.monthlyData});
+  const PurchaseAnalysisBarChart({super.key, required this.monthlyData});
 
   @override
   Widget build(BuildContext context) {
