@@ -1,5 +1,6 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:sales_manager/ui/common/widgets/drop_down_menu.dart';
 
 class ExecutiveOutStanding extends StatefulWidget {
   const ExecutiveOutStanding({super.key});
@@ -59,38 +60,8 @@ class _ExecutiveOutStandingState extends State<ExecutiveOutStanding> {
                   ),
                 ),
               ),
-
-              DropdownMenu<String>(
+              CustomDropDownMenu(
                 hintText: "Sort by",
-                textStyle: textTheme.bodyLarge?.copyWith(
-                  color: colorScheme.tertiary,
-                ),
-                selectedTrailingIcon: Icon(
-                  CupertinoIcons.chevron_up,
-                  size: 24,
-                  color: colorScheme.tertiary,
-                ),
-                trailingIcon: Icon(
-                  CupertinoIcons.chevron_down,
-                  size: 24,
-                  color: colorScheme.tertiary,
-                ),
-                menuStyle: MenuStyle(
-                  padding: WidgetStatePropertyAll(EdgeInsets.all(0)),
-                  backgroundColor: WidgetStatePropertyAll(
-                    colorScheme.onPrimary,
-                  ),
-                  shape: WidgetStatePropertyAll(
-                    RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8),
-                      side: BorderSide(color: colorScheme.tertiary, width: 1),
-                    ),
-                  ),
-                  visualDensity: VisualDensity.compact,
-                  alignment: AlignmentDirectional.bottomStart.add(
-                    const AlignmentDirectional(0, 0.2),
-                  ),
-                ),
                 dropdownMenuEntries: options
                     .map(
                       (value) =>

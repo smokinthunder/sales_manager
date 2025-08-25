@@ -1,13 +1,15 @@
 import 'package:flutter/material.dart';
 
-class AnalyticsScreen extends StatefulWidget {
-  const AnalyticsScreen({super.key});
+class ConsolidatedAnalyticScreen extends StatefulWidget {
+  const ConsolidatedAnalyticScreen({super.key});
 
   @override
-  State<AnalyticsScreen> createState() => _AnalyticsScreenState();
+  State<ConsolidatedAnalyticScreen> createState() =>
+      _ConsolidatedAnalyticScreenState();
 }
 
-class _AnalyticsScreenState extends State<AnalyticsScreen> {
+class _ConsolidatedAnalyticScreenState
+    extends State<ConsolidatedAnalyticScreen> {
   // Form state
   String shopName = 'ABC Plumbing';
   String shopLocation = 'Kochi';
@@ -25,7 +27,7 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final scheme = theme.colorScheme;
+    final colorScheme = theme.colorScheme;
 
     return Scaffold(
       body: SafeArea(

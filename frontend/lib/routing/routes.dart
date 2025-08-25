@@ -8,14 +8,17 @@ abstract class AppRoutes {
   static const executive = '/executive';
   static const executiveHome = '/executive/home';
   static const executiveProfile = '/executive/profile';
-  static const executiveAnalytics = '/executive/analytics'; //TODO
+  static const executiveAnalytics = '/executive/analytics';
+  static const executiveAnalyticsConsolidated =
+      '/executive/analytics/consolidated';
+  static const executiveAnalyticsIndividual = '/executive/analytics/individual';
   static const executiveOutStanding = '/executive/outstanding'; //TODO
   static const executiveNotVisiting =
       '/executive/not_visiting'; //Rewrite with shop_id as argument?
   static const executiveAddShop = '/executive/add_shop';
   static const executiveWaitForApproval = '/executive/wait_for_approval';
   static const executiveTopCustomers = '/executive/top_customers';
-  static const executiveShopDetails = '/executive/shop_details'; //TODO
+  static const executiveShopDetails = '/executive/shop_details';
 
   //Area Manager Routes
   static const areaManager = '/area_manager';

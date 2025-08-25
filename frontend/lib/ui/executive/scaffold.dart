@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:sales_manager/routing/routes.dart';
-import 'package:sales_manager/ui/common/app_bar.dart';
+import 'package:sales_manager/ui/common/widgets/app_bar.dart';
 
 class ExecutiveScaffold extends StatelessWidget {
   final Widget child;

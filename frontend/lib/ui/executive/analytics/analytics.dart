@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:sales_manager/ui/executive/all_shops.dart';
+import 'package:sales_manager/ui/executive/analytics/individual_analytics.dart';
 
 enum AnalyticsType {
   allShops("All Shops"),
@@ -22,86 +22,77 @@ class _ExecutiveAnalyticsState extends State<ExecutiveAnalytics> {
   @override
   Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
-    final colorScheme = Theme.of(context).colorScheme;
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        SizedBox(height: 10),
-        Padding(
-          padding: EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-          child: Text(
-            "Select your type for analysis",
-            style: textTheme.bodyLarge,
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 20),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text("Select your type for analysis", style: textTheme.bodyLarge),
+          SizedBox(height: 12),
+          _buildButtonTile(textTheme, "All Shops", AnalyticsType.allShops),
+          _buildButtonTile(
+            textTheme,
+            "Individual Shops",
+            AnalyticsType.individualShops,
           ),
-        ),
-        Container(
-          margin: EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-          padding: EdgeInsets.all(8),
-          decoration: BoxDecoration(
-            border: Border.all(color: colorScheme.tertiary, width: 1),
-            borderRadius: BorderRadius.circular(8),
-          ),
-          child: Row(
-            children: [
-              Text("All Shops", style: textTheme.bodyMedium),
-              Spacer(),
-              Radio(
-                materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                value: AnalyticsType.allShops,
-                groupValue: selectedType,
-                onChanged: (value) {
-                  setState(() {
-                    selectedType = value;
-                  });
-                },
-              ),
-            ],
-          ),
-        ),
+          Spacer(),
+          _buildContinueButton(context),
+        ],
+      ),
+    );
+  }
 
-        Container(
-          margin: EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-          padding: EdgeInsets.all(8),
-          decoration: BoxDecoration(
-            border: Border.all(color: colorScheme.tertiary, width: 1),
-            borderRadius: BorderRadius.circular(8),
-          ),
+  SizedBox _buildContinueButton(BuildContext context) {
+    return SizedBox(
+      width: double.infinity,
+      child: ElevatedButton(
+        onPressed: (selectedType == null)
+            ? null
+            : () {
+                //TODO: complete
+                Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (context) => IndividualAnalyticsScreen(),
+                  ),
+                );
+              },
+        child: const Text("Continue"),
+      ),
+    );
+  }
+
+  InkWell _buildButtonTile(
+    TextTheme textTheme,
+    String title,
+    AnalyticsType type,
+  ) {
+    onChanged() {
+      setState(() {
+        selectedType = type;
+      });
+    }
+
+    return InkWell(
+      onTap: onChanged,
+      child: Card(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 8.0),
           child: Row(
             children: [
-              Text("Individual Shops", style: textTheme.bodyMedium),
+              Text(title, style: textTheme.bodyMedium),
               Spacer(),
               Radio(
-                value: AnalyticsType.individualShops,
-                groupValue: selectedType,
                 materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                value: type,
+                groupValue: selectedType,
                 onChanged: (value) {
-                  setState(() {
-                    selectedType = value;
-                  });
+                  onChanged();
                 },
               ),
             ],
           ),
         ),
-        Spacer(),
-        Container(
-          padding: EdgeInsets.all(16),
-          width: double.infinity,
-          child: ElevatedButton(
-            onPressed: (selectedType == null)
-                ? null
-                : () {
-                    //TODO: complete
-                    Navigator.of(context).push(
-                      MaterialPageRoute(
-                        builder: (context) => AnalyticsScreen(),
-                      ),
-                    );
-                  },
-            child: const Text("Continue"),
-          ),
-        ),
-      ],
+      ),
     );
   }
 }
