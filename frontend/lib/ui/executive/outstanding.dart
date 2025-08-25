@@ -138,7 +138,7 @@ class _ExecutiveOutStandingState extends State<ExecutiveOutStanding> {
                   child: Padding(
                     padding: const EdgeInsets.symmetric(vertical: 12.0),
                     child: Container(
-                      padding: const EdgeInsets.all(8.0),
+                      padding: EdgeInsets.all((selectedType == e) ? 10.0 : 8),
                       decoration: BoxDecoration(
                         color: (selectedType == e)
                             ? e.color
