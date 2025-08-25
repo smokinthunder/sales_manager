@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:sales_manager/ui/executive/all_shops.dart';
 
 enum AnalyticsType {
   allShops("All Shops"),
@@ -91,6 +92,11 @@ class _ExecutiveAnalyticsState extends State<ExecutiveAnalytics> {
                 ? null
                 : () {
                     //TODO: complete
+                    Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (context) => AnalyticsScreen(),
+                      ),
+                    );
                   },
             child: const Text("Continue"),
           ),

@@ -99,6 +99,7 @@ class _ExecutiveHomeState extends ConsumerState<ExecutiveHome> {
                   ),
                 ),
                 ExpansionTile(
+                  shape: RoundedRectangleBorder(),
                   title: Text(
                     "Special route",
 
@@ -199,8 +200,6 @@ class _ExecutiveHomeState extends ConsumerState<ExecutiveHome> {
             ],
           ),
           const SizedBox(height: 10),
-
-          // ExpansionTile for View All
           InkWell(
             onTap: () {
               context.push(AppRoutes.executiveTopCustomers);
@@ -275,32 +274,38 @@ class _CustomerCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Card(
-      color: Theme.of(context).scaffoldBackgroundColor,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      child: Padding(
-        padding: const EdgeInsets.all(12),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(name, style: Theme.of(context).textTheme.bodyLarge),
-            Text(location, style: Theme.of(context).textTheme.bodySmall),
-            SizedBox(height: 4),
-            Text(phone, style: Theme.of(context).textTheme.bodySmall),
-            const SizedBox(height: 30),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  value,
-                  style: Theme.of(
-                    context,
-                  ).textTheme.headlineMedium?.copyWith(color: Colors.blue),
-                ),
-                const Icon(Icons.chevron_right),
-              ],
-            ),
-          ],
+    return InkWell(
+      onTap: () {
+        context.push(AppRoutes.executiveShopDetails);
+        //TODO
+      },
+      child: Card(
+        color: Theme.of(context).scaffoldBackgroundColor,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        child: Padding(
+          padding: const EdgeInsets.all(12),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(name, style: Theme.of(context).textTheme.bodyLarge),
+              Text(location, style: Theme.of(context).textTheme.bodySmall),
+              SizedBox(height: 4),
+              Text(phone, style: Theme.of(context).textTheme.bodySmall),
+              const SizedBox(height: 30),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    value,
+                    style: Theme.of(
+                      context,
+                    ).textTheme.headlineMedium?.copyWith(color: Colors.blue),
+                  ),
+                  const Icon(Icons.chevron_right),
+                ],
+              ),
+            ],
+          ),
         ),
       ),
     );
