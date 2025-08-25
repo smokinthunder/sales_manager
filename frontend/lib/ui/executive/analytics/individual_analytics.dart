@@ -117,14 +117,72 @@ class _IndividualAnalyticsScreenState extends State<IndividualAnalyticsScreen> {
                             ),
                           ],
                         ),
+                        _buildSwitchRow(
+                          textTheme,
+                          "Purchase Analysis",
+                          purchaseAnalysis,
+                          (value) {
+                            setState(() {
+                              purchaseAnalysis = value;
+                            });
+                          },
+                        ),
+                        _buildSwitchRow(
+                          textTheme,
+                          "Best Selling Product",
+                          bestSelling,
+                          (value) {
+                            setState(() {
+                              bestSelling = value;
+                            });
+                          },
+                        ),
+                        _buildSwitchRow(
+                          textTheme,
+                          "Sales Report",
+                          salesReport,
+                          (value) {
+                            setState(() {
+                              salesReport = value;
+                            });
+                          },
+                        ),
                       ],
                     ),
                   );
                 },
               ),
+              Container(
+                margin: EdgeInsets.symmetric(vertical: 10),
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: () {
+                    //TODO
+                  },
+                  child: Text("Find Analytics"),
+                ),
+              ),
             ],
           ),
         ),
+      ),
+    );
+  }
+
+  Padding _buildSwitchRow(
+    TextTheme textTheme,
+    String title,
+    bool value,
+    void Function(bool value)? onChanged,
+  ) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4),
+      child: Row(
+        children: [
+          Text(title, style: textTheme.bodyLarge),
+          Spacer(),
+          CupertinoSwitch(value: value, onChanged: onChanged),
+        ],
       ),
     );
   }
