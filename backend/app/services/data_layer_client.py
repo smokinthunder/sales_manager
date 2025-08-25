@@ -91,6 +91,43 @@ class DataLayerClient:
         """
         return await self._make_request("GET", f"/api/users/{tenant_id}")
     
+    async def get_user_by_phone(self, phone: str, tenant_id: str) -> Optional[Dict[str, Any]]:
+        """
+        Get user by phone number for a specific tenant.
+        
+        Args:
+            phone: User's phone number
+            tenant_id: Tenant identifier
+            
+        Returns:
+            User data or None if not found
+        """
+        users = await self.get_users(tenant_id)
+        for user in users:
+            if user.get("phone") == phone:
+                return user
+        return None
+    
+    async def create_user(self, user_data: Dict[str, Any]) -> Dict[str, Any]:
+        """
+        Create a new user.
+        
+        Args:
+            user_data: User data to create (can be Pydantic model or dict)
+            
+        Returns:
+            Created user data
+        """
+        # Convert Pydantic model to dict if needed
+        if hasattr(user_data, 'model_dump'):
+            user_dict = user_data.model_dump()
+        elif hasattr(user_data, 'dict'):
+            user_dict = user_data.dict()
+        else:
+            user_dict = dict(user_data)
+            
+        return await self._make_request("POST", f"/api/users/{user_dict['tenant_id']}", json=user_dict)
+    
     async def get_shops(
         self, 
         tenant_id: str, 
