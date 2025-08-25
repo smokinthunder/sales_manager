@@ -1,7 +1,10 @@
+import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:sales_manager/ui/common/widgets/drop_down_menu.dart';
+import 'package:sales_manager/ui/core/theme.dart';
+import 'package:sales_manager/ui/executive/analytics/widgets/best_selling_product.dart';
 
 class IndividualAnalyticsScreen extends StatefulWidget {
   const IndividualAnalyticsScreen({super.key});
@@ -39,7 +42,13 @@ class _IndividualAnalyticsScreenState extends State<IndividualAnalyticsScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text("Individual Shop Analytics", style: textTheme.bodyLarge),
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 16.0),
+                child: Text(
+                  "Individual Shop Analytics",
+                  style: textTheme.bodyLarge,
+                ),
+              ),
               LayoutBuilder(
                 builder: (context, constraints) {
                   return Card(
@@ -162,6 +171,15 @@ class _IndividualAnalyticsScreenState extends State<IndividualAnalyticsScreen> {
                   child: Text("Find Analytics"),
                 ),
               ),
+              if (purchaseAnalysis) PurchaseAnalysis(),
+              if (bestSelling)
+                BestSellingProduct(
+                  productList: [
+                    ProductSaleMap("ELBOW SOCKET 90", 60, Color(0xff3977e6)),
+                    ProductSaleMap("RAIN WATER CHAMBER", 30, Color(0xfff3a100)),
+                    ProductSaleMap("RAIN WATER PIPES", 10, Color(0xff449f40)),
+                  ],
+                ),
             ],
           ),
         ),
@@ -183,6 +201,167 @@ class _IndividualAnalyticsScreenState extends State<IndividualAnalyticsScreen> {
           Spacer(),
           CupertinoSwitch(value: value, onChanged: onChanged),
         ],
+      ),
+    );
+  }
+}
+
+class PurchaseAnalysis extends StatelessWidget {
+  const PurchaseAnalysis({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final textTheme = Theme.of(context).textTheme;
+    final colorScheme = Theme.of(context).colorScheme;
+    return Column(
+      children: [
+        SizedBox(height: 10),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text("Purchase Analysis", style: textTheme.bodyLarge),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                _buildColorLabel(
+                  textTheme,
+                  colorScheme,
+                  "Purchase",
+                  colorScheme.secondary,
+                ),
+                _buildColorLabel(
+                  textTheme,
+                  colorScheme,
+                  "Not Purchase",
+                  colorScheme.tertiary,
+                ),
+              ],
+            ),
+          ],
+        ),
+        SizedBox(height: 20),
+        MonthlyBarChart(
+          monthlyData: [
+            MonthlyMap("Jan", true),
+            MonthlyMap("Feb", false),
+            MonthlyMap("Mar", true),
+            MonthlyMap("Apr", true),
+            MonthlyMap("May", false),
+            MonthlyMap("Jun", true),
+            MonthlyMap("Jul", true),
+            MonthlyMap("Aug", false),
+            MonthlyMap("Sep", true),
+            MonthlyMap("Oct", true),
+            MonthlyMap("Nov", false),
+            MonthlyMap("Dec", true),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Row _buildColorLabel(
+    TextTheme textTheme,
+    ColorScheme colorScheme,
+    String title,
+    Color color,
+  ) {
+    return Row(
+      children: [
+        Text(
+          title,
+          style: textTheme.labelSmall?.copyWith(color: colorScheme.onSecondary),
+        ),
+        Container(
+          margin: EdgeInsets.all(4),
+          width: 40,
+          height: 12,
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(8),
+            color: color,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class MonthlyMap {
+  final String monthLabel;
+  final bool hasPurchased;
+  const MonthlyMap(this.monthLabel, this.hasPurchased);
+}
+
+class MonthlyBarChart extends StatelessWidget {
+  final List<MonthlyMap> monthlyData;
+
+  const MonthlyBarChart({super.key, required this.monthlyData});
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
+    return AspectRatio(
+      aspectRatio: 3.3,
+      child: BarChart(
+        BarChartData(
+          minY: -8,
+          alignment: BarChartAlignment.spaceAround,
+          maxY: 100,
+          barTouchData: BarTouchData(enabled: false),
+          gridData: FlGridData(show: false),
+          borderData: FlBorderData(
+            show: true,
+            border: Border(bottom: BorderSide(color: colorScheme.tertiary)),
+          ),
+          titlesData: FlTitlesData(
+            leftTitles: AxisTitles(
+              sideTitles: SideTitles(showTitles: false, reservedSize: 32),
+            ),
+            rightTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
+            topTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
+            bottomTitles: AxisTitles(
+              sideTitles: SideTitles(
+                showTitles: true,
+                getTitlesWidget: (value, meta) {
+                  if (value.toInt() < 0 ||
+                      value.toInt() >= monthlyData.length) {
+                    return const SizedBox.shrink();
+                  }
+                  return Padding(
+                    padding: const EdgeInsets.only(top: 4.0),
+                    child: Text(
+                      monthlyData[value.toInt()].monthLabel,
+                      style: textTheme.labelSmall,
+                    ),
+                  );
+                },
+              ),
+            ),
+          ),
+          barGroups: monthlyData
+              .asMap()
+              .map(
+                (index, value) => MapEntry(
+                  index,
+                  BarChartGroupData(
+                    x: index,
+                    barRods: [
+                      BarChartRodData(
+                        toY: value.hasPurchased ? 100 : 90,
+                        color: value.hasPurchased
+                            ? colorScheme.secondary
+                            : colorScheme.tertiary,
+                        width: 6,
+                        borderRadius: BorderRadius.circular(4),
+                      ),
+                    ],
+                  ),
+                ),
+              )
+              .values
+              .toList(),
+        ),
       ),
     );
   }

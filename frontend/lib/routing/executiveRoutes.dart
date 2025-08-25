@@ -52,7 +52,7 @@ abstract class ExecutiveRoutes {
     ),
     GoRoute(
       path: AppRoutes.executiveAnalyticsConsolidated,
-      builder: (context, state) => ConsolidatedAnalyticScreen(),
+      builder: (context, state) => ConsolidatedAnalyticsScreen(),
     ),
     GoRoute(
       path: AppRoutes.executiveAddShop,
