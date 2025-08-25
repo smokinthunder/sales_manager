@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:sales_manager/routing/routes.dart';
 
 class AddNewShopScreen extends StatelessWidget {
   const AddNewShopScreen({super.key});
@@ -182,7 +183,10 @@ class AddNewShopScreen extends StatelessWidget {
               child: SizedBox(
                 width: double.infinity,
                 child: ElevatedButton(
-                  onPressed: () {},
+                  onPressed: () {
+                    //TODO: write proper code
+                    context.go(AppRoutes.executiveWaitForApproval);
+                  },
                   child: const Text("Create New Customer"),
                 ),
               ),

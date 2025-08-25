@@ -13,8 +13,10 @@ import 'package:sales_manager/ui/executive/not_visiting.dart';
 import 'package:sales_manager/ui/executive/outstanding.dart';
 import 'package:sales_manager/ui/executive/profile.dart';
 import 'package:sales_manager/ui/executive/scaffold.dart';
+import 'package:sales_manager/ui/executive/shop_details.dart';
 import 'package:sales_manager/ui/executive/top_customers.dart';
-import 'package:sales_manager/ui/loading_screen.dart';
+import 'package:sales_manager/ui/common/screens/loading_screen.dart';
+import 'package:sales_manager/ui/executive/wait_for_approval.dart';
 
 final routerProvider = Provider<GoRouter>((ref) {
   // final user = ref.watch(authStreamProvider).valueOrNull;
@@ -60,15 +62,11 @@ final routerProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: AppRoutes.executiveAddShop,
-        builder: (c, s) {
-          return const AddNewShopScreen();
-        },
+        builder: (c, s) => AddNewShopScreen(),
       ),
       GoRoute(
         path: AppRoutes.executiveTopCustomers,
-        builder: (c, s) {
-          return const TopCustomersScreen();
-        },
+        builder: (c, s) => const TopCustomersScreen(),
       ),
       GoRoute(
         path: AppRoutes.executiveNotVisiting,
@@ -76,6 +74,14 @@ final routerProvider = Provider<GoRouter>((ref) {
           final shop = s.extra as Shop;
           return ReasonForNotVisitingScreen(shop: shop);
         },
+      ),
+      GoRoute(
+        path: AppRoutes.executiveWaitForApproval,
+        builder: (context, state) => WaitForApprovalScreen(),
+      ),
+      GoRoute(
+        path: AppRoutes.executiveShopDetails,
+        builder: (context, state) => ShopDetailScreen(),
       ),
     ],
     redirect: (context, state) {

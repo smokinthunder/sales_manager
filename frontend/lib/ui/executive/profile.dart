@@ -80,11 +80,16 @@ class _ExecutiveProfileState extends ConsumerState<ExecutiveProfile> {
                     ),
                   ),
                   const SizedBox(height: 8),
-                  Text(
-                    "Edit",
-                    style: theme.textTheme.bodyMedium?.copyWith(
-                      color: Colors.blue,
-                      fontWeight: FontWeight.w500,
+                  InkWell(
+                    onTap: () {
+                      //TODO: remove this edit and implement in image or implement here
+                    },
+                    child: Text(
+                      "Edit",
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                        color: Colors.blue,
+                        fontWeight: FontWeight.w500,
+                      ),
                     ),
                   ),
                 ],
@@ -102,17 +107,25 @@ class _ExecutiveProfileState extends ConsumerState<ExecutiveProfile> {
                     _buildTextField("Location", locationController),
 
                     const SizedBox(height: 16),
-                    Align(
-                      alignment: Alignment.centerLeft,
-                      child: Row(
-                        children: const [
-                          Text(
-                            "Logout",
-                            style: TextStyle(color: Colors.blue, fontSize: 16),
-                          ),
-                          SizedBox(width: 4),
-                          Icon(Icons.logout, color: Colors.blue, size: 18),
-                        ],
+                    InkWell(
+                      onTap: () {
+                        //TODO: implement logout
+                      },
+                      child: Align(
+                        alignment: Alignment.centerLeft,
+                        child: Row(
+                          children: const [
+                            Text(
+                              "Logout",
+                              style: TextStyle(
+                                color: Colors.blue,
+                                fontSize: 16,
+                              ),
+                            ),
+                            SizedBox(width: 4),
+                            Icon(Icons.logout, color: Colors.blue, size: 18),
+                          ],
+                        ),
                       ),
                     ),
                     const SizedBox(height: 20),

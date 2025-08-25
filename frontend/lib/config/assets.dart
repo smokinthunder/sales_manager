@@ -5,4 +5,5 @@ abstract final class Assets {
   static const appLogo = "assets/images/logo.png";
   static const imageOnLogin = "assets/images/login.png";
   static const imageOnOtp = "assets/images/otp.png";
+  static const circleProgress = "assets/images/progress.png";
 }
