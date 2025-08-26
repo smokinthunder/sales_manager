@@ -44,7 +44,7 @@ class AddNewShopScreen extends StatelessWidget {
                     alignment: Alignment.centerRight,
                     child: Text(
                       "All fields are required.",
-                      style: textTheme.labelSmall?.copyWith(
+                      style: textTheme.labelMedium?.copyWith(
                         color: colorScheme.error,
                       ),
                     ),

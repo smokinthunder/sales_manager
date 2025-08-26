@@ -42,11 +42,11 @@ class ReasonForNotVisitingScreen extends StatelessWidget {
                   children: [
                     Text(
                       "Last visit: ${DateFormat('dd-MM-yyyy').format(shop.lastVisted)}",
-                      style: textTheme.labelSmall,
+                      style: textTheme.labelMedium,
                     ),
                     Text(
                       DateFormat('hh:mm a').format(shop.lastVisted),
-                      style: textTheme.labelSmall,
+                      style: textTheme.labelMedium,
                     ),
                   ],
                 ),

@@ -88,8 +88,13 @@ final textTheme = TextTheme(
     color: AppColors.gray,
   ),
   // 10sp, w400
-  labelSmall: GoogleFonts.poppins(
+  labelMedium: GoogleFonts.poppins(
     fontSize: 10,
+    fontWeight: FontWeight.w400,
+    color: AppColors.gray,
+  ),
+  labelSmall: GoogleFonts.poppins(
+    fontSize: 8,
     fontWeight: FontWeight.w400,
     color: AppColors.gray,
   ),

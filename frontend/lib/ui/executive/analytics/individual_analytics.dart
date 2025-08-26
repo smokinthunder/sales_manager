@@ -5,6 +5,7 @@ import 'package:flutter/rendering.dart';
 import 'package:sales_manager/ui/common/widgets/drop_down_menu.dart';
 import 'package:sales_manager/ui/core/theme.dart';
 import 'package:sales_manager/ui/executive/analytics/widgets/best_selling_product.dart';
+import 'package:sales_manager/ui/executive/analytics/widgets/sales_report.dart';
 
 class IndividualAnalyticsScreen extends StatefulWidget {
   const IndividualAnalyticsScreen({super.key});
@@ -180,6 +181,24 @@ class _IndividualAnalyticsScreenState extends State<IndividualAnalyticsScreen> {
                     ProductSaleMap("RAIN WATER PIPES", 10, Color(0xff449f40)),
                   ],
                 ),
+
+              if (salesReport)
+                SalesReport(
+                  salesData: const [
+                    SalesReportDataMap('Jan', 5),
+                    SalesReportDataMap('Feb', 7.5),
+                    SalesReportDataMap('Mar', 10),
+                    SalesReportDataMap('Apr', 8),
+                    SalesReportDataMap('May', 15),
+                    SalesReportDataMap('Jun', 10),
+                    SalesReportDataMap('Jul', 8),
+                    SalesReportDataMap('Aug', 4),
+                    SalesReportDataMap('Sep', 5),
+                    SalesReportDataMap('Oct', 8),
+                    SalesReportDataMap('Nov', 10),
+                    SalesReportDataMap('Dec', 4),
+                  ],
+                ),
             ],
           ),
         ),
@@ -270,7 +289,9 @@ class PurchaseAnalysis extends StatelessWidget {
       children: [
         Text(
           title,
-          style: textTheme.labelSmall?.copyWith(color: colorScheme.onSecondary),
+          style: textTheme.labelMedium?.copyWith(
+            color: colorScheme.onSecondary,
+          ),
         ),
         Container(
           margin: EdgeInsets.all(4),
@@ -332,7 +353,7 @@ class PurchaseAnalysisBarChart extends StatelessWidget {
                     padding: const EdgeInsets.only(top: 4.0),
                     child: Text(
                       monthlyData[value.toInt()].monthLabel,
-                      style: textTheme.labelSmall,
+                      style: textTheme.labelMedium,
                     ),
                   );
                 },

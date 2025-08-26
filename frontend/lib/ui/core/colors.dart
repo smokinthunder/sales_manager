@@ -33,6 +33,13 @@ class AppColors {
     stops: [0.0, 1.0],
   );
 
+  static const LinearGradient greenBlueGradient = LinearGradient(
+    colors: [green, blue],
+    begin: Alignment.centerLeft,
+    end: Alignment.centerRight,
+    stops: [0.0, 1.0],
+  );
+
   // Custom colors
   /// Engineering Orange
   static const Color red = Color(0xFFff383c);
