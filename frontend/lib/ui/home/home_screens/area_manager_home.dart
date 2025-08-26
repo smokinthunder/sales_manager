@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
@@ -17,6 +16,14 @@ class AreaManagerHome extends ConsumerStatefulWidget {
 
 class _AreaManagerHomeState extends ConsumerState<AreaManagerHome> {
   bool _isMessageShown = false;
+  ExecutiveTrackingData? currentTrackingDate = ExecutiveTrackingData(
+    name: "name",
+    shopName: "shopName",
+    assignDate: DateTime.now(),
+    lastVisitDate: DateTime.now(),
+    photoUrl: "photoUrl",
+    hasVisisted: false,
+  );
 
   @override
   void didChangeDependencies() {
@@ -70,7 +77,16 @@ class _AreaManagerHomeState extends ConsumerState<AreaManagerHome> {
             child: Text("Track Executive", style: textTheme.bodyLarge),
           ),
           TrackExecutiveCard(),
+          SizedBox(height: 10),
+          if (currentTrackingDate != null)
+            TrackingData(trackingData: currentTrackingDate),
+          SizedBox(height: 20),
           TextButton(
+            style: TextButton.styleFrom(
+              padding: EdgeInsets.zero,
+              minimumSize: Size(0, 0),
+              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+            ),
             onPressed: () {
               //TODO
             },
@@ -80,6 +96,166 @@ class _AreaManagerHomeState extends ConsumerState<AreaManagerHome> {
                 Text("Create Target"),
                 Icon(Icons.arrow_forward_ios_outlined),
               ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class TrackingData extends StatelessWidget {
+  const TrackingData({super.key, required this.trackingData});
+  final ExecutiveTrackingData? trackingData;
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
+    final titleStyle = textTheme.bodyMedium?.copyWith(
+      color: colorScheme.onSecondary,
+    );
+    return SizedBox(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SizedBox(height: 10),
+          Table(
+            children: [
+              TableRow(
+                children: [
+                  Text(
+                    "Executive name",
+                    style: titleStyle,
+                    textAlign: TextAlign.center,
+                  ),
+                  Text(
+                    "Shop name",
+                    style: titleStyle,
+                    textAlign: TextAlign.center,
+                  ),
+                  Text(
+                    "Status",
+                    style: titleStyle,
+                    textAlign: TextAlign.center,
+                  ),
+                ],
+              ),
+              TableRow(
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.all(8.0),
+                    child: Text(
+                      trackingData!.name.toString(),
+                      style: textTheme.bodySmall,
+                      textAlign: TextAlign.center,
+                    ),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.all(8.0),
+                    child: Text(
+                      trackingData!.shopName,
+                      style: textTheme.bodySmall,
+                      textAlign: TextAlign.center,
+                    ),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.all(8.0),
+                    child: Text(
+                      trackingData!.hasVisisted ? "Visited" : "Not visited",
+                      style: textTheme.bodySmall,
+                      textAlign: TextAlign.center,
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+          Stack(
+            children: [
+              Container(
+                margin: EdgeInsets.symmetric(vertical: 10),
+                width: double.infinity,
+                height: 10,
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(5),
+                  color: colorScheme.tertiary.withAlpha(118),
+                ),
+              ),
+              Container(
+                margin: EdgeInsets.symmetric(vertical: 10),
+                width: trackingData!.hasVisisted ? double.infinity : 50,
+                height: 10,
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(5),
+                  color: colorScheme.secondary.withAlpha(168),
+                ),
+              ),
+              Positioned(
+                top: 7,
+                left: trackingData!.hasVisisted ? null : 45,
+                right: trackingData!.hasVisisted ? 0 : null,
+                child: Container(
+                  width: 16,
+                  height: 16,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    border: Border.all(color: colorScheme.tertiary),
+                    color: colorScheme.secondary,
+                  ),
+                  child: Icon(Icons.directions_walk, size: 10),
+                ),
+              ),
+            ],
+          ),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    "Assign Date: ${DateFormat('dd-MM-yyyy').format(trackingData!.assignDate)}",
+                    style: textTheme.labelSmall?.copyWith(
+                      color: colorScheme.onSecondary,
+                    ),
+                  ),
+                  SizedBox(height: 4),
+                  Text(
+                    "Last Visit: ${DateFormat('dd-MM-yyyy').format(trackingData!.lastVisitDate)}",
+                    style: textTheme.labelSmall?.copyWith(
+                      color: colorScheme.onSurface,
+                    ),
+                  ),
+                ],
+              ),
+              TextButton(
+                onPressed: trackingData!.hasVisisted
+                    ? () {
+                        //TODO
+                      }
+                    : null,
+                child: Row(
+                  children: [
+                    Icon(Icons.photo_size_select_actual_outlined),
+                    Text(" View Photo"),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          TextButton(
+            style: TextButton.styleFrom(
+              padding: EdgeInsets.zero,
+              minimumSize: Size(0, 0),
+              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+            ),
+            onPressed: () {
+              //TODO
+            },
+            child: Text(
+              'View History',
+              style: textTheme.bodySmall?.copyWith(color: colorScheme.primary),
             ),
           ),
         ],
@@ -187,6 +363,24 @@ class ExecutiveRouteData {
   final String location;
   final String area;
   const ExecutiveRouteData(this.name, this.location, this.area);
+}
+
+class ExecutiveTrackingData {
+  final String name;
+  final String shopName;
+  final DateTime assignDate;
+  final DateTime lastVisitDate;
+  final String photoUrl;
+  final bool hasVisisted;
+
+  ExecutiveTrackingData({
+    required this.name,
+    required this.shopName,
+    required this.assignDate,
+    required this.lastVisitDate,
+    required this.photoUrl,
+    required this.hasVisisted,
+  });
 }
 
 class HeaderTexts extends StatelessWidget {

@@ -240,7 +240,11 @@ class OutstandingTable extends StatelessWidget {
                 ),
                 Padding(
                   padding: EdgeInsets.all(8),
-                  child: Text("Shop", style: textTheme.bodyLarge),
+                  child: Text(
+                    "Shop name",
+                    style: textTheme.bodyLarge,
+                    textAlign: TextAlign.center,
+                  ),
                 ),
                 Padding(
                   padding: EdgeInsets.all(8),
@@ -252,7 +256,7 @@ class OutstandingTable extends StatelessWidget {
               TableRow(
                 children: [
                   Padding(
-                    padding: const EdgeInsets.all(8),
+                    padding: const EdgeInsets.all(6),
                     child: Text(
                       r[0],
                       style: textTheme.labelLarge?.copyWith(
@@ -261,8 +265,14 @@ class OutstandingTable extends StatelessWidget {
                     ),
                   ),
                   Padding(
-                    padding: const EdgeInsets.all(8),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 6,
+                    ),
                     child: Text(
+                      maxLines: 1,
+                      textAlign: TextAlign.center,
+
                       r[1],
                       style: textTheme.labelLarge?.copyWith(
                         color: colorScheme.onSurface,
@@ -270,9 +280,10 @@ class OutstandingTable extends StatelessWidget {
                     ),
                   ),
                   Padding(
-                    padding: const EdgeInsets.all(8),
+                    padding: const EdgeInsets.all(6),
                     child: Text(
                       r[2],
+                      textAlign: TextAlign.center,
                       style: textTheme.labelLarge?.copyWith(
                         color: colorScheme.onSurface,
                       ),
