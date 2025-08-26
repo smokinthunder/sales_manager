@@ -1,24 +1,29 @@
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:sales_manager/config/providers/current_user_notifier.dart';
+import 'package:sales_manager/domain/models/user/user.dart';
 import 'package:sales_manager/ui/common/widgets/drop_down_menu.dart';
 
-class ExecutiveOutStanding extends StatefulWidget {
+class ExecutiveOutStanding extends ConsumerStatefulWidget {
   const ExecutiveOutStanding({super.key});
 
   @override
-  State<ExecutiveOutStanding> createState() => _ExecutiveOutStandingState();
+  ConsumerState<ExecutiveOutStanding> createState() =>
+      _ExecutiveOutStandingState();
 }
 
-class _ExecutiveOutStandingState extends State<ExecutiveOutStanding> {
+class _ExecutiveOutStandingState extends ConsumerState<ExecutiveOutStanding> {
   String? selectedValue;
 
   final List<String> options = ["1 Month", "2 Month", "3 Month", "1 Year"];
   CreditType selectedType = CreditType.outstanding;
 
   final PageController _controller = PageController();
-
   @override
   Widget build(BuildContext context) {
+    final user = ref.read(currentUserNotifierProvider);
+    final userType = user?.type;
+
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
     final textTheme = theme.textTheme;
@@ -27,65 +32,83 @@ class _ExecutiveOutStandingState extends State<ExecutiveOutStanding> {
       children: [
         SizedBox(height: 20),
         Padding(
-          padding: const EdgeInsets.all(8.0),
-          child: Text("Select Shop", style: textTheme.bodyLarge),
+          padding: const EdgeInsets.symmetric(horizontal: 18.0),
+          child: Text(
+            (userType == UserType.executive)
+                ? "Select Shop"
+                : "Select Executive",
+            style: textTheme.bodyLarge,
+          ),
         ),
         SizedBox(height: 8),
         Padding(
-          padding: const EdgeInsets.all(8.0),
+          padding: const EdgeInsets.symmetric(horizontal: 18.0),
           child: Row(
             spacing: 16,
             children: [
-              Expanded(
-                child: TextField(
-                  decoration: InputDecoration(
-                    contentPadding: EdgeInsets.symmetric(
-                      horizontal: 8,
-                      vertical: 12,
-                    ),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(8),
-                      borderSide: BorderSide(color: colorScheme.tertiary),
-                    ),
-                    hint: Text(
-                      'Search here',
-                      style: textTheme.bodyLarge?.copyWith(
-                        color: colorScheme.tertiary,
+              Flexible(
+                flex: 5,
+                child: (userType == UserType.areaManager)
+                    ? CustomDropDownMenu(
+                        width: double.infinity,
+                        hintText: "Varun Kumar",
+                        dropdownMenuEntries: [],
+                      )
+                    : TextField(
+                        decoration: InputDecoration(
+                          contentPadding: EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 12,
+                          ),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(8),
+                            borderSide: BorderSide(color: colorScheme.tertiary),
+                          ),
+                          hint: Text(
+                            'Search here',
+                            style: textTheme.bodyLarge?.copyWith(
+                              color: colorScheme.tertiary,
+                            ),
+                          ),
+                          suffixIcon: Icon(
+                            Icons.search_rounded,
+                            color: colorScheme.tertiary,
+                          ),
+                        ),
                       ),
-                    ),
-                    suffixIcon: Icon(
-                      Icons.search_rounded,
-                      color: colorScheme.tertiary,
-                    ),
-                  ),
-                ),
               ),
-              CustomDropDownMenu(
-                hintText: "Sort by",
-                dropdownMenuEntries: options
-                    .map(
-                      (value) =>
-                          DropdownMenuEntry<String>(value: value, label: value),
-                    )
-                    .toList(),
-                onSelected: (String? newValue) {
-                  setState(() {
-                    selectedValue = newValue!;
-                    // TODO
-                  });
-                },
+              Flexible(
+                flex: 3,
+                child: CustomDropDownMenu(
+                  width: double.infinity,
+                  hintText: "Sort by",
+                  dropdownMenuEntries: options
+                      .map(
+                        (value) => DropdownMenuEntry<String>(
+                          value: value,
+                          label: value,
+                        ),
+                      )
+                      .toList(),
+                  onSelected: (String? newValue) {
+                    setState(() {
+                      selectedValue = newValue!;
+                      // TODO
+                    });
+                  },
+                ),
               ),
             ],
           ),
         ),
-        SizedBox(height: 30),
+        SizedBox(height: 20),
         Padding(
-          padding: const EdgeInsets.all(8.0),
+          padding: const EdgeInsets.all(18.0),
           child: Text("Credit list", style: textTheme.bodyLarge),
         ),
 
         Padding(
-          padding: const EdgeInsets.all(8.0),
+          padding: const EdgeInsets.symmetric(horizontal: 18.0),
           child: Container(
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(16),
@@ -148,7 +171,7 @@ class _ExecutiveOutStandingState extends State<ExecutiveOutStanding> {
             itemCount: CreditType.values.length,
             itemBuilder: (context, index) {
               return Padding(
-                padding: const EdgeInsets.all(8.0),
+                padding: const EdgeInsets.symmetric(horizontal: 18.0),
                 child: OutstandingTable(color: CreditType.values[index].color),
               );
             },
