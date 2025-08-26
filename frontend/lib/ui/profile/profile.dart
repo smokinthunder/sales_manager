@@ -45,21 +45,7 @@ class _ExecutiveProfileState extends ConsumerState<ExecutiveProfile> {
     final theme = Theme.of(context);
     return Stack(
       children: [
-        Container(
-          height: 160,
-          decoration: const BoxDecoration(
-            gradient: LinearGradient(
-              colors: [
-                AppColors.blue,
-                AppColors.green,
-                AppColors.white,
-              ], //TODO: fix/make consistent with design
-              begin: Alignment.topCenter,
-              end: Alignment.bottomCenter,
-              stops: [0.0, 0.7, 1.0],
-            ),
-          ),
-        ),
+        Container(height: 160, color: theme.colorScheme.primary),
         SingleChildScrollView(
           child: Column(
             children: [
@@ -144,6 +130,54 @@ class _ExecutiveProfileState extends ConsumerState<ExecutiveProfile> {
                 ),
               ),
             ],
+          ),
+        ),
+        Positioned(
+          right: -60,
+          top: 0,
+          child: Container(
+            width: 120,
+            height: 120,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: Color(0xff1479ba),
+            ),
+          ),
+        ),
+        Positioned(
+          left: -15,
+          top: 100,
+          child: Container(
+            width: 60,
+            height: 60,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: Color(0xff1479ba),
+            ),
+          ),
+        ),
+        Positioned(
+          right: 130,
+          top: 5,
+          child: Container(
+            width: 50,
+            height: 50,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: Color(0xff1479ba),
+            ),
+          ),
+        ),
+        Positioned(
+          left: 40,
+          top: 5,
+          child: Container(
+            width: 70,
+            height: 70,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: Color(0xff1479ba),
+            ),
           ),
         ),
       ],
