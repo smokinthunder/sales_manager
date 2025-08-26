@@ -171,6 +171,81 @@ async def get_users(tenant_id: str, db=Depends(get_db)):
         logger.error(f"Unexpected error: {e}")
         raise HTTPException(status_code=500, detail="Internal server error")
 
+# User creation model
+class UserCreate(BaseModel):
+    phone: str
+    name: str
+    role: str
+    tenant_id: str
+    status: str = "pending_approval"
+
+@app.post("/api/users/{tenant_id}", response_model=UserResponse)
+async def create_user(tenant_id: str, user_data: UserCreate, db=Depends(get_db)):
+    """Create a new user for a specific tenant"""
+    try:
+        # Check if user with same phone already exists
+        check_query = text("""
+            SELECT id FROM users 
+            WHERE phone = :phone AND tenant_id = :tenant_id
+        """)
+        
+        existing_user = db.execute(check_query, {
+            "phone": user_data.phone,
+            "tenant_id": tenant_id
+        }).fetchone()
+        
+        if existing_user:
+            raise HTTPException(status_code=400, detail="User with this phone number already exists")
+        
+        # Create new user
+        insert_query = text("""
+            INSERT INTO users (phone, name, role, tenant_id, status, created_at, updated_at)
+            VALUES (:phone, :name, :role, :tenant_id, :status, NOW(), NOW())
+        """)
+        
+        result = db.execute(insert_query, {
+            "phone": user_data.phone,
+            "name": user_data.name,
+            "role": user_data.role,
+            "tenant_id": tenant_id,
+            "status": user_data.status
+        })
+        
+        db.commit()
+        
+        # Get the created user
+        user_id = result.lastrowid
+        select_query = text("""
+            SELECT id, phone, name, role, status, tenant_id, created_at, updated_at
+            FROM users 
+            WHERE id = :user_id
+        """)
+        
+        user_result = db.execute(select_query, {"user_id": user_id})
+        user_row = user_result.fetchone()
+        
+        return UserResponse(
+            id=user_row[0],
+            phone=user_row[1],
+            name=user_row[2],
+            role=user_row[3],
+            status=user_row[4],
+            tenant_id=user_row[5],
+            created_at=user_row[6],
+            updated_at=user_row[7]
+        )
+        
+    except HTTPException:
+        raise
+    except SQLAlchemyError as e:
+        db.rollback()
+        logger.error(f"Database error: {e}")
+        raise HTTPException(status_code=500, detail="Database error")
+    except Exception as e:
+        db.rollback()
+        logger.error(f"Unexpected error: {e}")
+        raise HTTPException(status_code=500, detail="Internal server error")
+
 @app.get("/api/shops/{tenant_id}", response_model=List[ShopResponse])
 async def get_shops(tenant_id: str, territory_id: Optional[str] = None, db=Depends(get_db)):
     """Get shops for a specific tenant, optionally filtered by territory"""
