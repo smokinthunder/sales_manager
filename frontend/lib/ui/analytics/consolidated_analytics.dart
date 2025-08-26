@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:sales_manager/ui/executive/analytics/widgets/best_selling_product.dart';
-import 'package:sales_manager/ui/executive/analytics/widgets/sales_report.dart';
-import 'package:sales_manager/ui/executive/analytics/widgets/switch_row.dart';
+import 'package:sales_manager/ui/analytics/widgets/best_selling_product.dart';
+import 'package:sales_manager/ui/analytics/widgets/sales_report.dart';
+import 'package:sales_manager/ui/analytics/widgets/switch_row.dart';
 
 class ConsolidatedAnalyticsScreen extends StatefulWidget {
   const ConsolidatedAnalyticsScreen({super.key});

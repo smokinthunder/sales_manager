@@ -4,9 +4,9 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:sales_manager/ui/common/widgets/drop_down_menu.dart';
 import 'package:sales_manager/ui/core/theme.dart';
-import 'package:sales_manager/ui/executive/analytics/widgets/best_selling_product.dart';
-import 'package:sales_manager/ui/executive/analytics/widgets/sales_report.dart';
-import 'package:sales_manager/ui/executive/analytics/widgets/switch_row.dart';
+import 'package:sales_manager/ui/analytics/widgets/best_selling_product.dart';
+import 'package:sales_manager/ui/analytics/widgets/sales_report.dart';
+import 'package:sales_manager/ui/analytics/widgets/switch_row.dart';
 
 class IndividualAnalyticsScreen extends StatefulWidget {
   const IndividualAnalyticsScreen({super.key});

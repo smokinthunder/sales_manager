@@ -2,7 +2,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:sales_manager/domain/models/shops/shop.dart';
-import 'package:sales_manager/ui/executive/home/top_customers.dart';
+import 'package:sales_manager/ui/home/top_customers.dart';
 
 class ShopDetailScreen extends StatefulWidget {
   const ShopDetailScreen({super.key});

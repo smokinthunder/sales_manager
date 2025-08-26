@@ -9,12 +9,14 @@ class CustomDropDownMenu<T> extends StatelessWidget {
     this.onSelected,
     this.title,
     this.width,
+    this.tinyTitle = false,
   });
   final String hintText;
   final String? title;
   final List<DropdownMenuEntry<T>> dropdownMenuEntries;
   final ValueChanged<T?>? onSelected;
   final double? width;
+  final bool tinyTitle;
 
   @override
   Widget build(BuildContext context) {
@@ -29,9 +31,11 @@ class CustomDropDownMenu<T> extends StatelessWidget {
             padding: const EdgeInsets.symmetric(vertical: 4.0),
             child: Text(
               title!,
-              style: textTheme.labelLarge?.copyWith(
-                color: colorScheme.onSecondary,
-              ),
+              style: tinyTitle
+                  ? textTheme.bodySmall
+                  : textTheme.labelLarge?.copyWith(
+                      color: colorScheme.onSecondary,
+                    ),
             ),
           ),
         DropdownMenu<T>(

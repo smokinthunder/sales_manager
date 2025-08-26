@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:sales_manager/routing/routes.dart';
+import 'package:sales_manager/routing/route_paths.dart';
 
 enum AnalyticsType {
   allShops("All Shops"),
@@ -52,10 +52,10 @@ class _ExecutiveAnalyticsState extends State<ExecutiveAnalytics> {
             : () {
                 switch (selectedType) {
                   case AnalyticsType.allShops:
-                    context.push(AppRoutes.executiveAnalyticsConsolidated);
+                    context.push(RoutePaths.executiveAnalyticsConsolidated);
                     break;
                   case AnalyticsType.individualShops:
-                    context.push(AppRoutes.executiveAnalyticsIndividual);
+                    context.push(RoutePaths.executiveAnalyticsIndividual);
                     break;
                   case null:
                 }

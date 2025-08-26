@@ -1,12 +1,11 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:sales_manager/config/providers/current_user_notifier.dart';
-import 'package:sales_manager/domain/models/user/user.dart';
-import 'package:sales_manager/routing/executiveRoutes.dart';
-import 'package:sales_manager/routing/routes.dart';
+import 'package:sales_manager/routing/go_routes.dart';
+import 'package:sales_manager/routing/route_paths.dart';
 import 'package:sales_manager/ui/auth/login_screen.dart';
 import 'package:sales_manager/ui/auth/otp_screen.dart';
-import 'package:sales_manager/ui/executive/scaffold.dart';
+import 'package:sales_manager/ui/common/widgets/scaffold.dart';
 import 'package:sales_manager/ui/common/screens/loading_screen.dart';
 
 final routerProvider = Provider<GoRouter>((ref) {
@@ -14,7 +13,7 @@ final routerProvider = Provider<GoRouter>((ref) {
   final user = ref.watch(currentUserNotifierProvider);
 
   return GoRouter(
-    initialLocation: AppRoutes.login,
+    initialLocation: RoutePaths.login,
     routes: [
       loadinRoute,
       loginRoute,
@@ -34,37 +33,35 @@ final routerProvider = Provider<GoRouter>((ref) {
     ],
     redirect: (context, state) {
       final isLoggingIn =
-          state.matchedLocation == AppRoutes.login ||
-          state.matchedLocation == AppRoutes.otp;
+          state.matchedLocation == RoutePaths.login ||
+          state.matchedLocation == RoutePaths.otp;
 
       // 1. User not logged in → force login unless already at login/otp
       if (user == null) {
-        return isLoggingIn ? null : AppRoutes.login;
+        return isLoggingIn ? null : RoutePaths.login;
       }
 
-      if (user.type == UserType.executive) {
-        if (!state.matchedLocation.startsWith(AppRoutes.executive) ||
-            state.matchedLocation == AppRoutes.executive) {
-          return AppRoutes.executiveHome;
-        }
+      if (isLoggingIn) {
+        return RoutePaths.home;
       }
+
       return null;
     },
   );
 });
 
 final loadinRoute = GoRoute(
-  path: AppRoutes.loading,
+  path: RoutePaths.loading,
   builder: (c, s) => const LoadingScreen(),
 );
 
 final loginRoute = GoRoute(
-  path: AppRoutes.login,
+  path: RoutePaths.login,
   builder: (c, s) => const LoginScreen(),
 );
 
 final otpRoute = GoRoute(
-  path: AppRoutes.otp,
+  path: RoutePaths.otp,
   builder: (c, s) {
     final phoneNumber = s.extra as String;
     return OtpVerificationScreen(phoneNumber: phoneNumber);

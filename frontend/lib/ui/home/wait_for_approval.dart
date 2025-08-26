@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:sales_manager/config/assets.dart';
-import 'package:sales_manager/routing/routes.dart';
+import 'package:sales_manager/routing/route_paths.dart';
 
 class WaitForApprovalScreen extends StatelessWidget {
   const WaitForApprovalScreen({super.key});
@@ -49,7 +49,7 @@ class WaitForApprovalScreen extends StatelessWidget {
                 child: ElevatedButton(
                   onPressed: () {
                     //TODO: complete
-                    context.go(AppRoutes.executiveHome);
+                    context.go(RoutePaths.home);
                   },
                   child: const Text("Continue"),
                 ),
