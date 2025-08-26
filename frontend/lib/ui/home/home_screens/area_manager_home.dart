@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:intl/intl.dart';
 import 'package:sales_manager/config/providers/login_message_provider.dart';
 import 'package:sales_manager/routing/route_paths.dart';
 import 'package:sales_manager/ui/common/widgets/drop_down_menu.dart';
@@ -36,7 +37,6 @@ class _AreaManagerHomeState extends ConsumerState<AreaManagerHome> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final textTheme = theme.textTheme;
-    final colorScheme = theme.colorScheme;
 
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16),
@@ -45,14 +45,29 @@ class _AreaManagerHomeState extends ConsumerState<AreaManagerHome> {
         children: [
           HeaderTexts(),
           const SizedBox(height: 40),
-          Text("Create Route", style: Theme.of(context).textTheme.bodyLarge),
+          Text("Create Route", style: textTheme.bodyLarge),
           CreateRouteCard(),
+          DailyExecutiveRoute(
+            routeData: [
+              ExecutiveRouteData('John Doe', 'ABC Plumbing', 'North Zone'),
+              ExecutiveRouteData('Jane Smith', 'XYZ Hardware', 'East Zone'),
+              ExecutiveRouteData(
+                'Mike Johnson',
+                'LMN Electricals',
+                'South Zone',
+              ),
+              ExecutiveRouteData('John Doe', 'ABC Plumbing', 'North Zone'),
+              ExecutiveRouteData('Jane Smith', 'XYZ Hardware', 'East Zone'),
+              ExecutiveRouteData(
+                'Mike Johnson',
+                'LMN Electricals',
+                'South Zone',
+              ),
+            ],
+          ),
           Padding(
             padding: const EdgeInsets.symmetric(vertical: 12.0),
-            child: Text(
-              "Track Executive",
-              style: Theme.of(context).textTheme.bodyLarge,
-            ),
+            child: Text("Track Executive", style: textTheme.bodyLarge),
           ),
           TrackExecutiveCard(),
           TextButton(
@@ -71,6 +86,107 @@ class _AreaManagerHomeState extends ConsumerState<AreaManagerHome> {
       ),
     );
   }
+}
+
+class DailyExecutiveRoute extends StatelessWidget {
+  const DailyExecutiveRoute({super.key, required this.routeData});
+  final List<ExecutiveRouteData> routeData;
+
+  @override
+  Widget build(BuildContext context) {
+    final TextTheme textTheme = Theme.of(context).textTheme;
+    final ColorScheme colorScheme = Theme.of(context).colorScheme;
+    final titleStyle = textTheme.labelLarge?.copyWith(
+      color: colorScheme.onSecondary,
+    );
+    final contentStyle = textTheme.bodySmall;
+    return ExpansionTile(
+      title: Text("Today's List"),
+      shape: RoundedRectangleBorder(),
+      children: [
+        Align(
+          alignment: Alignment.centerRight,
+          child: Text(
+            DateFormat('dd-MM-yyyy').format(DateTime.now()),
+            style: textTheme.labelMedium?.copyWith(
+              color: colorScheme.onSurface,
+            ),
+          ),
+        ),
+        Table(
+          columnWidths: const {
+            0: FlexColumnWidth(2),
+            1: FlexColumnWidth(2),
+            2: FlexColumnWidth(2),
+          },
+          children: [
+            TableRow(
+              children: [
+                Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 12.0),
+                  child: Text(
+                    "Executive",
+                    style: titleStyle,
+                    textAlign: TextAlign.center,
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 12.0),
+                  child: Text(
+                    'Location',
+                    style: titleStyle,
+                    textAlign: TextAlign.center,
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 12.0),
+                  child: Text(
+                    "Area",
+                    style: titleStyle,
+                    textAlign: TextAlign.center,
+                  ),
+                ),
+              ],
+            ),
+            ...routeData.map(
+              (e) => TableRow(
+                decoration: BoxDecoration(
+                  border: Border(
+                    bottom: BorderSide(color: colorScheme.tertiary),
+                  ),
+                ),
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.all(12.0),
+                    child: Center(child: Text(e.name, style: contentStyle)),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.all(12.0),
+                    child: Center(child: Text(e.location, style: contentStyle)),
+                  ),
+                  ExpansionTile(
+                    shape: RoundedRectangleBorder(),
+                    dense: true,
+                    tilePadding: EdgeInsets.zero,
+                    visualDensity: VisualDensity.compact,
+                    title: Text(e.area, style: contentStyle),
+                    children: [Text(e.location, style: contentStyle)],
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+}
+
+class ExecutiveRouteData {
+  final String name;
+  final String location;
+  final String area;
+  const ExecutiveRouteData(this.name, this.location, this.area);
 }
 
 class HeaderTexts extends StatelessWidget {
