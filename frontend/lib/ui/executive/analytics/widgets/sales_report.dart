@@ -3,8 +3,9 @@ import 'package:flutter/material.dart';
 import 'package:sales_manager/ui/core/colors.dart';
 
 class SalesReport extends StatelessWidget {
-  const SalesReport({super.key, required this.salesData});
+  const SalesReport({super.key, required this.salesData, this.salesData2});
   final List<SalesReportDataMap> salesData;
+  final List<SalesReportDataMap>? salesData2;
 
   @override
   Widget build(BuildContext context) {
@@ -12,13 +13,14 @@ class SalesReport extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Padding(
-          padding: const EdgeInsets.symmetric(vertical: 20.0),
-          child: Text("Sales Report", style: textTheme.bodyLarge),
-        ),
+        if (salesData2 == null)
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 20.0),
+            child: Text("Sales Report", style: textTheme.bodyLarge),
+          ),
         AspectRatio(
           aspectRatio: 2,
-          child: SimpleLineChart(salesData: salesData),
+          child: SimpleLineChart(salesData: salesData, salesData2: salesData2),
         ),
       ],
     );
@@ -32,8 +34,10 @@ class SalesReportDataMap {
 }
 
 class SimpleLineChart extends StatelessWidget {
-  const SimpleLineChart({super.key, required this.salesData});
+  const SimpleLineChart({super.key, required this.salesData, this.salesData2});
   final List<SalesReportDataMap> salesData;
+
+  final List<SalesReportDataMap>? salesData2;
 
   @override
   Widget build(BuildContext context) {
@@ -86,6 +90,19 @@ class SimpleLineChart extends StatelessWidget {
           ),
         ),
         lineBarsData: [
+          if (salesData2 != null)
+            LineChartBarData(
+              spots: salesData2!
+                  .asMap()
+                  .entries
+                  .map((e) => FlSpot(e.key.toDouble() + 1, e.value.saleAmount))
+                  .toList(),
+              isCurved: false,
+              color: colorScheme.primary,
+              isStrokeCapRound: true,
+              barWidth: 2,
+              dotData: FlDotData(show: (salesData2 == null)),
+            ),
           LineChartBarData(
             spots: salesData
                 .asMap()
@@ -94,10 +111,11 @@ class SimpleLineChart extends StatelessWidget {
                 .toList(),
             isCurved: false,
             isStrokeCapRound: true,
-            gradient: AppColors.greenBlueGradient,
-            barWidth: 1,
+            color: (salesData2 == null) ? null : colorScheme.secondary,
+            gradient: (salesData2 == null) ? AppColors.greenBlueGradient : null,
+            barWidth: (salesData2 == null) ? 1 : 2,
             dotData: FlDotData(
-              show: true,
+              show: (salesData2 == null),
               // getDotPainter: (spot, percent, barData, index) {
               //   if (index == barData.spots.length - 1) {
               //     return FlDotCirclePainter(
@@ -111,8 +129,7 @@ class SimpleLineChart extends StatelessWidget {
           ),
         ],
         minX: 0,
-        maxX: 12, // only showing Jan - Jun
-        minY: 0,
+        maxX: 12,
       ),
     );
   }

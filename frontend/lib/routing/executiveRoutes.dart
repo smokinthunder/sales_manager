@@ -3,6 +3,7 @@ import 'package:sales_manager/domain/models/shops/shop.dart';
 import 'package:sales_manager/routing/routes.dart';
 import 'package:sales_manager/ui/executive/analytics/consolidated_analytics.dart';
 import 'package:sales_manager/ui/executive/analytics/analytics.dart';
+import 'package:sales_manager/ui/executive/analytics/individual_analytics.dart';
 import 'package:sales_manager/ui/executive/home/add_new_shop.dart';
 import 'package:sales_manager/ui/executive/home/home.dart';
 import 'package:sales_manager/ui/executive/home/not_visiting.dart';
@@ -57,6 +58,14 @@ abstract class ExecutiveRoutes {
     GoRoute(
       path: AppRoutes.executiveAddShop,
       builder: (c, s) => AddNewShopScreen(),
+    ),
+    GoRoute(
+      path: AppRoutes.executiveAnalyticsIndividual,
+      builder: (context, state) => IndividualAnalyticsScreen(),
+    ),
+    GoRoute(
+      path: AppRoutes.executiveAnalyticsConsolidated,
+      builder: (context, state) => ConsolidatedAnalyticsScreen(),
     ),
   ];
 }

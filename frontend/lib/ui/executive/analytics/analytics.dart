@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:sales_manager/ui/executive/analytics/individual_analytics.dart';
+import 'package:go_router/go_router.dart';
+import 'package:sales_manager/routing/routes.dart';
 
 enum AnalyticsType {
   allShops("All Shops"),
@@ -49,12 +50,15 @@ class _ExecutiveAnalyticsState extends State<ExecutiveAnalytics> {
         onPressed: (selectedType == null)
             ? null
             : () {
-                //TODO: complete
-                Navigator.of(context).push(
-                  MaterialPageRoute(
-                    builder: (context) => IndividualAnalyticsScreen(),
-                  ),
-                );
+                switch (selectedType) {
+                  case AnalyticsType.allShops:
+                    context.push(AppRoutes.executiveAnalyticsConsolidated);
+                    break;
+                  case AnalyticsType.individualShops:
+                    context.push(AppRoutes.executiveAnalyticsIndividual);
+                    break;
+                  case null:
+                }
               },
         child: const Text("Continue"),
       ),
