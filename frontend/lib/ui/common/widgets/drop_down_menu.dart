@@ -8,14 +8,12 @@ class CustomDropDownMenu<T> extends StatelessWidget {
     required this.dropdownMenuEntries,
     this.onSelected,
     this.title,
-    this.width,
     this.tinyTitle = false,
   });
   final String hintText;
   final String? title;
   final List<DropdownMenuEntry<T>> dropdownMenuEntries;
   final ValueChanged<T?>? onSelected;
-  final double? width;
   final bool tinyTitle;
 
   @override
@@ -39,7 +37,7 @@ class CustomDropDownMenu<T> extends StatelessWidget {
             ),
           ),
         DropdownMenu<T>(
-          width: width,
+          width: double.infinity,
           hintText: hintText,
           textStyle: textTheme.bodyLarge?.copyWith(color: colorScheme.tertiary),
           inputDecorationTheme: theme.dropdownMenuTheme.inputDecorationTheme

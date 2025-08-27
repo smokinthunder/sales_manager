@@ -60,114 +60,109 @@ class _IndividualAnalyticsScreenState extends State<IndividualAnalyticsScreen> {
                   style: textTheme.bodyLarge,
                 ),
               ),
-              LayoutBuilder(
-                builder: (context, constraints) {
-                  return Card(
-                    child: Column(
+              Card(
+                child: Column(
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.all(8.0),
+                      child: CustomDropDownMenu(
+                        hintText: "Shop name",
+                        title: "Select shop name",
+                        dropdownMenuEntries: [
+                          DropdownMenuEntry(
+                            value: 'ABC Plumbing',
+                            label: 'ABC Plumbing',
+                          ),
+                          DropdownMenuEntry(
+                            value: 'XYZ Hardware',
+                            label: 'XYZ Hardware',
+                          ),
+                          DropdownMenuEntry(
+                            value: 'LMN Electricals',
+                            label: 'LMN Electricals',
+                          ),
+                        ],
+                      ),
+                    ),
+                    Row(
                       children: [
-                        Padding(
-                          padding: const EdgeInsets.all(8.0),
-                          child: CustomDropDownMenu(
-                            width: constraints.maxWidth,
-                            hintText: "Shop name",
-                            title: "Select shop name",
-                            dropdownMenuEntries: [
-                              DropdownMenuEntry(
-                                value: 'ABC Plumbing',
-                                label: 'ABC Plumbing',
-                              ),
-                              DropdownMenuEntry(
-                                value: 'XYZ Hardware',
-                                label: 'XYZ Hardware',
-                              ),
-                              DropdownMenuEntry(
-                                value: 'LMN Electricals',
-                                label: 'LMN Electricals',
-                              ),
-                            ],
+                        Flexible(
+                          child: Padding(
+                            padding: const EdgeInsets.all(8.0),
+                            child: CustomDropDownMenu(
+                              hintText: "Location",
+                              title: "Select shop Location",
+                              dropdownMenuEntries: [
+                                DropdownMenuEntry(
+                                  value: 'ABC Plumbing',
+                                  label: 'ABC Plumbing',
+                                ),
+                                DropdownMenuEntry(
+                                  value: 'XYZ Hardware',
+                                  label: 'XYZ Hardware',
+                                ),
+                                DropdownMenuEntry(
+                                  value: 'LMN Electricals',
+                                  label: 'LMN Electricals',
+                                ),
+                              ],
+                            ),
                           ),
                         ),
-                        Row(
-                          children: [
-                            Flexible(
-                              child: Padding(
-                                padding: const EdgeInsets.all(8.0),
-                                child: CustomDropDownMenu(
-                                  hintText: "Location",
-                                  title: "Select shop Location",
-                                  dropdownMenuEntries: [
-                                    DropdownMenuEntry(
-                                      value: 'ABC Plumbing',
-                                      label: 'ABC Plumbing',
-                                    ),
-                                    DropdownMenuEntry(
-                                      value: 'XYZ Hardware',
-                                      label: 'XYZ Hardware',
-                                    ),
-                                    DropdownMenuEntry(
-                                      value: 'LMN Electricals',
-                                      label: 'LMN Electricals',
-                                    ),
-                                  ],
+                        Flexible(
+                          child: Padding(
+                            padding: const EdgeInsets.all(8.0),
+                            child: CustomDropDownMenu(
+                              hintText: "Area",
+                              title: "Select shop area",
+                              dropdownMenuEntries: [
+                                DropdownMenuEntry(
+                                  value: 'ABC Plumbing',
+                                  label: 'ABC Plumbing',
                                 ),
-                              ),
-                            ),
-                            Flexible(
-                              child: Padding(
-                                padding: const EdgeInsets.all(8.0),
-                                child: CustomDropDownMenu(
-                                  hintText: "Area",
-                                  title: "Select shop area",
-                                  dropdownMenuEntries: [
-                                    DropdownMenuEntry(
-                                      value: 'ABC Plumbing',
-                                      label: 'ABC Plumbing',
-                                    ),
-                                    DropdownMenuEntry(
-                                      value: 'XYZ Hardware',
-                                      label: 'XYZ Hardware',
-                                    ),
-                                    DropdownMenuEntry(
-                                      value: 'LMN Electricals',
-                                      label: 'LMN Electricals',
-                                    ),
-                                  ],
+                                DropdownMenuEntry(
+                                  value: 'XYZ Hardware',
+                                  label: 'XYZ Hardware',
                                 ),
-                              ),
+                                DropdownMenuEntry(
+                                  value: 'LMN Electricals',
+                                  label: 'LMN Electricals',
+                                ),
+                              ],
                             ),
-                          ],
-                        ),
-                        SwitchRow(
-                          title: "Purchase Analysis",
-                          value: purchaseAnalysis,
-                          onChanged: (value) {
-                            setState(() {
-                              purchaseAnalysis = value;
-                            });
-                          },
-                        ),
-                        SwitchRow(
-                          title: "Best Selling Product",
-                          value: bestSelling,
-                          onChanged: (value) {
-                            setState(() {
-                              bestSelling = value;
-                            });
-                          },
-                        ),
-                        SwitchRow(
-                          title: "Sales Report",
-                          value: salesReport,
-                          onChanged: (value) {
-                            setState(() {
-                              salesReport = value;
-                            });
-                          },
+                          ),
                         ),
                       ],
                     ),
-                  );
-                },
+                    SwitchRow(
+                      title: "Purchase Analysis",
+                      value: purchaseAnalysis,
+                      onChanged: (value) {
+                        setState(() {
+                          purchaseAnalysis = value;
+                        });
+                      },
+                    ),
+                    SwitchRow(
+                      title: "Best Selling Product",
+                      value: bestSelling,
+                      onChanged: (value) {
+                        setState(() {
+                          bestSelling = value;
+                        });
+                      },
+                    ),
+                    SwitchRow(
+                      title: "Sales Report",
+                      value: salesReport,
+                      onChanged: (value) {
+                        setState(() {
+                          salesReport = value;
+                        });
+                      },
+                    ),
+                  ],
+                ),
               ),
               Container(
                 margin: EdgeInsets.symmetric(vertical: 10),

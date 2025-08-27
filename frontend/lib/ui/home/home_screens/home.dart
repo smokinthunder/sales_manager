@@ -7,8 +7,8 @@ import 'package:sales_manager/routing/route_paths.dart';
 import 'package:sales_manager/ui/home/home_screens/area_manager_home.dart';
 import 'package:sales_manager/ui/home/home_screens/executive_home.dart';
 
-class HomeWrapper extends ConsumerWidget {
-  const HomeWrapper({super.key});
+class HomeScreen extends ConsumerWidget {
+  const HomeScreen({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {

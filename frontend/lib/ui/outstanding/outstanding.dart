@@ -50,7 +50,6 @@ class _ExecutiveOutStandingState extends ConsumerState<ExecutiveOutStanding> {
                 flex: 5,
                 child: (userType == UserType.areaManager)
                     ? CustomDropDownMenu(
-                        width: double.infinity,
                         hintText: "Varun Kumar",
                         dropdownMenuEntries: [],
                       )
@@ -80,7 +79,6 @@ class _ExecutiveOutStandingState extends ConsumerState<ExecutiveOutStanding> {
               Flexible(
                 flex: 3,
                 child: CustomDropDownMenu(
-                  width: double.infinity,
                   hintText: "Sort by",
                   dropdownMenuEntries: options
                       .map(

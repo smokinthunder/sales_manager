@@ -4,19 +4,19 @@ import 'package:sales_manager/routing/route_paths.dart';
 import 'package:sales_manager/ui/analytics/consolidated_analytics.dart';
 import 'package:sales_manager/ui/analytics/analytics.dart';
 import 'package:sales_manager/ui/analytics/individual_analytics.dart';
-import 'package:sales_manager/ui/home/add_new_shop.dart';
-import 'package:sales_manager/ui/home/home_screens/home_wrapper.dart';
+import 'package:sales_manager/ui/home/add_shop/add_new_shop.dart';
+import 'package:sales_manager/ui/home/home_screens/home.dart';
 import 'package:sales_manager/ui/home/not_visiting.dart';
 import 'package:sales_manager/ui/home/shop_details.dart';
 import 'package:sales_manager/ui/home/top_customers.dart';
-import 'package:sales_manager/ui/home/wait_for_approval.dart';
+import 'package:sales_manager/ui/home/add_shop/wait_for_approval.dart';
 import 'package:sales_manager/ui/outstanding/outstanding.dart';
 import 'package:sales_manager/ui/profile/profile.dart';
 
 abstract class ExecutiveRoutes {
   static final executiveHome = GoRoute(
     path: RoutePaths.home,
-    builder: (context, state) => HomeWrapper(),
+    builder: (context, state) => HomeScreen(),
   );
   static final executiveAnalytics = GoRoute(
     path: RoutePaths.analyticsRoot,
