@@ -56,7 +56,7 @@ class _ConsolidatedAnalyticsScreenState
                           style: textTheme.bodyLarge,
                         ),
                       ),
-                      if (user!.type == UserType.areaManager)
+                      if (user.type == UserType.areaManager)
                         Padding(
                           padding: const EdgeInsets.all(8.0),
                           child: CustomDropDownMenu(

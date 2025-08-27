@@ -41,7 +41,7 @@ class _ExecutiveAnalyticsState extends ConsumerState<ExecutiveAnalytics> {
           ),
           _buildButtonTile(
             textTheme,
-            (user!.type == UserType.areaManager)
+            (user.type == UserType.areaManager)
                 ? "All Shops"
                 : "Individual Shops",
             AnalyticsType.individualShops,

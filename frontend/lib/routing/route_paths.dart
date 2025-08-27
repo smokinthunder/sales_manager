@@ -18,4 +18,6 @@ abstract class RoutePaths {
   static const consolidatedOrExecutiveAnalytics = '/analytics/consolidated';
   static const shopAnalytics = '/analytics/shop';
   static const viewExecutiveHistory = '/view_executive_history';
+  static const notifications = '/notifications';
+  static const chat = '/chat';
 }

@@ -1,13 +1,15 @@
 import 'package:go_router/go_router.dart';
 import 'package:sales_manager/domain/models/shops/shop.dart';
 import 'package:sales_manager/routing/route_paths.dart';
-import 'package:sales_manager/ui/analytics/cosol_exec_analytics.dart';
+import 'package:sales_manager/ui/analytics/consol_exec_analytics.dart';
 import 'package:sales_manager/ui/analytics/analytics.dart';
 import 'package:sales_manager/ui/analytics/individual_analytics.dart';
 import 'package:sales_manager/ui/home/add_shop/add_new_shop.dart';
 import 'package:sales_manager/ui/home/add_shop/success.dart';
 import 'package:sales_manager/ui/home/home_screens/home.dart';
+import 'package:sales_manager/ui/home/messages.dart';
 import 'package:sales_manager/ui/home/not_visiting.dart';
+import 'package:sales_manager/ui/home/notification.dart';
 import 'package:sales_manager/ui/home/shop_details.dart';
 import 'package:sales_manager/ui/home/top_customers.dart';
 import 'package:sales_manager/ui/home/add_shop/wait_for_approval.dart';
@@ -74,5 +76,10 @@ abstract class ExecutiveRoutes {
       path: RoutePaths.viewExecutiveHistory,
       builder: (c, s) => const ViewExecutiveHistory(),
     ),
+    GoRoute(
+      path: RoutePaths.notifications,
+      builder: (c, s) => const NotificationScreen(),
+    ),
+    GoRoute(path: RoutePaths.chat, builder: (c, s) => const MessageScreen()),
   ];
 }
