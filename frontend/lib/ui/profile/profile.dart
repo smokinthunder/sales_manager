@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:sales_manager/config/providers/current_user_notifier.dart';
 import 'package:sales_manager/domain/models/user/user.dart';
-import 'package:sales_manager/ui/core/colors.dart';
 
 class ExecutiveProfile extends ConsumerStatefulWidget {
   const ExecutiveProfile({super.key});
