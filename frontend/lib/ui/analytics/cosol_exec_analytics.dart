@@ -1,25 +1,30 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:sales_manager/config/providers/current_user_notifier.dart';
+import 'package:sales_manager/domain/models/user/user.dart';
 import 'package:sales_manager/ui/analytics/widgets/best_selling_product.dart';
 import 'package:sales_manager/ui/analytics/widgets/sales_report.dart';
 import 'package:sales_manager/ui/analytics/widgets/switch_row.dart';
+import 'package:sales_manager/ui/common/widgets/drop_down_menu.dart';
 
-class ConsolidatedAnalyticsScreen extends StatefulWidget {
+class ConsolidatedAnalyticsScreen extends ConsumerStatefulWidget {
   const ConsolidatedAnalyticsScreen({super.key});
 
   @override
-  State<ConsolidatedAnalyticsScreen> createState() =>
+  ConsumerState<ConsolidatedAnalyticsScreen> createState() =>
       _ConsolidatedAnalyticsScreenState();
 }
 
 class _ConsolidatedAnalyticsScreenState
-    extends State<ConsolidatedAnalyticsScreen> {
+    extends ConsumerState<ConsolidatedAnalyticsScreen> {
   bool showTopTen = false;
   bool showSalesReport = false;
   bool showBestSelling = false;
 
   @override
   Widget build(BuildContext context) {
+    final user = ref.read(currentUserNotifierProvider);
     final textTheme = Theme.of(context).textTheme;
     return Scaffold(
       appBar: AppBar(
@@ -44,8 +49,30 @@ class _ConsolidatedAnalyticsScreenState
                     children: [
                       Padding(
                         padding: const EdgeInsets.all(8.0),
-                        child: Text("Select Items", style: textTheme.bodyLarge),
+                        child: Text(
+                          (user!.type == UserType.areaManager)
+                              ? "Select Executive"
+                              : "Select Items",
+                          style: textTheme.bodyLarge,
+                        ),
                       ),
+                      if (user!.type == UserType.areaManager)
+                        Padding(
+                          padding: const EdgeInsets.all(8.0),
+                          child: CustomDropDownMenu(
+                            hintText: "Akhil Dev",
+                            dropdownMenuEntries: [
+                              DropdownMenuEntry(
+                                value: "Akhil Dev",
+                                label: "Akhil Dev",
+                              ),
+                              DropdownMenuEntry(
+                                value: "John Doe",
+                                label: "John Doe",
+                              ),
+                            ],
+                          ),
+                        ),
                       SwitchRow(
                         title: "TOP 10 Customer",
                         value: showTopTen,

@@ -55,10 +55,7 @@ class _IndividualAnalyticsScreenState extends State<IndividualAnalyticsScreen> {
             children: [
               Padding(
                 padding: const EdgeInsets.symmetric(vertical: 16.0),
-                child: Text(
-                  "Individual Shop Analytics",
-                  style: textTheme.bodyLarge,
-                ),
+                child: Text("Shop Analytics", style: textTheme.bodyLarge),
               ),
               Card(
                 child: Column(
@@ -431,40 +428,46 @@ class _ComparingAnalyticsState extends State<ComparingAnalytics> {
                 SizedBox(height: 10),
                 Row(
                   children: [
-                    CustomDropDownMenu(
-                      hintText: "0000",
-                      dropdownMenuEntries: years
-                          .map(
-                            (e) => DropdownMenuEntry(
-                              value: e,
-                              label: e.toString(),
-                            ),
-                          )
-                          .toList(),
-                      onSelected: (value) {
-                        setState(() {
-                          yearOne = value;
-                        });
-                      },
+                    Flexible(
+                      child: CustomDropDownMenu(
+                        hintText: "0000",
+                        dropdownMenuEntries: years
+                            .map(
+                              (e) => DropdownMenuEntry(
+                                value: e,
+                                label: e.toString(),
+                              ),
+                            )
+                            .toList(),
+                        onSelected: (value) {
+                          setState(() {
+                            yearOne = value;
+                          });
+                        },
+                      ),
                     ),
-                    Spacer(),
-                    Text("to", style: textTheme.bodySmall),
-                    Spacer(),
-                    CustomDropDownMenu(
-                      hintText: "0000",
-                      dropdownMenuEntries: years
-                          .map(
-                            (e) => DropdownMenuEntry(
-                              value: e,
-                              label: e.toString(),
-                            ),
-                          )
-                          .toList(),
-                      onSelected: (value) {
-                        setState(() {
-                          yearTwo = value;
-                        });
-                      },
+                    Padding(
+                      padding: EdgeInsets.symmetric(horizontal: 15),
+                      child: Text("to", style: textTheme.bodySmall),
+                    ),
+
+                    Flexible(
+                      child: CustomDropDownMenu(
+                        hintText: "0000",
+                        dropdownMenuEntries: years
+                            .map(
+                              (e) => DropdownMenuEntry(
+                                value: e,
+                                label: e.toString(),
+                              ),
+                            )
+                            .toList(),
+                        onSelected: (value) {
+                          setState(() {
+                            yearTwo = value;
+                          });
+                        },
+                      ),
                     ),
                   ],
                 ),
@@ -483,10 +486,8 @@ class _ComparingAnalyticsState extends State<ComparingAnalytics> {
             child: Text("Compare"),
           ),
         ),
-        Text(
-          "Montly Purchase Value",
-          style: textTheme.labelLarge?.copyWith(color: colorScheme.onSurface),
-        ),
+        SizedBox(height: 20),
+        Text("Montly Purchase Value", style: textTheme.bodyLarge),
         Row(
           children: [
             _buildYearCard(textTheme, yearOne ?? 0, 10, 1),
@@ -760,7 +761,7 @@ class BestSellingProductGrid extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Padding(
-          padding: const EdgeInsets.symmetric(vertical: 16.0),
+          padding: const EdgeInsets.symmetric(vertical: 12.0),
           child: Text(
             "Best Selling Product",
             style: textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.w400),

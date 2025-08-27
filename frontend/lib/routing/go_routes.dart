@@ -1,7 +1,7 @@
 import 'package:go_router/go_router.dart';
 import 'package:sales_manager/domain/models/shops/shop.dart';
 import 'package:sales_manager/routing/route_paths.dart';
-import 'package:sales_manager/ui/analytics/consolidated_analytics.dart';
+import 'package:sales_manager/ui/analytics/cosol_exec_analytics.dart';
 import 'package:sales_manager/ui/analytics/analytics.dart';
 import 'package:sales_manager/ui/analytics/individual_analytics.dart';
 import 'package:sales_manager/ui/home/add_shop/add_new_shop.dart';
@@ -53,16 +53,16 @@ abstract class ExecutiveRoutes {
       builder: (context, state) => ShopDetailScreen(),
     ),
     GoRoute(
-      path: RoutePaths.executiveAnalyticsConsolidated,
+      path: RoutePaths.consolidatedOrExecutiveAnalytics,
       builder: (context, state) => ConsolidatedAnalyticsScreen(),
     ),
     GoRoute(path: RoutePaths.addShop, builder: (c, s) => AddNewShopScreen()),
     GoRoute(
-      path: RoutePaths.executiveAnalyticsIndividual,
+      path: RoutePaths.shopAnalytics,
       builder: (context, state) => IndividualAnalyticsScreen(),
     ),
     GoRoute(
-      path: RoutePaths.executiveAnalyticsConsolidated,
+      path: RoutePaths.consolidatedOrExecutiveAnalytics,
       builder: (context, state) => ConsolidatedAnalyticsScreen(),
     ),
     GoRoute(

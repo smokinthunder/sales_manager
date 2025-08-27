@@ -15,7 +15,6 @@ abstract class RoutePaths {
   static const waitForApproval = '/executive/wait_for_approval';
   static const executiveTopCustomers = '/executive/top_customers';
   static const executiveShopDetails = '/executive/shop_details';
-  static const executiveAnalyticsConsolidated =
-      '/executive/analytics/consolidated';
-  static const executiveAnalyticsIndividual = '/executive/analytics/individual';
+  static const consolidatedOrExecutiveAnalytics = '/analytics/consolidated';
+  static const shopAnalytics = '/analytics/shop';
 }
