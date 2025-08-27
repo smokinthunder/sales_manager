@@ -29,10 +29,9 @@ class _OtpVerificationScreenState extends ConsumerState<OtpVerificationScreen> {
         data: (data) {
           ref.read(loginMessageProvider.notifier).state =
               'Authentication successful';
-          
         },
         error: (error, st) {
-          showSnackBar(context, error.toString(), true);
+          showSnackBar(context, error.toString().split(":").last, true);
         },
         loading: () {},
       );
@@ -111,8 +110,13 @@ class _OtpVerificationScreenState extends ConsumerState<OtpVerificationScreen> {
                               style: TextStyle(color: Colors.grey),
                             ),
                             GestureDetector(
-                              onTap: () {
-                                //TODO: Handle resend OTP
+                              onTap: () async {
+                                await ref
+                                    .read(authViewModelProvider.notifier)
+                                    .generateOtp(
+                                      phoneNumber: widget.phoneNumber,
+                                    );
+                                showSnackBar(context, "OTP Resent");
                               },
                               child: const Text(
                                 "Resend OTP",

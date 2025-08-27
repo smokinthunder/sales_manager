@@ -48,7 +48,7 @@ class CustomAppBar extends ConsumerWidget implements PreferredSizeWidget {
                       ),
                     ),
                     Text(
-                      user?.firstName ?? "User Name",
+                      user?.name.split(" ").first ?? "User Name",
                       style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                         color: Colors.white,
                         height: 1,

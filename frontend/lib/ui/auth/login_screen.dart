@@ -33,7 +33,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
           });
         },
         error: (error, st) {
-          showSnackBar(context, error.toString(), true);
+          showSnackBar(context, error.toString().split(":").last, true);
         },
         loading: () {},
       );
@@ -167,7 +167,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                         onPressed: () async {
                           await ref
                               .read(authViewModelProvider.notifier)
-                              .sendOtp(phoneNumber: phoneController.text);
+                              .generateOtp(phoneNumber: phoneController.text);
                         },
                         child: const Text("Login"),
                       ),

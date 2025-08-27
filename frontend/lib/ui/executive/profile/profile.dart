@@ -22,8 +22,8 @@ class _ExecutiveProfileState extends ConsumerState<ExecutiveProfile> {
   @override
   didChangeDependencies() {
     user = ref.watch(currentUserNotifierProvider);
-    firstNameController.text = user?.firstName ?? "";
-    lastNameController.text = user?.lastName ?? "";
+    firstNameController.text = user?.name.split(" ").first ?? "";
+    lastNameController.text = user?.name.split(" ").last ?? "";
     emailController.text = user?.email ?? "";
     phoneController.text = user?.phoneNumber ?? "";
     locationController.text = user?.location ?? "";

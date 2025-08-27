@@ -1,7 +1,7 @@
-import 'package:logging/logging.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:sales_manager/config/providers/current_user_notifier.dart';
 import 'package:sales_manager/data/repositories/auth/auth_local_repository.dart';
+import 'package:sales_manager/data/repositories/auth/auth_remote_repository.dart';
 import 'package:sales_manager/domain/models/user/user.dart';
 import 'package:sales_manager/utils/result.dart';
 
@@ -11,58 +11,58 @@ part 'auth_viewmodel.g.dart';
 class AuthViewModel extends _$AuthViewModel {
   late AuthLocalRepository _authLocalRepository;
   late CurrentUserNotifier _currentUserNotifier;
+  late AuthRemoteRepository _authRemoteRepository;
   // late String _phoneNumberStore;
-  final _log = Logger("AuthViewModel");
 
   @override
   AsyncValue<AppUser>? build() {
     _authLocalRepository = ref.watch(authLocalRepositoryProvider);
     _currentUserNotifier = ref.watch(currentUserNotifierProvider.notifier);
+    _authRemoteRepository = ref.watch(authRemoteRepositoryProvider);
     return null;
   }
 
-  Future<void> sendOtp({required phoneNumber}) async {
+  Future<Map<String, dynamic>?> generateOtp({required phoneNumber}) async {
     state = const AsyncValue.loading();
-    _log.info("Sending OTP to $phoneNumber");
-    final res = await _authLocalRepository.sendOtp(phoneNumber);
-    _log.info("Otp sent to $phoneNumber: $res");
+    final res = await _authRemoteRepository.generateOtp(phoneNumber);
     switch (res) {
       case Ok():
-        _log.info("Otp send to $phoneNumber");
-        // _phoneNumberStore = phoneNumber;
-        state = AsyncData(
-          AppUser(
-            id: "",
-            type: UserType.executive,
-            firstName: '',
-            lastName: '',
-            email: '',
-            phoneNumber: '',
-            pictureUrl: '',
-            location: '',
-          ),
-        );
+        state = AsyncData(AppUser.empty());
+        return res.value.data;
       case Error():
         state = AsyncError(res.error, StackTrace.current);
+        return null;
     }
   }
 
   Future<void> verifyOtp({required phoneNumber, required otp}) async {
-    state = const AsyncLoading();
-    final res = await _authLocalRepository.verifyOtp(phoneNumber, otp);
+    state = const AsyncValue.loading();
+    final res = await _authRemoteRepository.verifyOtp(phoneNumber, otp);
     switch (res) {
       case Ok():
-        _log.info("Logged in as ${res.value.id}");
-        _verifyOtpSuccess(res.value);
+        final data = res.value.data;
+        // Save tokens
+        await _authLocalRepository.saveTokens(
+          accessToken: data?["access_token"],
+          refreshToken: data?["refresh_token"],
+          expiresIn: data?["expires_in"],
+        );
+
+        // Store user data in state
+        final user = data?["user"];
+        final appUser = AppUser(
+          name: user["name"],
+          email: "",
+          phoneNumber: user["phone"],
+          pictureUrl: "",
+          id: user["id"].toString(),
+          type: UserType.fromBackend(user["role"]),
+          location: "",
+        );
+        _currentUserNotifier.addUser(appUser);
+        state = AsyncValue.data(appUser);
       case Error():
-        _log.warning("Otp doesn't match");
         state = AsyncError(res.error, StackTrace.current);
     }
-  }
-
-  AsyncValue<AppUser>? _verifyOtpSuccess(AppUser user) {
-    _currentUserNotifier.addUser(user);
-    _log.info("Current user updated: ${_currentUserNotifier.state}");
-    return state = AsyncData(user);
   }
 }
