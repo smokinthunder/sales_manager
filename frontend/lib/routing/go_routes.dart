@@ -5,6 +5,7 @@ import 'package:sales_manager/ui/analytics/consolidated_analytics.dart';
 import 'package:sales_manager/ui/analytics/analytics.dart';
 import 'package:sales_manager/ui/analytics/individual_analytics.dart';
 import 'package:sales_manager/ui/home/add_shop/add_new_shop.dart';
+import 'package:sales_manager/ui/home/add_shop/success.dart';
 import 'package:sales_manager/ui/home/home_screens/home.dart';
 import 'package:sales_manager/ui/home/not_visiting.dart';
 import 'package:sales_manager/ui/home/shop_details.dart';
@@ -63,6 +64,10 @@ abstract class ExecutiveRoutes {
     GoRoute(
       path: RoutePaths.executiveAnalyticsConsolidated,
       builder: (context, state) => ConsolidatedAnalyticsScreen(),
+    ),
+    GoRoute(
+      path: RoutePaths.addShopSuccess,
+      builder: (context, state) => const SuccessScreen(),
     ),
   ];
 }

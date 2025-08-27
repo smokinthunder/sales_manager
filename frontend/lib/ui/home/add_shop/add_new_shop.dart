@@ -185,7 +185,7 @@ class AddNewShopScreen extends StatelessWidget {
                 child: ElevatedButton(
                   onPressed: () {
                     //TODO: write proper code
-                    context.go(RoutePaths.waitForApproval);
+                    context.go(RoutePaths.addShopSuccess);
                   },
                   child: const Text("Create New Customer"),
                 ),

@@ -11,6 +11,7 @@ abstract class RoutePaths {
   static const outstanding = '/outstanding';
   static const reasonForNotVisting = '/reason_for_not_visiting';
   static const addShop = '/add_shop';
+  static const addShopSuccess = '/add_shop/success';
   static const waitForApproval = '/executive/wait_for_approval';
   static const executiveTopCustomers = '/executive/top_customers';
   static const executiveShopDetails = '/executive/shop_details';
