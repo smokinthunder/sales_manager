@@ -107,32 +107,33 @@ class _PaginatedListState extends State<PaginatedList> {
         const SizedBox(height: 8),
 
         // Navigation buttons
-        Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            _buildNavButton(
-              enabled: currentPage > 0,
-              onTap: () => _pageController.previousPage(
-                duration: const Duration(milliseconds: 300),
-                curve: Curves.easeInOut,
+        if (itemsPerPage < widget.items.length)
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              _buildNavButton(
+                enabled: currentPage > 0,
+                onTap: () => _pageController.previousPage(
+                  duration: const Duration(milliseconds: 300),
+                  curve: Curves.easeInOut,
+                ),
+                icon: Icons.arrow_back_ios_new,
+                color: colors.primary,
+                iconColor: colors.onPrimary,
               ),
-              icon: Icons.arrow_back_ios_new,
-              color: colors.primary,
-              iconColor: colors.onPrimary,
-            ),
-            const SizedBox(width: 16),
-            _buildNavButton(
-              enabled: currentPage < totalPages - 1,
-              onTap: () => _pageController.nextPage(
-                duration: const Duration(milliseconds: 300),
-                curve: Curves.easeInOut,
+              const SizedBox(width: 16),
+              _buildNavButton(
+                enabled: currentPage < totalPages - 1,
+                onTap: () => _pageController.nextPage(
+                  duration: const Duration(milliseconds: 300),
+                  curve: Curves.easeInOut,
+                ),
+                icon: Icons.arrow_forward_ios,
+                color: colors.primary,
+                iconColor: colors.onPrimary,
               ),
-              icon: Icons.arrow_forward_ios,
-              color: colors.primary,
-              iconColor: colors.onPrimary,
-            ),
-          ],
-        ),
+            ],
+          ),
 
         const SizedBox(height: 12),
       ],

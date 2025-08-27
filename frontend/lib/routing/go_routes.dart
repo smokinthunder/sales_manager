@@ -10,6 +10,7 @@ import 'package:sales_manager/ui/home/home_screens/home.dart';
 import 'package:sales_manager/ui/home/messages.dart';
 import 'package:sales_manager/ui/home/not_visiting.dart';
 import 'package:sales_manager/ui/home/notification.dart';
+import 'package:sales_manager/ui/home/pending_requests.dart';
 import 'package:sales_manager/ui/home/shop_details.dart';
 import 'package:sales_manager/ui/home/top_customers.dart';
 import 'package:sales_manager/ui/home/add_shop/wait_for_approval.dart';
@@ -81,5 +82,9 @@ abstract class ExecutiveRoutes {
       builder: (c, s) => const NotificationScreen(),
     ),
     GoRoute(path: RoutePaths.chat, builder: (c, s) => const MessageScreen()),
+    GoRoute(
+      path: RoutePaths.pendingRequests,
+      builder: (c, s) => const PendingRequests(),
+    ),
   ];
 }

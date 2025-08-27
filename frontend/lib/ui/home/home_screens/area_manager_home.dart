@@ -420,6 +420,7 @@ class HeaderTexts extends StatelessWidget {
               style: buttonStyle,
               onPressed: () {
                 //TODO:
+                context.push(RoutePaths.pendingRequests);
               },
               child: Text(
                 "Pending Requests",

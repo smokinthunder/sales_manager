@@ -20,4 +20,5 @@ abstract class RoutePaths {
   static const viewExecutiveHistory = '/view_executive_history';
   static const notifications = '/notifications';
   static const chat = '/chat';
+  static const pendingRequests = '/pending_requests';
 }
