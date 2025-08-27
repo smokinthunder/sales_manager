@@ -6,7 +6,7 @@ import 'package:sales_manager/domain/models/user/user.dart';
 import 'package:sales_manager/ui/analytics/widgets/best_selling_product.dart';
 import 'package:sales_manager/ui/analytics/widgets/sales_report.dart';
 import 'package:sales_manager/ui/analytics/widgets/switch_row.dart';
-import 'package:sales_manager/ui/common/widgets/drop_down_menu.dart';
+import 'package:sales_manager/ui/widgets/drop_down_menu.dart';
 
 class ConsolidatedAnalyticsScreen extends ConsumerStatefulWidget {
   const ConsolidatedAnalyticsScreen({super.key});

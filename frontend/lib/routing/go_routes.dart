@@ -11,6 +11,7 @@ import 'package:sales_manager/ui/home/not_visiting.dart';
 import 'package:sales_manager/ui/home/shop_details.dart';
 import 'package:sales_manager/ui/home/top_customers.dart';
 import 'package:sales_manager/ui/home/add_shop/wait_for_approval.dart';
+import 'package:sales_manager/ui/home/view_history.dart';
 import 'package:sales_manager/ui/outstanding/outstanding.dart';
 import 'package:sales_manager/ui/profile/profile.dart';
 
@@ -68,6 +69,10 @@ abstract class ExecutiveRoutes {
     GoRoute(
       path: RoutePaths.addShopSuccess,
       builder: (context, state) => const SuccessScreen(),
+    ),
+    GoRoute(
+      path: RoutePaths.viewExecutiveHistory,
+      builder: (c, s) => const ViewExecutiveHistory(),
     ),
   ];
 }

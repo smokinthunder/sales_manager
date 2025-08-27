@@ -4,7 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:sales_manager/config/providers/login_message_provider.dart';
 import 'package:sales_manager/routing/route_paths.dart';
-import 'package:sales_manager/ui/common/widgets/drop_down_menu.dart';
+import 'package:sales_manager/ui/widgets/drop_down_menu.dart';
 import 'package:sales_manager/utils/show_snackbar.dart';
 
 class AreaManagerHome extends ConsumerStatefulWidget {
@@ -251,6 +251,7 @@ class TrackingData extends StatelessWidget {
               tapTargetSize: MaterialTapTargetSize.shrinkWrap,
             ),
             onPressed: () {
+              context.push(RoutePaths.viewExecutiveHistory);
               //TODO
             },
             child: Text(

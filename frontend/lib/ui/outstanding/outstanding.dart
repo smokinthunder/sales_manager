@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:sales_manager/config/providers/current_user_notifier.dart';
 import 'package:sales_manager/domain/models/user/user.dart';
-import 'package:sales_manager/ui/common/widgets/drop_down_menu.dart';
+import 'package:sales_manager/ui/widgets/drop_down_menu.dart';
 
 class ExecutiveOutStanding extends ConsumerStatefulWidget {
   const ExecutiveOutStanding({super.key});

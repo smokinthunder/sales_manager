@@ -17,4 +17,5 @@ abstract class RoutePaths {
   static const executiveShopDetails = '/executive/shop_details';
   static const consolidatedOrExecutiveAnalytics = '/analytics/consolidated';
   static const shopAnalytics = '/analytics/shop';
+  static const viewExecutiveHistory = '/view_executive_history';
 }

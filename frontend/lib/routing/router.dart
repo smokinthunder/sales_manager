@@ -5,15 +5,15 @@ import 'package:sales_manager/routing/go_routes.dart';
 import 'package:sales_manager/routing/route_paths.dart';
 import 'package:sales_manager/ui/auth/login_screen.dart';
 import 'package:sales_manager/ui/auth/otp_screen.dart';
-import 'package:sales_manager/ui/common/widgets/scaffold.dart';
-import 'package:sales_manager/ui/common/screens/loading_screen.dart';
+import 'package:sales_manager/ui/widgets/scaffold.dart';
+import 'package:sales_manager/ui/loading_screen.dart';
 
 final routerProvider = Provider<GoRouter>((ref) {
   // final user = ref.watch(authStreamProvider).valueOrNull;
   final user = ref.watch(currentUserNotifierProvider);
 
   return GoRouter(
-    initialLocation: RoutePaths.login,
+    initialLocation: RoutePaths.loading,
     routes: [
       loadinRoute,
       loginRoute,
@@ -39,6 +39,10 @@ final routerProvider = Provider<GoRouter>((ref) {
       // 1. User not logged in → force login unless already at login/otp
       if (user == null) {
         return isLoggingIn ? null : RoutePaths.login;
+      }
+
+      if (state.matchedLocation == RoutePaths.loading) {
+        return RoutePaths.home;
       }
 
       if (isLoggingIn) {
