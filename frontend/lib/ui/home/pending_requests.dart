@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
-import 'package:sales_manager/domain/models/shops/shop.dart';
 import 'package:sales_manager/routing/route_paths.dart';
 
 class PendingRequests extends StatefulWidget {

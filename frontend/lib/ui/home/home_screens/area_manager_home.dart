@@ -88,6 +88,7 @@ class _AreaManagerHomeState extends ConsumerState<AreaManagerHome> {
               tapTargetSize: MaterialTapTargetSize.shrinkWrap,
             ),
             onPressed: () {
+              context.push(RoutePaths.createTarget);
               //TODO
             },
             child: Row(
