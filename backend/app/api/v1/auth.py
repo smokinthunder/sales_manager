@@ -11,12 +11,13 @@ from typing import Dict, Any
 import structlog
 
 from app.core.errors import (
-    AuthenticationError, OTPError, NotFoundError,
-    create_error_response
+    AuthenticationError, OTPExpiredError, OTPInvalidError, NotFoundError
 )
 from app.services.auth_service import get_auth_service, AuthService
 from app.domain.models.user import UserLogin, UserOTP
 from app.core.rate_limit import create_rate_limit_dependency
+from app.api.deps import get_current_user
+from app.core.redis_client import get_redis_client
 
 logger = structlog.get_logger(__name__)
 
@@ -61,12 +62,11 @@ async def generate_otp(
         logger.info("OTP generated successfully", phone=phone, tenant_id=tenant_id)
         return result
         
-    except OTPError as e:
+    except OTPExpiredError as e:
         logger.warning("OTP generation failed", phone=phone, tenant_id=tenant_id, error=str(e))
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail=str(e.message),
-            headers={"X-Error-Code": e.error_code}
+            detail=e.message
         )
     except Exception as e:
         logger.error("Unexpected error in OTP generation", error=str(e))
@@ -111,12 +111,11 @@ async def verify_otp(
         logger.info("OTP verified successfully", phone=phone, tenant_id=tenant_id)
         return result
         
-    except OTPError as e:
+    except OTPExpiredError as e:
         logger.warning("OTP verification failed", phone=phone, tenant_id=tenant_id, error=str(e))
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail=str(e.message),
-            headers={"X-Error-Code": e.error_code}
+            detail=e.message
         )
     except AuthenticationError as e:
         logger.warning("Authentication failed", phone=phone, tenant_id=tenant_id, error=str(e))
@@ -190,15 +189,15 @@ async def refresh_token(
 
 @router.post("/logout")
 async def logout(
-    auth_service: AuthService = Depends(get_auth_service),
-    current_user: Dict[str, Any] = Depends(security)
+    current_user: Dict[str, Any] = Depends(get_current_user),
+    auth_service: AuthService = Depends(get_auth_service)
 ):
     """
     Logout user by invalidating refresh token.
     
     Args:
-        auth_service: Authentication service dependency
         current_user: Current authenticated user from token
+        auth_service: Authentication service dependency
         
     Returns:
         Logout success message
@@ -207,23 +206,14 @@ async def logout(
         HTTPException: If logout fails
     """
     try:
-        # Extract user ID from token
-        token = current_user.credentials
-        user_info = await auth_service.validate_token(token)
-        user_id = user_info["user_id"]
+        user_id = current_user.get("id")
+        tenant_id = current_user.get("tenant_id")
         
-        result = await auth_service.logout(user_id)
+        result = await auth_service.logout(user_id, tenant_id)
         
-        logger.info("User logged out successfully", user_id=user_id)
+        logger.info(f"User logged out successfully: user {user_id}")
         return result
         
-    except AuthenticationError as e:
-        logger.warning("Logout failed", error=str(e))
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail=str(e.message),
-            headers={"X-Error-Code": e.error_code}
-        )
     except Exception as e:
         logger.error("Unexpected error in logout", error=str(e))
         raise HTTPException(
@@ -234,14 +224,12 @@ async def logout(
 
 @router.get("/me")
 async def get_current_user_info(
-    auth_service: AuthService = Depends(get_auth_service),
-    current_user: Dict[str, Any] = Depends(security)
+    current_user: Dict[str, Any] = Depends(get_current_user)
 ):
     """
     Get current user information from token.
     
     Args:
-        auth_service: Authentication service dependency
         current_user: Current authenticated user from token
         
     Returns:
@@ -251,19 +239,18 @@ async def get_current_user_info(
         HTTPException: If token validation fails
     """
     try:
-        token = current_user.credentials
-        user_info = await auth_service.validate_token(token)
+        logger.info(f"User info retrieved successfully: user {current_user.get('id')}")
+        return {
+            "id": current_user.get("id"),
+            "phone": current_user.get("phone"),
+            "name": current_user.get("name"),
+            "role": current_user.get("role"),
+            "status": current_user.get("status"),
+            "tenant_id": current_user.get("tenant_id"),
+            "created_at": current_user.get("created_at"),
+            "updated_at": current_user.get("updated_at")
+        }
         
-        logger.info("User info retrieved successfully", user_id=user_info["user_id"])
-        return user_info
-        
-    except AuthenticationError as e:
-        logger.warning("Token validation failed", error=str(e))
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail=str(e.message),
-            headers={"X-Error-Code": e.error_code}
-        )
     except Exception as e:
         logger.error("Unexpected error getting user info", error=str(e))
         raise HTTPException(

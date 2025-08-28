@@ -15,8 +15,7 @@ from app.core.security import (
     get_password_hash, generate_otp
 )
 from app.core.errors import (
-    AuthenticationError, OTPError, NotFoundError,
-    log_error, raise_not_found_if_none
+    AuthenticationError, OTPExpiredError, OTPInvalidError, NotFoundError
 )
 from app.core.redis_client import get_redis_client
 from app.core.config import settings
@@ -47,7 +46,7 @@ class AuthService:
             Dictionary with OTP details
             
         Raises:
-            OTPError: If OTP generation fails
+            OTPExpiredError: If OTP generation fails
         """
         try:
             # Check if user exists
@@ -84,7 +83,7 @@ class AuthService:
                 lockout_until = await redis_client.get(lockout_key)
                 
                 if lockout_until and datetime.fromisoformat(lockout_until) > datetime.utcnow():
-                    raise OTPError(
+                    raise OTPExpiredError(
                         message="Too many OTP attempts. Please try again later.",
                         details={"lockout_until": lockout_until}
                     )
@@ -117,10 +116,10 @@ class AuthService:
             }
             
         except Exception as e:
-            log_error(e, context={"phone": phone, "tenant_id": tenant_id})
-            if isinstance(e, OTPError):
+            logger.error("Failed to generate OTP", error=str(e), phone=phone)
+            if isinstance(e, OTPExpiredError):
                 raise
-            raise OTPError(message="Failed to generate OTP", details={"error": str(e)})
+            raise OTPExpiredError(message="Failed to generate OTP", details={"error": str(e)})
     
     async def verify_otp(self, phone: str, otp: str, tenant_id: str) -> Dict[str, Any]:
         """
@@ -135,7 +134,7 @@ class AuthService:
             Dictionary with authentication tokens and user info
             
         Raises:
-            OTPError: If OTP verification fails
+            OTPExpiredError: If OTP verification fails
             AuthenticationError: If authentication fails
         """
         try:
@@ -145,7 +144,7 @@ class AuthService:
             stored_otp_data = await redis_client.get(otp_key)
             
             if not stored_otp_data:
-                raise OTPError(message="OTP expired or not found")
+                raise OTPExpiredError(message="OTP expired or not found")
             
             # Check OTP attempts
             attempts_key = f"otp_attempts:{phone}:{tenant_id}"
@@ -157,7 +156,7 @@ class AuthService:
                 lockout_key = f"otp_lockout:{phone}:{tenant_id}"
                 await redis_client.set(lockout_key, lockout_until.isoformat(), expire=self.otp_lockout_minutes * 60)
                 
-                raise OTPError(
+                raise OTPExpiredError(
                     message="Too many OTP attempts. Account temporarily locked.",
                     details={"lockout_until": lockout_until.isoformat()}
                 )
@@ -168,7 +167,7 @@ class AuthService:
                 await redis_client.increment(attempts_key, 1)
                 await redis_client.expire(attempts_key, 60 * 60)  # 1 hour expiry
                 
-                raise OTPError(message="Invalid OTP")
+                raise OTPExpiredError(message="Invalid OTP")
             
             # OTP is valid - get user
             data_layer = await get_data_layer_client()
@@ -198,7 +197,8 @@ class AuthService:
             
             refresh_token = create_refresh_token(
                 subject=user["id"],
-                expires_delta=timedelta(days=settings.refresh_token_expire_days)
+                expires_delta=timedelta(days=settings.refresh_token_expire_days),
+                tenant_id=user["tenant_id"]
             )
             
             # Store refresh token in Redis
@@ -209,7 +209,7 @@ class AuthService:
                 expire=settings.refresh_token_expire_days * 24 * 60 * 60
             )
             
-            logger.info("User authenticated successfully", user_id=user["id"], phone=phone)
+            logger.info(f"User authenticated successfully: user {user['id']}, phone {phone}")
             
             return {
                 "access_token": access_token,
@@ -227,8 +227,8 @@ class AuthService:
             }
             
         except Exception as e:
-            log_error(e, context={"phone": phone, "tenant_id": tenant_id})
-            if isinstance(e, (OTPError, AuthenticationError, NotFoundError)):
+            logger.error("Authentication failed", error=str(e), phone=phone, tenant_id=tenant_id)
+            if isinstance(e, (OTPExpiredError, AuthenticationError, NotFoundError)):
                 raise
             raise AuthenticationError(message="Authentication failed", details={"error": str(e)})
     
@@ -257,7 +257,7 @@ class AuthService:
             
             # Check if refresh token exists in Redis
             redis_client = await get_redis_client()
-            refresh_key = f"refresh_token:{user_id}"
+            refresh_key = f"refresh_token:{user_id}:{payload.get('tenant_id', 'unknown')}"
             stored_refresh = await redis_client.get(refresh_key)
             
             if not stored_refresh or stored_refresh != refresh_token:
@@ -265,12 +265,12 @@ class AuthService:
             
             # Get user from Data Layer
             data_layer = await get_data_layer_client()
-            user = await data_layer.get_user_by_id(user_id)
+            user = await data_layer.get_user_by_id(user_id, payload.get("tenant_id", "unknown"))
             
             if not user:
                 raise AuthenticationError(message="User not found")
             
-            if user["status"] != UserStatus.ACTIVE:
+            if user["status"] != "active":
                 raise AuthenticationError(message="User account not active")
             
             # Generate new access token
@@ -281,7 +281,7 @@ class AuthService:
                 tenant_id=user["tenant_id"]
             )
             
-            logger.info("Access token refreshed", user_id=user["id"])
+            logger.info(f"Access token refreshed: user {user['id']}")
             
             return {
                 "access_token": new_access_token,
@@ -290,34 +290,35 @@ class AuthService:
             }
             
         except Exception as e:
-            log_error(e, context={"refresh_token": refresh_token[:10] + "..."})
+            logger.error("Token refresh failed", error=str(e), context={"refresh_token": refresh_token[:10] + "..."})
             if isinstance(e, AuthenticationError):
                 raise
             raise AuthenticationError(message="Token refresh failed", details={"error": str(e)})
     
-    async def logout(self, user_id: int) -> Dict[str, str]:
+    async def logout(self, user_id: int, tenant_id: str) -> Dict[str, str]:
         """
         Logout user by invalidating refresh token.
         
         Args:
             user_id: User ID to logout
+            tenant_id: Tenant ID for the user
             
         Returns:
             Success message
         """
         try:
             redis_client = await get_redis_client()
-            refresh_key = f"refresh_token:{user_id}"
+            refresh_key = f"refresh_token:{user_id}:{tenant_id}"
             
             # Remove refresh token
             await redis_client.delete(refresh_key)
             
-            logger.info("User logged out", user_id=user_id)
+            logger.info(f"User logged out: user {user_id}, tenant {tenant_id}")
             
             return {"message": "Logged out successfully"}
             
         except Exception as e:
-            log_error(e, context={"user_id": user_id})
+            logger.error("Logout failed", error=str(e), context={"user_id": user_id})
             # Don't raise error for logout failures
             return {"message": "Logged out successfully"}
     
@@ -345,12 +346,12 @@ class AuthService:
             
             # Get user from Data Layer
             data_layer = await get_data_layer_client()
-            user = await data_layer.get_user_by_id(user_id)
+            user = await data_layer.get_user_by_id(user_id, payload.get("tenant_id", "unknown"))
             
             if not user:
                 raise AuthenticationError(message="User not found")
             
-            if user["status"] != UserStatus.ACTIVE:
+            if user["status"] != "active":
                 raise AuthenticationError(message="User account not active")
             
             return {
@@ -363,7 +364,7 @@ class AuthService:
             }
             
         except Exception as e:
-            log_error(e, context={"token": token[:10] + "..."})
+            logger.error("Token validation failed", error=str(e), context={"token": token[:10] + "..."})
             if isinstance(e, AuthenticationError):
                 raise
             raise AuthenticationError(message="Token validation failed", details={"error": str(e)})

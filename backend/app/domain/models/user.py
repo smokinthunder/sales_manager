@@ -273,3 +273,13 @@ class UserOTP(BasePydanticModel):
     phone: str = Field(..., description="Phone number")
     otp: str = Field(..., description="One-time password")
     expires_at: datetime = Field(..., description="OTP expiration time")
+
+
+class ProfileUpdateResponse(BasePydanticModel):
+    """Response model for profile update operations."""
+    
+    status: str = Field(..., description="Update status")
+    message: str = Field(..., description="Status message")
+    request_id: Optional[str] = Field(None, description="Approval request ID")
+    approval_required: bool = Field(False, description="Whether approval is required")
+    user: Optional[UserRead] = Field(None, description="Updated user data if no approval required")

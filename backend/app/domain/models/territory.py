@@ -17,6 +17,7 @@ class Territory(BaseEntity):
     
     __tablename__ = "territories"
     
+    territory_id: Mapped[str] = mapped_column(String(20), unique=True, nullable=False, index=True)
     name: Mapped[str] = mapped_column(String(100), nullable=False)
     code: Mapped[str] = mapped_column(String(20), unique=True, nullable=False, index=True)
     description: Mapped[Optional[str]] = mapped_column(String(500), nullable=True)
@@ -58,6 +59,7 @@ class Territory(BaseEntity):
 class TerritoryBase(BasePydanticModel):
     """Base territory model with common fields."""
     
+    territory_id: str = Field(..., description="Unique territory identifier")
     name: str = Field(..., description="Territory name")
     code: str = Field(..., description="Unique territory code")
     description: Optional[str] = Field(None, description="Territory description")
@@ -73,6 +75,7 @@ class TerritoryCreate(TerritoryBase):
 class TerritoryUpdate(BasePydanticModel):
     """Model for updating existing territories."""
     
+    territory_id: Optional[str] = None
     name: Optional[str] = None
     code: Optional[str] = None
     description: Optional[str] = None

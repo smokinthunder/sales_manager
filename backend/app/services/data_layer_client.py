@@ -108,6 +108,23 @@ class DataLayerClient:
                 return user
         return None
     
+    async def get_user_by_id(self, user_id: str, tenant_id: str) -> Optional[Dict[str, Any]]:
+        """
+        Get user by ID for a specific tenant.
+        
+        Args:
+            user_id: User ID
+            tenant_id: Tenant identifier
+            
+        Returns:
+            User data or None if not found
+        """
+        users = await self.get_users(tenant_id)
+        for user in users:
+            if str(user.get("id")) == str(user_id):
+                return user
+        return None
+    
     async def create_user(self, user_data: Dict[str, Any]) -> Dict[str, Any]:
         """
         Create a new user.

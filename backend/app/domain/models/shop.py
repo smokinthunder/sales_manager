@@ -26,6 +26,7 @@ class Shop(BaseEntity):
     
     __tablename__ = "shops"
     
+    shop_id: Mapped[str] = mapped_column(String(20), unique=True, nullable=False, index=True)
     name: Mapped[str] = mapped_column(String(100), nullable=False)
     code: Mapped[str] = mapped_column(String(20), unique=True, nullable=False, index=True)
     status: Mapped[ShopStatus] = mapped_column(SQLEnum(ShopStatus), default=ShopStatus.ACTIVE)
@@ -86,6 +87,7 @@ class Shop(BaseEntity):
 class ShopBase(BasePydanticModel):
     """Base shop model with common fields."""
     
+    shop_id: str = Field(..., description="Unique shop identifier")
     name: str = Field(..., description="Shop name")
     code: str = Field(..., description="Unique shop code")
     status: ShopStatus = Field(default=ShopStatus.ACTIVE, description="Shop status")
@@ -106,6 +108,7 @@ class ShopCreate(ShopBase):
 class ShopUpdate(BasePydanticModel):
     """Model for updating existing shops."""
     
+    shop_id: Optional[str] = None
     name: Optional[str] = None
     code: Optional[str] = None
     status: Optional[ShopStatus] = None
