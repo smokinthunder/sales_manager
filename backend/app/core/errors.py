@@ -33,56 +33,56 @@ class AuthenticationError(BaseError):
     """Raised when authentication fails."""
     
     def __init__(self, message: str = "Authentication failed", details: Optional[Dict[str, Any]] = None):
-        super().__init__(message, details, status_code=401)
+        super().__init__(message, details, 401)
 
 
 class AuthorizationError(BaseError):
     """Raised when authorization fails."""
     
     def __init__(self, message: str = "Insufficient permissions", details: Optional[Dict[str, Any]] = None):
-        super().__init__(message, details, status_code=403)
+        super().__init__(message, details, 403)
 
 
 class ValidationError(BaseError):
     """Raised when data validation fails."""
     
     def __init__(self, message: str = "Validation failed", details: Optional[Dict[str, Any]] = None):
-        super().__init__(message, details, status_code=422)
+        super().__init__(message, details, 422)
 
 
 class NotFoundError(BaseError):
     """Raised when a requested resource is not found."""
     
     def __init__(self, message: str = "Resource not found", details: Optional[Dict[str, Any]] = None):
-        super().__init__(message, details, status_code=404)
+        super().__init__(message, details, 404)
 
 
 class ConflictError(BaseError):
     """Raised when there's a conflict with existing data."""
     
     def __init__(self, message: str = "Resource conflict", details: Optional[Dict[str, Any]] = None):
-        super().__init__(message, details, status_code=409)
+        super().__init__(message, details, 409)
 
 
 class RateLimitError(BaseError):
     """Raised when rate limits are exceeded."""
     
     def __init__(self, message: str = "Rate limit exceeded", details: Optional[Dict[str, Any]] = None):
-        super().__init__(message, details, status_code=429)
+        super().__init__(message, details, 429)
 
 
 class DatabaseError(BaseError):
     """Raised when database operations fail."""
     
     def __init__(self, message: str = "Database operation failed", details: Optional[Dict[str, Any]] = None):
-        super().__init__(message, details, status_code=500)
+        super().__init__(message, details, 500)
 
 
 class ExternalServiceError(BaseError):
     """Raised when external service calls fail."""
     
     def __init__(self, message: str = "External service error", details: Optional[Dict[str, Any]] = None):
-        super().__init__(message, details, status_code=503)
+        super().__init__(message, details, 503)
 
 
 # User Management Errors
@@ -90,49 +90,56 @@ class UserNotFoundError(NotFoundError):
     """Raised when a user is not found."""
     
     def __init__(self, message: str = "User not found", details: Optional[Dict[str, Any]] = None):
-        super().__init__(message, details, status_code=404)
+        super().__init__(message, details)
 
 
 class UserAlreadyExistsError(ConflictError):
     """Raised when trying to create a user that already exists."""
     
     def __init__(self, message: str = "User already exists", details: Optional[Dict[str, Any]] = None):
-        super().__init__(message, details, status_code=409)
+        super().__init__(message, details)
+
+
+class TenantAlreadyExistsError(ConflictError):
+    """Raised when trying to create a user with a tenant ID that already exists."""
+    
+    def __init__(self, message: str = "Tenant already exists", details: Optional[Dict[str, Any]] = None):
+        super().__init__(message, details)
 
 
 class InvalidUserDataError(ValidationError):
     """Raised when user data is invalid."""
     
     def __init__(self, message: str = "Invalid user data", details: Optional[Dict[str, Any]] = None):
-        super().__init__(message, details, status_code=422)
+        super().__init__(message, details)
 
 
 class InsufficientPermissionsError(AuthorizationError):
     """Raised when user lacks required permissions."""
     
     def __init__(self, message: str = "Insufficient permissions", details: Optional[Dict[str, Any]] = None):
-        super().__init__(message, details, status_code=403)
+        super().__init__(message, details)
 
 
 class ProfileUpdatePendingApprovalError(ConflictError):
     """Raised when profile update is pending approval."""
     
     def __init__(self, message: str = "Profile update pending approval", details: Optional[Dict[str, Any]] = None):
-        super().__init__(message, details, status_code=409)
+        super().__init__(message, details)
 
 
 class ApprovalRequiredError(AuthorizationError):
     """Raised when approval is required for an operation."""
     
     def __init__(self, message: str = "Approval required", details: Optional[Dict[str, Any]] = None):
-        super().__init__(message, details, status_code=403)
+        super().__init__(message, details)
 
 
 class InvalidApproverError(AuthorizationError):
     """Raised when the approver is not authorized."""
     
     def __init__(self, message: str = "Invalid approver", details: Optional[Dict[str, Any]] = None):
-        super().__init__(message, details, status_code=403)
+        super().__init__(message, details)
 
 
 # Territory Management Errors

@@ -31,6 +31,7 @@ class BaseEntity(Base):
 class BasePydanticModel(BaseModel):
     """Base Pydantic model with common configuration."""
     
-    class Config:
-        from_attributes = True
-        arbitrary_types_allowed = True
+    model_config = {
+        "from_attributes": True,
+        "arbitrary_types_allowed": True
+    }

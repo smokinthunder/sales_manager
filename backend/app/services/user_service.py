@@ -29,6 +29,13 @@ class UserService:
     
     def __init__(self):
         self.data_layer = None
+        self.approval_service = None
+    
+    async def _get_approval_service(self):
+        """Get Approval Service."""
+        if not self.approval_service:
+            self.approval_service = await get_approval_service()
+        return self.approval_service
     
     async def _get_data_layer(self):
         """Get Data Layer client."""
@@ -71,19 +78,31 @@ class UserService:
         
         # Create user
         try:
-            created_user = await data_layer.create_user(user_data)
+            # Enrich user data with metadata
+            user_dict = user_data.model_dump() if hasattr(user_data, 'model_dump') else dict(user_data)
+            enriched_user_data = {
+                **user_dict,
+                "created_by": current_user.get("id"),
+                "updated_by": current_user.get("id"),
+                "created_at": datetime.utcnow().isoformat(),
+                "updated_at": datetime.utcnow().isoformat()
+            }
+            
+            # Ensure email is properly set if provided
+            if user_data.email:
+                enriched_user_data["email"] = user_data.email
+            
+            # Debug logging to see what's being sent
+            logger.info(f"Sending enriched user data to Data Layer: {enriched_user_data}")
+            
+            created_user = await data_layer.create_user(enriched_user_data)
             logger.info(
-                "User created successfully", 
-                user_id=created_user.get("id"),
-                phone=user_data.phone,
-                created_by=current_user.get("id")
+                f"User created successfully: user {created_user.get('id')}, phone {user_data.phone}, created_by {current_user.get('id')}"
             )
             return created_user
         except Exception as e:
             logger.error(
-                "Failed to create user", 
-                error=str(e),
-                phone=user_data.phone
+                f"Failed to create user: {str(e)}, phone {user_data.phone}"
             )
             raise InvalidUserDataError(
                 message="Failed to create user",
@@ -213,21 +232,8 @@ class UserService:
         
         # If superadmin is updating, no approval needed
         if current_user.get("role") == "superadmin":
-            # TODO: Implement actual update in Data Layer
-            updated_user = {**existing_user}
-            
-            # Update fields if provided
-            if user_data.name is not None:
-                updated_user["name"] = user_data.name
-            if user_data.email is not None:
-                updated_user["email"] = user_data.email
-            if user_data.role is not None:
-                updated_user["role"] = user_data.role
-            if user_data.status is not None:
-                updated_user["status"] = user_data.status
-            
-            updated_user["updated_at"] = datetime.utcnow().isoformat()
-            updated_user["updated_by"] = current_user.get("id")
+            # Call Data Layer to update user
+            updated_user = await data_layer.update_user(user_id, user_data, tenant_id, current_user.get("id"))
             
             logger.info(
                 f"User updated successfully by superadmin: user {user_id}, updated by {current_user.get('id')}"
@@ -241,24 +247,11 @@ class UserService:
                 "user": updated_user
             }
         
-        # If admin is updating another user, no approval needed
-        if (current_user.get("role") in ["client_admin"] and 
+        # If client_admin is updating another user, no approval needed
+        if (current_user.get("role") == "client_admin" and 
             str(current_user.get("id")) != str(user_id)):
-            # TODO: Implement actual update in Data Layer
-            updated_user = {**existing_user}
-            
-            # Update fields if provided
-            if user_data.name is not None:
-                updated_user["name"] = user_data.name
-            if user_data.email is not None:
-                updated_user["email"] = user_data.email
-            if user_data.role is not None:
-                updated_user["role"] = user_data.role
-            if user_data.status is not None:
-                updated_user["status"] = user_data.status
-            
-            updated_user["updated_at"] = datetime.utcnow().isoformat()
-            updated_user["updated_by"] = current_user.get("id")
+            # Call Data Layer to update user
+            updated_user = await data_layer.update_user(user_id, user_data, tenant_id, current_user.get("id"))
             
             logger.info(
                 f"User updated successfully by admin: user {user_id}, updated by {current_user.get('id')}"
@@ -270,6 +263,26 @@ class UserService:
                 "request_id": None,
                 "approval_required": False,
                 "user": updated_user
+            }
+        
+        # For sales_executive and area_manager, approval is required
+        if current_user.get("role") in ["sales_executive", "area_manager"]:
+            # Create approval request instead of direct update
+            approval_service = await self._get_approval_service()
+            approval_request = await approval_service.create_profile_update_request(
+                user_id, user_data, current_user, tenant_id
+            )
+            
+            logger.info(
+                f"Profile update approval request created: user {user_id}, requested by {current_user.get('id')}"
+            )
+            
+            return {
+                "status": "pending_approval",
+                "message": "Profile update request submitted for approval",
+                "request_id": approval_request.get("id"),
+                "approval_required": True,
+                "user": None
             }
         
         # For self-updates, approval is required
@@ -374,12 +387,13 @@ class UserService:
             )
         
         # Soft delete by setting status to inactive
-        # TODO: Implement actual update in Data Layer
+        result = await data_layer.delete_user(user_id, tenant_id)
+        
         logger.info(
             f"User soft deleted successfully: user {user_id} deleted by {current_user.get('id')}"
         )
         
-        return True
+        return result
     
     async def get_user_profile(self, current_user: Dict[str, Any]) -> Dict[str, Any]:
         """

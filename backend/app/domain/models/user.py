@@ -6,11 +6,11 @@ and multi-tenant support.
 """
 
 from datetime import datetime
-from typing import Optional, List
+from typing import Optional, List, Dict, Any
 from enum import Enum
 from sqlalchemy import String, Integer, ForeignKey, Enum as SQLEnum
 from sqlalchemy.orm import relationship, Mapped, mapped_column
-from pydantic import Field, validator
+from pydantic import Field, field_validator
 from .base import Base, BaseEntity, BasePydanticModel
 
 
@@ -228,7 +228,8 @@ class UserBase(BasePydanticModel):
     status: UserStatus = Field(default=UserStatus.PENDING_APPROVAL, description="Account status")
     tenant_id: str = Field(..., description="Tenant identifier for multi-tenancy")
     
-    @validator("phone")
+    @field_validator("phone")
+    @classmethod
     def validate_phone(cls, v):
         """Validate phone number format."""
         if not v or len(v) < 10:
@@ -283,3 +284,52 @@ class ProfileUpdateResponse(BasePydanticModel):
     request_id: Optional[str] = Field(None, description="Approval request ID")
     approval_required: bool = Field(False, description="Whether approval is required")
     user: Optional[UserRead] = Field(None, description="Updated user data if no approval required")
+
+
+# Authentication models
+class OTPGenerateRequest(BasePydanticModel):
+    """Request model for OTP generation."""
+    
+    phone: str = Field(..., description="Phone number for OTP")
+    tenant_id: str = Field(..., description="Tenant identifier")
+
+
+class OTPVerifyRequest(BasePydanticModel):
+    """Request model for OTP verification."""
+    
+    phone: str = Field(..., description="Phone number")
+    otp: str = Field(..., description="One-time password")
+    tenant_id: str = Field(..., description="Tenant identifier")
+
+
+class TokenRefreshRequest(BasePydanticModel):
+    """Request model for token refresh."""
+    
+    refresh_token: str = Field(..., description="Refresh token")
+
+
+class AuthResponse(BasePydanticModel):
+    """Response model for authentication operations."""
+    
+    access_token: str = Field(..., description="JWT access token")
+    refresh_token: str = Field(..., description="JWT refresh token")
+    token_type: str = Field(default="bearer", description="Token type")
+    expires_in: int = Field(..., description="Access token expiration time in seconds")
+    user: Optional[Dict[str, Any]] = Field(None, description="User information (for OTP verification)")
+
+
+class TokenRefreshResponse(BasePydanticModel):
+    """Response model for token refresh operations."""
+    
+    access_token: str = Field(..., description="New JWT access token")
+    token_type: str = Field(default="bearer", description="Token type")
+    expires_in: int = Field(..., description="Access token expiration time in seconds")
+
+
+class OTPResponse(BasePydanticModel):
+    """Response model for OTP operations."""
+    
+    message: str = Field(..., description="Operation message")
+    phone: str = Field(..., description="Phone number")
+    expires_in_minutes: int = Field(..., description="OTP expiration time in minutes")
+    is_new_user: bool = Field(..., description="Whether this is a new user")

@@ -262,7 +262,6 @@ async def base_error_handler(request: Request, exc: BaseError):
         "Sales Manager exception",
         url=str(request.url),
         error_type=exc.__class__.__name__,
-        error_code=exc.error_code,
         message=exc.message,
         details=exc.details,
         status_code=exc.status_code

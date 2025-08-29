@@ -144,6 +144,46 @@ class DataLayerClient:
             user_dict = dict(user_data)
             
         return await self._make_request("POST", f"/api/users/{user_dict['tenant_id']}", json=user_dict)
+
+    async def update_user(self, user_id: str, user_data: Any, tenant_id: str, updated_by: Optional[int] = None) -> Dict[str, Any]:
+        """
+        Update user data in the Data Layer service.
+        
+        Args:
+            user_id: User ID to update
+            user_data: User data to update (can be Pydantic model or dict)
+            tenant_id: Tenant identifier
+            updated_by: ID of user making the update
+            
+        Returns:
+            Updated user data
+        """
+        # Convert Pydantic model to dict if needed
+        if hasattr(user_data, 'model_dump'):
+            user_dict = user_data.model_dump(exclude_none=True)
+        elif hasattr(user_data, 'dict'):
+            user_dict = user_data.dict(exclude_none=True)
+        else:
+            user_dict = dict(user_data)
+        
+        # Add updated_by if provided
+        if updated_by is not None:
+            user_dict["updated_by"] = updated_by
+            
+        return await self._make_request("PUT", f"/api/users/{tenant_id}/{user_id}", json=user_dict)
+
+    async def delete_user(self, user_id: str, tenant_id: str) -> Dict[str, Any]:
+        """
+        Delete user (soft delete) in the Data Layer service.
+        
+        Args:
+            user_id: User ID to delete
+            tenant_id: Tenant identifier
+            
+        Returns:
+            Deletion result
+        """
+        return await self._make_request("DELETE", f"/api/users/{tenant_id}/{user_id}")
     
     async def get_shops(
         self, 

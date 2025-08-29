@@ -14,7 +14,11 @@ from app.core.errors import (
     AuthenticationError, OTPExpiredError, OTPInvalidError, NotFoundError
 )
 from app.services.auth_service import get_auth_service, AuthService
-from app.domain.models.user import UserLogin, UserOTP
+from app.domain.models.user import (
+    UserLogin, UserOTP, 
+    OTPGenerateRequest, OTPVerifyRequest, TokenRefreshRequest,
+    AuthResponse, OTPResponse, TokenRefreshResponse
+)
 from app.core.rate_limit import create_rate_limit_dependency
 from app.api.deps import get_current_user
 from app.core.redis_client import get_redis_client
@@ -28,9 +32,9 @@ security = HTTPBearer()
 rate_limit_auth = create_rate_limit_dependency(limit=5)  # 5 requests per minute
 
 
-@router.post("/otp/generate")
+@router.post("/otp/generate", response_model=OTPResponse)
 async def generate_otp(
-    request: Dict[str, Any],
+    request: OTPGenerateRequest,
     auth_service: AuthService = Depends(get_auth_service),
     _: None = Depends(rate_limit_auth)
 ):
@@ -38,32 +42,23 @@ async def generate_otp(
     Generate OTP for user authentication.
     
     Args:
-        request: Dictionary with phone and tenant_id
+        request: OTP generation request with phone and tenant_id
         auth_service: Authentication service dependency
         
     Returns:
-        OTP generation result
+        OTP generation result with expiration time
         
     Raises:
         HTTPException: If OTP generation fails
     """
     try:
-        phone = request.get("phone")
-        tenant_id = request.get("tenant_id")
+        result = await auth_service.generate_otp(request.phone, request.tenant_id)
         
-        if not phone or not tenant_id:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Phone and tenant_id are required"
-            )
-        
-        result = await auth_service.generate_otp(phone, tenant_id)
-        
-        logger.info("OTP generated successfully", phone=phone, tenant_id=tenant_id)
+        logger.info("OTP generated successfully", phone=request.phone, tenant_id=request.tenant_id)
         return result
         
     except OTPExpiredError as e:
-        logger.warning("OTP generation failed", phone=phone, tenant_id=tenant_id, error=str(e))
+        logger.warning("OTP generation failed", phone=request.phone, tenant_id=request.tenant_id, error=str(e))
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=e.message
@@ -76,9 +71,9 @@ async def generate_otp(
         )
 
 
-@router.post("/otp/verify")
+@router.post("/otp/verify", response_model=AuthResponse)
 async def verify_otp(
-    request: Dict[str, Any],
+    request: OTPVerifyRequest,
     auth_service: AuthService = Depends(get_auth_service),
     _: None = Depends(rate_limit_auth)
 ):
@@ -86,50 +81,38 @@ async def verify_otp(
     Verify OTP and authenticate user.
     
     Args:
-        request: Dictionary with phone, otp, and tenant_id
+        request: OTP verification request with phone, otp, and tenant_id
         auth_service: Authentication service dependency
         
     Returns:
-        Authentication result with tokens
+        Authentication result with access and refresh tokens
         
     Raises:
         HTTPException: If OTP verification fails
     """
     try:
-        phone = request.get("phone")
-        otp = request.get("otp")
-        tenant_id = request.get("tenant_id")
+        result = await auth_service.verify_otp(request.phone, request.otp, request.tenant_id)
         
-        if not phone or not otp or not tenant_id:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Phone, OTP, and tenant_id are required"
-            )
-        
-        result = await auth_service.verify_otp(phone, otp, tenant_id)
-        
-        logger.info("OTP verified successfully", phone=phone, tenant_id=tenant_id)
+        logger.info("OTP verified successfully", phone=request.phone, tenant_id=request.tenant_id)
         return result
         
     except OTPExpiredError as e:
-        logger.warning("OTP verification failed", phone=phone, tenant_id=tenant_id, error=str(e))
+        logger.warning("OTP verification failed", phone=request.phone, tenant_id=request.tenant_id, error=str(e))
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=e.message
         )
     except AuthenticationError as e:
-        logger.warning("Authentication failed", phone=phone, tenant_id=tenant_id, error=str(e))
+        logger.warning("Authentication failed", phone=request.phone, tenant_id=request.tenant_id, error=str(e))
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail=str(e.message),
-            headers={"X-Error-Code": e.error_code}
+            detail=str(e.message)
         )
     except NotFoundError as e:
-        logger.warning("User not found", phone=phone, tenant_id=tenant_id, error=str(e))
+        logger.warning("User not found", phone=request.phone, tenant_id=request.tenant_id, error=str(e))
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail=str(e.message),
-            headers={"X-Error-Code": e.error_code}
+            detail=str(e.message)
         )
     except Exception as e:
         logger.error("Unexpected error in OTP verification", error=str(e))
@@ -139,9 +122,9 @@ async def verify_otp(
         )
 
 
-@router.post("/token/refresh")
+@router.post("/token/refresh", response_model=TokenRefreshResponse)
 async def refresh_token(
-    request: Dict[str, Any],
+    request: TokenRefreshRequest,
     auth_service: AuthService = Depends(get_auth_service),
     _: None = Depends(rate_limit_auth)
 ):
@@ -149,25 +132,17 @@ async def refresh_token(
     Refresh access token using refresh token.
     
     Args:
-        request: Dictionary with refresh_token
+        request: Token refresh request with refresh_token
         auth_service: Authentication service dependency
         
     Returns:
-        New access token
+        New access and refresh tokens
         
     Raises:
         HTTPException: If token refresh fails
     """
     try:
-        refresh_token = request.get("refresh_token")
-        
-        if not refresh_token:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Refresh token is required"
-            )
-        
-        result = await auth_service.refresh_token(refresh_token)
+        result = await auth_service.refresh_token(request.refresh_token)
         
         logger.info("Token refreshed successfully")
         return result
@@ -176,8 +151,7 @@ async def refresh_token(
         logger.warning("Token refresh failed", error=str(e))
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail=str(e.message),
-            headers={"X-Error-Code": e.error_code}
+            detail=str(e.message)
         )
     except Exception as e:
         logger.error("Unexpected error in token refresh", error=str(e))
