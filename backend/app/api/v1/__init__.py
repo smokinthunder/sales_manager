@@ -1,10 +1,15 @@
 """
-API v1 package for the Sales Manager Backend.
+API v1 module.
 
-This package contains version 1 of the API endpoints.
+Contains all API endpoints for version 1 of the API.
 """
 
-from .users import router as users_router
 from .auth import router as auth_router
+from .users import router as users_router
+from .territories import router as territories_router
 
-__all__ = ["users_router", "auth_router"]
+__all__ = [
+    "auth_router",
+    "users_router",
+    "territories_router"
+]

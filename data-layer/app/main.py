@@ -50,15 +50,25 @@ engine = create_engine(DATABASE_URL, pool_pre_ping=True)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 # Data models for API responses
+class UserUpdate(BaseModel):
+    name: Optional[str] = None
+    email: Optional[str] = None
+    role: Optional[str] = None
+    status: Optional[str] = None
+    updated_by: Optional[int] = None
+
 class UserResponse(BaseModel):
     id: int
     phone: str
     name: str
+    email: Optional[str] = None
     role: str
     status: str
     tenant_id: str
     created_at: datetime
     updated_at: datetime
+    created_by: Optional[int] = None
+    updated_by: Optional[int] = None
 
 class ShopResponse(BaseModel):
     id: int
@@ -74,10 +84,14 @@ class TerritoryResponse(BaseModel):
     id: int
     territory_id: str
     name: str
-    description: str
+    code: str
+    description: Optional[str] = None
+    area_manager_id: Optional[int] = None
     tenant_id: str
     created_at: datetime
     updated_at: datetime
+    created_by: Optional[int] = None
+    updated_by: Optional[int] = None
 
 class VisitResponse(BaseModel):
     id: int
@@ -143,7 +157,7 @@ async def get_users(tenant_id: str, db=Depends(get_db)):
     """Get users for a specific tenant"""
     try:
         query = text("""
-            SELECT id, phone, name, role, status, tenant_id, created_at, updated_at
+            SELECT id, phone, name, email, role, status, tenant_id, created_at, updated_at, created_by, updated_by
             FROM users 
             WHERE tenant_id = :tenant_id
         """)
@@ -156,11 +170,14 @@ async def get_users(tenant_id: str, db=Depends(get_db)):
                 id=row[0],
                 phone=row[1],
                 name=row[2],
-                role=row[3],
-                status=row[4],
-                tenant_id=row[5],
-                created_at=row[6],
-                updated_at=row[7]
+                email=row[3],
+                role=row[4],
+                status=row[5],
+                tenant_id=row[6],
+                created_at=row[7],
+                updated_at=row[8],
+                created_by=row[9],
+                updated_by=row[10]
             ))
         
         return users
@@ -171,52 +188,126 @@ async def get_users(tenant_id: str, db=Depends(get_db)):
         logger.error(f"Unexpected error: {e}")
         raise HTTPException(status_code=500, detail="Internal server error")
 
-# User creation model
-class UserCreate(BaseModel):
-    phone: str
-    name: str
-    role: str
-    tenant_id: str
-    status: str = "pending_approval"
 
-@app.post("/api/users/{tenant_id}", response_model=UserResponse)
-async def create_user(tenant_id: str, user_data: UserCreate, db=Depends(get_db)):
-    """Create a new user for a specific tenant"""
+@app.delete("/api/users/{tenant_id}/{user_id}")
+async def delete_user(tenant_id: str, user_id: str, db=Depends(get_db)):
+    """Soft delete a user by setting status to inactive"""
     try:
-        # Check if user with same phone already exists
+        # Check if user exists
         check_query = text("""
-            SELECT id FROM users 
-            WHERE phone = :phone AND tenant_id = :tenant_id
+            SELECT id, status FROM users 
+            WHERE id = :user_id AND tenant_id = :tenant_id
         """)
         
         existing_user = db.execute(check_query, {
-            "phone": user_data.phone,
+            "user_id": user_id,
             "tenant_id": tenant_id
         }).fetchone()
         
-        if existing_user:
-            raise HTTPException(status_code=400, detail="User with this phone number already exists")
+        if not existing_user:
+            raise HTTPException(status_code=404, detail="User not found")
         
-        # Create new user
-        insert_query = text("""
-            INSERT INTO users (phone, name, role, tenant_id, status, created_at, updated_at)
-            VALUES (:phone, :name, :role, :tenant_id, :status, NOW(), NOW())
+        if existing_user[1] == "inactive":
+            raise HTTPException(status_code=400, detail="User is already inactive")
+        
+        # Soft delete by setting status to inactive
+        update_query = text("""
+            UPDATE users 
+            SET status = 'inactive', updated_at = NOW() 
+            WHERE id = :user_id AND tenant_id = :tenant_id
         """)
         
-        result = db.execute(insert_query, {
-            "phone": user_data.phone,
-            "name": user_data.name,
-            "role": user_data.role,
-            "tenant_id": tenant_id,
-            "status": user_data.status
+        result = db.execute(update_query, {
+            "user_id": user_id,
+            "tenant_id": tenant_id
         })
         
         db.commit()
         
-        # Get the created user
-        user_id = result.lastrowid
+        if result.rowcount == 0:
+            raise HTTPException(status_code=500, detail="Failed to update user")
+        
+        return {
+            "message": "User deleted successfully",
+            "user_id": user_id,
+            "status": "inactive",
+            "deleted_at": datetime.now().isoformat()
+        }
+        
+    except HTTPException:
+        raise
+    except SQLAlchemyError as e:
+        db.rollback()
+        logger.error(f"Database error: {e}")
+        raise HTTPException(status_code=500, detail="Database error")
+    except Exception as e:
+        db.rollback()
+        logger.error(f"Unexpected error: {e}")
+        raise HTTPException(status_code=500, detail="Internal server error")
+
+
+@app.put("/api/users/{tenant_id}/{user_id}")
+async def update_user(tenant_id: str, user_id: str, user_data: UserUpdate, db=Depends(get_db)):
+    """Update user data"""
+    try:
+        # Check if user exists
+        check_query = text("""
+            SELECT id FROM users 
+            WHERE id = :user_id AND tenant_id = :tenant_id
+        """)
+        
+        existing_user = db.execute(check_query, {
+            "user_id": user_id,
+            "tenant_id": tenant_id
+        }).fetchone()
+        
+        if not existing_user:
+            raise HTTPException(status_code=404, detail="User not found")
+        
+        # Build dynamic UPDATE query based on provided fields
+        update_fields = []
+        params = {"user_id": user_id, "tenant_id": tenant_id}
+        
+        if user_data.name is not None:
+            update_fields.append("name = :name")
+            params["name"] = user_data.name
+        
+        if user_data.email is not None:
+            update_fields.append("email = :email")
+            params["email"] = user_data.email
+        
+        if user_data.role is not None:
+            update_fields.append("role = :role")
+            params["role"] = user_data.role
+        
+        if user_data.status is not None:
+            update_fields.append("status = :status")
+            params["status"] = user_data.status
+        
+        if not update_fields:
+            raise HTTPException(status_code=400, detail="No fields to update")
+        
+        # Add timestamp and updated_by if provided
+        update_fields.append("updated_at = NOW()")
+        if user_data.updated_by is not None:
+            update_fields.append("updated_by = :updated_by")
+            params["updated_by"] = user_data.updated_by
+        
+        update_query = text(f"""
+            UPDATE users 
+            SET {', '.join(update_fields)}
+            WHERE id = :user_id AND tenant_id = :tenant_id
+        """)
+        
+        result = db.execute(update_query, params)
+        db.commit()
+        
+        if result.rowcount == 0:
+            raise HTTPException(status_code=500, detail="Failed to update user")
+        
+        # Get the updated user
         select_query = text("""
-            SELECT id, phone, name, role, status, tenant_id, created_at, updated_at
+            SELECT id, phone, name, email, role, status, tenant_id, created_at, updated_at, created_by, updated_by
             FROM users 
             WHERE id = :user_id
         """)
@@ -228,11 +319,130 @@ async def create_user(tenant_id: str, user_data: UserCreate, db=Depends(get_db))
             id=user_row[0],
             phone=user_row[1],
             name=user_row[2],
-            role=user_row[3],
-            status=user_row[4],
-            tenant_id=user_row[5],
-            created_at=user_row[6],
-            updated_at=user_row[7]
+            email=user_row[3],
+            role=user_row[4],
+            status=user_row[5],
+            tenant_id=user_row[6],
+            created_at=user_row[7],
+            updated_at=user_row[8],
+            created_by=user_row[9],
+            updated_by=user_row[10]
+        )
+        
+    except HTTPException:
+        raise
+    except SQLAlchemyError as e:
+        db.rollback()
+        logger.error(f"Database error: {e}")
+        raise HTTPException(status_code=500, detail="Database error")
+    except Exception as e:
+        db.rollback()
+        logger.error(f"Unexpected error: {e}")
+        raise HTTPException(status_code=500, detail="Internal server error")
+
+
+# Territory creation model
+class TerritoryCreate(BaseModel):
+    territory_id: str
+    name: str
+    code: str
+    description: Optional[str] = None
+    area_manager_id: Optional[int] = None
+    created_by: Optional[int] = None
+    # SECURITY: tenant_id is NOT allowed in request body - it's enforced via URL parameter
+
+# Territory update model
+class TerritoryUpdate(BaseModel):
+    name: Optional[str] = None
+    code: Optional[str] = None
+    description: Optional[str] = None
+    area_manager_id: Optional[int] = None
+    updated_by: Optional[int] = None
+
+# User creation model
+class UserCreate(BaseModel):
+    phone: str
+    name: str
+    email: Optional[str] = None
+    role: str
+    tenant_id: str
+    status: str = "pending_approval"
+    created_by: Optional[int] = None
+    updated_by: Optional[int] = None
+
+@app.post("/api/users/{tenant_id}", response_model=UserResponse)
+async def create_user(tenant_id: str, user_data: UserCreate, db=Depends(get_db)):
+    """Create a new user for a specific tenant"""
+    try:
+        # Check if user with same phone already exists
+        check_phone_query = text("""
+            SELECT id FROM users 
+            WHERE phone = :phone AND tenant_id = :tenant_id
+        """)
+        
+        existing_user_by_phone = db.execute(check_phone_query, {
+            "phone": user_data.phone,
+            "tenant_id": tenant_id
+        }).fetchone()
+        
+        if existing_user_by_phone:
+            raise HTTPException(status_code=400, detail="User with this phone number already exists")
+        
+        # Check if tenant_id already exists (only one user per tenant)
+        check_tenant_query = text("""
+            SELECT id FROM users 
+            WHERE tenant_id = :tenant_id
+        """)
+        
+        existing_user_by_tenant = db.execute(check_tenant_query, {
+            "tenant_id": tenant_id
+        }).fetchone()
+        
+        if existing_user_by_tenant:
+            raise HTTPException(status_code=400, detail="A user with this tenant ID already exists. Each tenant can only have one user.")
+        
+        # Create new user
+        insert_query = text("""
+            INSERT INTO users (phone, name, email, role, tenant_id, status, created_at, updated_at, created_by, updated_by)
+            VALUES (:phone, :name, :email, :role, :tenant_id, :status, NOW(), NOW(), :created_by, :updated_by)
+        """)
+        
+        result = db.execute(insert_query, {
+            "phone": user_data.phone,
+            "name": user_data.name,
+            "email": getattr(user_data, 'email', None),
+            "role": user_data.role,
+            "tenant_id": tenant_id,
+            "status": user_data.status,
+            "created_by": getattr(user_data, 'created_by', None),
+            "updated_by": getattr(user_data, 'created_by', None)
+        })
+        
+        db.commit()
+        
+        # Get the created user
+        user_id = result.lastrowid
+        select_query = text("""
+            SELECT id, phone, name, email, role, status, tenant_id, created_at, updated_at, created_by, updated_by
+            FROM users 
+            WHERE id = :user_id
+        """)
+        
+        user_result = db.execute(select_query, {"user_id": user_id})
+        user_row = user_result.fetchone()
+        
+        return UserResponse(
+            id=user_row[0],
+            phone=user_row[1],
+            name=user_row[2],
+            email=user_row[3],
+            role=user_row[4],
+            status=user_row[5],
+            tenant_id=user_row[6],
+            created_at=user_row[7],
+            updated_at=user_row[8],
+            created_by=user_row[9],
+            updated_by=user_row[10]
         )
         
     except HTTPException:
@@ -293,7 +503,7 @@ async def get_territories(tenant_id: str, db=Depends(get_db)):
     """Get territories for a specific tenant"""
     try:
         query = text("""
-            SELECT id, territory_id, name, description, tenant_id, created_at, updated_at
+            SELECT id, territory_id, name, code, description, area_manager_id, tenant_id, created_at, updated_at, created_by, updated_by
             FROM territories 
             WHERE tenant_id = :tenant_id
         """)
@@ -306,10 +516,14 @@ async def get_territories(tenant_id: str, db=Depends(get_db)):
                 id=row[0],
                 territory_id=row[1],
                 name=row[2],
-                description=row[3],
-                tenant_id=row[4],
-                created_at=row[5],
-                updated_at=row[6]
+                code=row[3],
+                description=row[4],
+                area_manager_id=row[5],
+                tenant_id=row[6],
+                created_at=row[7],
+                updated_at=row[8],
+                created_by=row[9],
+                updated_by=row[10]
             ))
         
         return territories
@@ -317,6 +531,249 @@ async def get_territories(tenant_id: str, db=Depends(get_db)):
         logger.error(f"Database error: {e}")
         raise HTTPException(status_code=500, detail="Database error")
     except Exception as e:
+        logger.error(f"Unexpected error: {e}")
+        raise HTTPException(status_code=500, detail="Internal server error")
+
+
+@app.post("/api/territories/{tenant_id}", response_model=TerritoryResponse)
+async def create_territory(tenant_id: str, territory_data: TerritoryCreate, db=Depends(get_db)):
+    """Create a new territory for a specific tenant"""
+    try:
+        # SECURITY: Always use the URL parameter tenant_id, ignore any tenant_id in request body
+        # This prevents users from creating resources in other tenants
+        
+        # Check if territory with same territory_id or code already exists
+        check_query = text("""
+            SELECT id FROM territories 
+            WHERE (territory_id = :territory_id OR code = :code) AND tenant_id = :tenant_id
+        """)
+        
+        existing_territory = db.execute(check_query, {
+            "territory_id": territory_data.territory_id,
+            "code": territory_data.code,
+            "tenant_id": tenant_id  # Use URL parameter, not request body
+        }).fetchone()
+        
+        if existing_territory:
+            raise HTTPException(status_code=400, detail="Territory with this ID or code already exists")
+        
+        # Create new territory - ALWAYS use URL parameter tenant_id
+        insert_query = text("""
+            INSERT INTO territories (territory_id, name, code, description, area_manager_id, tenant_id, created_at, updated_at, created_by, updated_by)
+            VALUES (:territory_id, :name, :code, :description, :area_manager_id, :tenant_id, NOW(), NOW(), :created_by, :updated_by)
+        """)
+        
+        result = db.execute(insert_query, {
+            "territory_id": territory_data.territory_id,
+            "name": territory_data.name,
+            "code": territory_data.code,
+            "description": territory_data.description,
+            "area_manager_id": territory_data.area_manager_id,
+            "tenant_id": tenant_id,  # Use URL parameter, not request body
+            "created_by": territory_data.created_by,
+            "updated_by": territory_data.created_by
+        })
+        
+        db.commit()
+        
+        # Get the created territory
+        territory_id = result.lastrowid
+        select_query = text("""
+            SELECT id, territory_id, name, code, description, area_manager_id, tenant_id, created_at, updated_at, created_by, updated_by
+            FROM territories 
+            WHERE id = :territory_id
+        """)
+        
+        territory_result = db.execute(select_query, {"territory_id": territory_id})
+        territory_row = territory_result.fetchone()
+        
+        return TerritoryResponse(
+            id=territory_row[0],
+            territory_id=territory_row[1],
+            name=territory_row[2],
+            code=territory_row[3],
+            description=territory_row[4],
+            area_manager_id=territory_row[5],
+            tenant_id=territory_row[6],
+            created_at=territory_row[7],
+            updated_at=territory_row[8],
+            created_by=territory_row[9],
+            updated_by=territory_row[10]
+        )
+        
+    except HTTPException:
+        raise
+    except SQLAlchemyError as e:
+        db.rollback()
+        logger.error(f"Database error: {e}")
+        raise HTTPException(status_code=500, detail="Database error")
+    except Exception as e:
+        db.rollback()
+        logger.error(f"Unexpected error: {e}")
+        raise HTTPException(status_code=500, detail="Internal server error")
+
+
+@app.put("/api/territories/{tenant_id}/{territory_id}", response_model=TerritoryResponse)
+async def update_territory(tenant_id: str, territory_id: str, territory_data: TerritoryUpdate, db=Depends(get_db)):
+    """Update territory data"""
+    try:
+        # Check if territory exists
+        check_query = text("""
+            SELECT id FROM territories 
+            WHERE territory_id = :territory_id AND tenant_id = :tenant_id
+        """)
+        
+        existing_territory = db.execute(check_query, {
+            "territory_id": territory_id,
+            "tenant_id": tenant_id
+        }).fetchone()
+        
+        if not existing_territory:
+            raise HTTPException(status_code=404, detail="Territory not found")
+        
+        # Build dynamic UPDATE query based on provided fields
+        update_fields = []
+        params = {"territory_id": territory_id, "tenant_id": tenant_id}
+        
+        if territory_data.name is not None:
+            update_fields.append("name = :name")
+            params["name"] = territory_data.name
+        
+        if territory_data.code is not None:
+            update_fields.append("code = :code")
+            params["code"] = territory_data.code
+        
+        if territory_data.description is not None:
+            update_fields.append("description = :description")
+            params["description"] = territory_data.description
+        
+        if territory_data.area_manager_id is not None:
+            update_fields.append("area_manager_id = :area_manager_id")
+            params["area_manager_id"] = territory_data.area_manager_id
+        
+        if not update_fields:
+            raise HTTPException(status_code=400, detail="No fields to update")
+        
+        # Add timestamp and updated_by if provided
+        update_fields.append("updated_at = NOW()")
+        if territory_data.updated_by is not None:
+            update_fields.append("updated_by = :updated_by")
+            params["updated_by"] = territory_data.updated_by
+        
+        update_query = text(f"""
+            UPDATE territories 
+            SET {', '.join(update_fields)}
+            WHERE territory_id = :territory_id AND tenant_id = :tenant_id
+        """)
+        
+        result = db.execute(update_query, params)
+        db.commit()
+        
+        if result.rowcount == 0:
+            raise HTTPException(status_code=500, detail="Failed to update territory")
+        
+        # Get the updated territory
+        select_query = text("""
+            SELECT id, territory_id, name, code, description, area_manager_id, tenant_id, created_at, updated_at, created_by, updated_by
+            FROM territories 
+            WHERE territory_id = :territory_id
+        """)
+        
+        territory_result = db.execute(select_query, {"territory_id": territory_id})
+        territory_row = territory_result.fetchone()
+        
+        return TerritoryResponse(
+            id=territory_row[0],
+            territory_id=territory_row[1],
+            name=territory_row[2],
+            code=territory_row[3],
+            description=territory_row[4],
+            area_manager_id=territory_row[5],
+            tenant_id=territory_row[6],
+            created_at=territory_row[7],
+            updated_at=territory_row[8],
+            created_by=territory_row[9],
+            updated_by=territory_row[10]
+        )
+        
+    except HTTPException:
+        raise
+    except SQLAlchemyError as e:
+        db.rollback()
+        logger.error(f"Database error: {e}")
+        raise HTTPException(status_code=500, detail="Database error")
+    except Exception as e:
+        db.rollback()
+        logger.error(f"Unexpected error: {e}")
+        raise HTTPException(status_code=500, detail="Internal server error")
+
+
+@app.delete("/api/territories/{tenant_id}/{territory_id}")
+async def delete_territory(tenant_id: str, territory_id: str, db=Depends(get_db)):
+    """Delete a territory (soft delete by setting status to inactive)"""
+    try:
+        # Check if territory exists
+        check_query = text("""
+            SELECT id FROM territories 
+            WHERE territory_id = :territory_id AND tenant_id = :tenant_id
+        """)
+        
+        existing_territory = db.execute(check_query, {
+            "territory_id": territory_id,
+            "tenant_id": tenant_id
+        }).fetchone()
+        
+        if not existing_territory:
+            raise HTTPException(status_code=404, detail="Territory not found")
+        
+        # Check if territory has associated shops or routes
+        check_dependencies_query = text("""
+            SELECT 
+                (SELECT COUNT(*) FROM shops WHERE territory_id = :territory_id AND tenant_id = :tenant_id) as shop_count,
+                (SELECT COUNT(*) FROM routes WHERE territory_id = :territory_id AND tenant_id = :tenant_id) as route_count
+        """)
+        
+        dependencies_result = db.execute(check_dependencies_query, {
+            "territory_id": territory_id,
+            "tenant_id": tenant_id
+        }).fetchone()
+        
+        if dependencies_result[0] > 0 or dependencies_result[1] > 0:
+            raise HTTPException(
+                status_code=400, 
+                detail=f"Cannot delete territory. It has {dependencies_result[0]} shops and {dependencies_result[1]} routes associated with it."
+            )
+        
+        # Delete territory
+        delete_query = text("""
+            DELETE FROM territories 
+            WHERE territory_id = :territory_id AND tenant_id = :tenant_id
+        """)
+        
+        result = db.execute(delete_query, {
+            "territory_id": territory_id,
+            "tenant_id": tenant_id
+        })
+        
+        db.commit()
+        
+        if result.rowcount == 0:
+            raise HTTPException(status_code=500, detail="Failed to delete territory")
+        
+        return {
+            "message": "Territory deleted successfully",
+            "territory_id": territory_id,
+            "deleted_at": datetime.now().isoformat()
+        }
+        
+    except HTTPException:
+        raise
+    except SQLAlchemyError as e:
+        db.rollback()
+        logger.error(f"Database error: {e}")
+        raise HTTPException(status_code=500, detail="Database error")
+    except Exception as e:
+        db.rollback()
         logger.error(f"Unexpected error: {e}")
         raise HTTPException(status_code=500, detail="Internal server error")
 

@@ -27,6 +27,7 @@ class Visit(BaseEntity):
     
     __tablename__ = "visits"
     
+    visit_id: Mapped[str] = mapped_column(String(20), unique=True, nullable=False, index=True)
     planned_date: Mapped[Optional[date]] = mapped_column(Date, nullable=True)
     status: Mapped[VisitStatus] = mapped_column(SQLEnum(VisitStatus), default=VisitStatus.PLANNED)
     check_in_time: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
@@ -81,6 +82,7 @@ class Visit(BaseEntity):
 class VisitBase(BasePydanticModel):
     """Base visit model with common fields."""
     
+    visit_id: str = Field(..., description="Unique visit identifier")
     planned_date: Optional[date] = Field(None, description="Planned visit date")
     status: VisitStatus = Field(default=VisitStatus.PLANNED, description="Visit status")
     check_in_time: Optional[datetime] = Field(None, description="Check-in timestamp")

@@ -6,11 +6,11 @@ and multi-tenant support.
 """
 
 from datetime import datetime
-from typing import Optional, List
+from typing import Optional, List, Dict, Any
 from enum import Enum
 from sqlalchemy import String, Integer, ForeignKey, Enum as SQLEnum
 from sqlalchemy.orm import relationship, Mapped, mapped_column
-from pydantic import Field, validator
+from pydantic import Field, field_validator
 from .base import Base, BaseEntity, BasePydanticModel
 
 
@@ -228,7 +228,8 @@ class UserBase(BasePydanticModel):
     status: UserStatus = Field(default=UserStatus.PENDING_APPROVAL, description="Account status")
     tenant_id: str = Field(..., description="Tenant identifier for multi-tenancy")
     
-    @validator("phone")
+    @field_validator("phone")
+    @classmethod
     def validate_phone(cls, v):
         """Validate phone number format."""
         if not v or len(v) < 10:
@@ -236,9 +237,15 @@ class UserBase(BasePydanticModel):
         return v
 
 
-class UserCreate(UserBase):
+class UserCreate(BasePydanticModel):
     """Model for creating new users."""
-    pass
+    
+    phone: str = Field(..., description="Phone number as primary identifier")
+    name: str = Field(..., description="Full name of the user")
+    email: Optional[str] = Field(None, description="Email address")
+    role: UserRole = Field(..., description="User role in the system")
+    status: UserStatus = Field(default=UserStatus.PENDING_APPROVAL, description="Account status")
+    # SECURITY: tenant_id is NOT allowed in request body - it's enforced via URL parameter
 
 
 class UserUpdate(BasePydanticModel):
@@ -273,3 +280,62 @@ class UserOTP(BasePydanticModel):
     phone: str = Field(..., description="Phone number")
     otp: str = Field(..., description="One-time password")
     expires_at: datetime = Field(..., description="OTP expiration time")
+
+
+class ProfileUpdateResponse(BasePydanticModel):
+    """Response model for profile update operations."""
+    
+    status: str = Field(..., description="Update status")
+    message: str = Field(..., description="Status message")
+    request_id: Optional[str] = Field(None, description="Approval request ID")
+    approval_required: bool = Field(False, description="Whether approval is required")
+    user: Optional[UserRead] = Field(None, description="Updated user data if no approval required")
+
+
+# Authentication models
+class OTPGenerateRequest(BasePydanticModel):
+    """Request model for OTP generation."""
+    
+    phone: str = Field(..., description="Phone number for OTP")
+    # SECURITY: tenant_id is NOT allowed in request body - it's enforced via URL parameter
+
+
+class OTPVerifyRequest(BasePydanticModel):
+    """Request model for OTP verification."""
+    
+    phone: str = Field(..., description="Phone number")
+    otp: str = Field(..., description="One-time password")
+    # SECURITY: tenant_id is NOT allowed in request body - it's enforced via URL parameter
+
+
+class TokenRefreshRequest(BasePydanticModel):
+    """Request model for token refresh."""
+    
+    refresh_token: str = Field(..., description="Refresh token")
+
+
+class AuthResponse(BasePydanticModel):
+    """Response model for authentication operations."""
+    
+    access_token: str = Field(..., description="JWT access token")
+    refresh_token: str = Field(..., description="JWT refresh token")
+    token_type: str = Field(default="bearer", description="Token type")
+    expires_in: int = Field(..., description="Access token expiration time in seconds")
+    user: Optional[Dict[str, Any]] = Field(None, description="User information (for OTP verification)")
+
+
+class TokenRefreshResponse(BasePydanticModel):
+    """Response model for token refresh operations."""
+    
+    access_token: str = Field(..., description="New JWT access token")
+    token_type: str = Field(default="bearer", description="Token type")
+    expires_in: int = Field(..., description="Access token expiration time in seconds")
+
+
+class OTPResponse(BasePydanticModel):
+    """Response model for OTP operations."""
+    
+    message: str = Field(..., description="Operation message")
+    phone: str = Field(..., description="Phone number")
+    expires_in_minutes: int = Field(..., description="OTP expiration time in minutes")
+    is_new_user: bool = Field(..., description="Whether this is a new user")

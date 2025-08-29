@@ -33,7 +33,7 @@ class RedisClient:
                 socket_connect_timeout=5,
                 socket_timeout=5,
                 retry_on_timeout=True,
-                health_check_interval=30
+                health_check_interval=60
             )
             logger.info("Redis client initialized", url=settings.redis_connection_string)
         except Exception as e:

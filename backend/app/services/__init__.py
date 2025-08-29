@@ -1,16 +1,26 @@
 """
-Services package for the Sales Manager Backend.
+Services module.
 
-This package contains service layer implementations that handle
-business logic and external service communication.
+Contains all business logic services for the application.
 """
 
-from .data_layer_client import DataLayerClient, get_data_layer_client, close_data_layer_client
-from .auth_service import get_auth_service, AuthService
+from .data_layer_client import (
+    get_data_layer_client, 
+    close_data_layer_client,
+    DataLayerClient
+)
+from .auth_service import AuthService, get_auth_service
+from .user_service import UserService, get_user_service
+from .approval_service import ApprovalService, get_approval_service
 
 __all__ = [
+    "get_data_layer_client",
+    "close_data_layer_client", 
     "DataLayerClient",
+    "AuthService",
     "get_auth_service",
-    "get_data_layer_client", 
-    "close_data_layer_client"
+    "UserService",
+    "get_user_service",
+    "ApprovalService",
+    "get_approval_service"
 ]

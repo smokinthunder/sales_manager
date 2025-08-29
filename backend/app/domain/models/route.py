@@ -26,6 +26,7 @@ class Route(BaseEntity):
     
     __tablename__ = "routes"
     
+    route_id: Mapped[str] = mapped_column(String(20), unique=True, nullable=False, index=True)
     name: Mapped[str] = mapped_column(String(100), nullable=False)
     code: Mapped[str] = mapped_column(String(20), unique=True, nullable=False, index=True)
     status: Mapped[RouteStatus] = mapped_column(SQLEnum(RouteStatus), default=RouteStatus.PLANNED)
@@ -90,6 +91,7 @@ class RouteShop(Base):
 class RouteBase(BasePydanticModel):
     """Base route model with common fields."""
     
+    route_id: str = Field(..., description="Unique route identifier")
     name: str = Field(..., description="Route name")
     code: str = Field(..., description="Unique route code")
     status: RouteStatus = Field(default=RouteStatus.PLANNED, description="Route status")
@@ -107,6 +109,7 @@ class RouteCreate(RouteBase):
 class RouteUpdate(BasePydanticModel):
     """Model for updating existing routes."""
     
+    route_id: Optional[str] = None
     name: Optional[str] = None
     code: Optional[str] = None
     status: Optional[RouteStatus] = None

@@ -21,7 +21,17 @@ import os
 from app.core.config import settings
 from app.core.logging import setup_logging, get_logger
 from app.core.redis_client import get_redis_client, close_redis_client
-from app.core.errors import SalesManagerException, create_error_response
+from app.core.errors import (
+    BaseError,
+    AuthenticationError,
+    AuthorizationError,
+    ValidationError,
+    NotFoundError,
+    ConflictError,
+    RateLimitError,
+    DatabaseError,
+    ExternalServiceError
+)
 from app.api.deps import get_current_user
 
 
@@ -236,8 +246,8 @@ async def http_exception_handler(request: Request, exc: StarletteHTTPException):
     )
 
 
-@app.exception_handler(SalesManagerException)
-async def sales_manager_exception_handler(request: Request, exc: SalesManagerException):
+@app.exception_handler(BaseError)
+async def base_error_handler(request: Request, exc: BaseError):
     """
     Handle Sales Manager custom exceptions.
     
@@ -252,7 +262,6 @@ async def sales_manager_exception_handler(request: Request, exc: SalesManagerExc
         "Sales Manager exception",
         url=str(request.url),
         error_type=exc.__class__.__name__,
-        error_code=exc.error_code,
         message=exc.message,
         details=exc.details,
         status_code=exc.status_code
@@ -260,7 +269,7 @@ async def sales_manager_exception_handler(request: Request, exc: SalesManagerExc
     
     return JSONResponse(
         status_code=exc.status_code,
-        content=create_error_response(exc)
+        content=exc.to_response()
     )
 
 
@@ -338,10 +347,11 @@ async def health_check():
 
 
 # Import and include API routers
-from app.api.v1 import users_router, auth_router
+from app.api.v1 import users_router, auth_router, territories_router
 
 app.include_router(auth_router, prefix="/api/v1/auth", tags=["authentication"])
 app.include_router(users_router, prefix="/api/v1/users", tags=["users"])
+app.include_router(territories_router, prefix="/api/v1/territories", tags=["territories"])
 
 
 if __name__ == "__main__":

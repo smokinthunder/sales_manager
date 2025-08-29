@@ -108,6 +108,23 @@ class DataLayerClient:
                 return user
         return None
     
+    async def get_user_by_id(self, user_id: str, tenant_id: str) -> Optional[Dict[str, Any]]:
+        """
+        Get user by ID for a specific tenant.
+        
+        Args:
+            user_id: User ID
+            tenant_id: Tenant identifier
+            
+        Returns:
+            User data or None if not found
+        """
+        users = await self.get_users(tenant_id)
+        for user in users:
+            if str(user.get("id")) == str(user_id):
+                return user
+        return None
+    
     async def create_user(self, user_data: Dict[str, Any]) -> Dict[str, Any]:
         """
         Create a new user.
@@ -127,6 +144,46 @@ class DataLayerClient:
             user_dict = dict(user_data)
             
         return await self._make_request("POST", f"/api/users/{user_dict['tenant_id']}", json=user_dict)
+
+    async def update_user(self, user_id: str, user_data: Any, tenant_id: str, updated_by: Optional[int] = None) -> Dict[str, Any]:
+        """
+        Update user data in the Data Layer service.
+        
+        Args:
+            user_id: User ID to update
+            user_data: User data to update (can be Pydantic model or dict)
+            tenant_id: Tenant identifier
+            updated_by: ID of user making the update
+            
+        Returns:
+            Updated user data
+        """
+        # Convert Pydantic model to dict if needed
+        if hasattr(user_data, 'model_dump'):
+            user_dict = user_data.model_dump(exclude_none=True)
+        elif hasattr(user_data, 'dict'):
+            user_dict = user_data.dict(exclude_none=True)
+        else:
+            user_dict = dict(user_data)
+        
+        # Add updated_by if provided
+        if updated_by is not None:
+            user_dict["updated_by"] = updated_by
+            
+        return await self._make_request("PUT", f"/api/users/{tenant_id}/{user_id}", json=user_dict)
+
+    async def delete_user(self, user_id: str, tenant_id: str) -> Dict[str, Any]:
+        """
+        Delete user (soft delete) in the Data Layer service.
+        
+        Args:
+            user_id: User ID to delete
+            tenant_id: Tenant identifier
+            
+        Returns:
+            Deletion result
+        """
+        return await self._make_request("DELETE", f"/api/users/{tenant_id}/{user_id}")
     
     async def get_shops(
         self, 
@@ -160,6 +217,46 @@ class DataLayerClient:
             List of territories
         """
         return await self._make_request("GET", f"/api/territories/{tenant_id}")
+
+    async def create_territory(self, territory_data: Dict[str, Any], tenant_id: str) -> Dict[str, Any]:
+        """
+        Create a new territory in the Data Layer service.
+        
+        Args:
+            territory_data: Territory data to create
+            tenant_id: Tenant identifier
+            
+        Returns:
+            Created territory data
+        """
+        return await self._make_request("POST", f"/api/territories/{tenant_id}", json=territory_data)
+
+    async def update_territory(self, territory_id: str, territory_data: Dict[str, Any], tenant_id: str) -> Dict[str, Any]:
+        """
+        Update territory data in the Data Layer service.
+        
+        Args:
+            territory_id: Territory ID to update
+            territory_data: Territory data to update
+            tenant_id: Tenant identifier
+            
+        Returns:
+            Updated territory data
+        """
+        return await self._make_request("PUT", f"/api/territories/{tenant_id}/{territory_id}", json=territory_data)
+
+    async def delete_territory(self, territory_id: str, tenant_id: str) -> Dict[str, Any]:
+        """
+        Delete territory in the Data Layer service.
+        
+        Args:
+            territory_id: Territory ID to delete
+            tenant_id: Tenant identifier
+            
+        Returns:
+            Deletion result
+        """
+        return await self._make_request("DELETE", f"/api/territories/{tenant_id}/{territory_id}")
     
     async def get_visits(
         self, 

@@ -5,18 +5,23 @@ Handles user authentication, OTP generation/verification,
 token refresh, and logout functionality.
 """
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, Query
 from fastapi.security import HTTPBearer
 from typing import Dict, Any
 import structlog
 
 from app.core.errors import (
-    AuthenticationError, OTPError, NotFoundError,
-    create_error_response
+    AuthenticationError, OTPExpiredError, OTPInvalidError, NotFoundError
 )
 from app.services.auth_service import get_auth_service, AuthService
-from app.domain.models.user import UserLogin, UserOTP
+from app.domain.models.user import (
+    UserLogin, UserOTP, 
+    OTPGenerateRequest, OTPVerifyRequest, TokenRefreshRequest,
+    AuthResponse, OTPResponse, TokenRefreshResponse
+)
 from app.core.rate_limit import create_rate_limit_dependency
+from app.api.deps import get_current_user
+from app.core.redis_client import get_redis_client
 
 logger = structlog.get_logger(__name__)
 
@@ -27,9 +32,10 @@ security = HTTPBearer()
 rate_limit_auth = create_rate_limit_dependency(limit=5)  # 5 requests per minute
 
 
-@router.post("/otp/generate")
+@router.post("/otp/generate", response_model=OTPResponse)
 async def generate_otp(
-    request: Dict[str, Any],
+    phone: str = Query(..., description="Phone number for OTP"),
+    tenant_id: str = Query(..., description="Tenant identifier (required)"),
     auth_service: AuthService = Depends(get_auth_service),
     _: None = Depends(rate_limit_auth)
 ):
@@ -37,36 +43,27 @@ async def generate_otp(
     Generate OTP for user authentication.
     
     Args:
-        request: Dictionary with phone and tenant_id
+        phone: Phone number for OTP
+        tenant_id: Tenant identifier from URL parameter (enforced)
         auth_service: Authentication service dependency
         
     Returns:
-        OTP generation result
+        OTP generation result with expiration time
         
     Raises:
         HTTPException: If OTP generation fails
     """
     try:
-        phone = request.get("phone")
-        tenant_id = request.get("tenant_id")
-        
-        if not phone or not tenant_id:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Phone and tenant_id are required"
-            )
-        
         result = await auth_service.generate_otp(phone, tenant_id)
         
         logger.info("OTP generated successfully", phone=phone, tenant_id=tenant_id)
         return result
         
-    except OTPError as e:
-        logger.warning("OTP generation failed", phone=phone, tenant_id=tenant_id, error=str(e))
+    except OTPExpiredError as e:
+        logger.warning("OTP generation failed", phone=request.phone, tenant_id=request.tenant_id, error=str(e))
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail=str(e.message),
-            headers={"X-Error-Code": e.error_code}
+            detail=e.message
         )
     except Exception as e:
         logger.error("Unexpected error in OTP generation", error=str(e))
@@ -76,9 +73,11 @@ async def generate_otp(
         )
 
 
-@router.post("/otp/verify")
+@router.post("/otp/verify", response_model=AuthResponse)
 async def verify_otp(
-    request: Dict[str, Any],
+    phone: str = Query(..., description="Phone number"),
+    otp: str = Query(..., description="One-time password"),
+    tenant_id: str = Query(..., description="Tenant identifier (required)"),
     auth_service: AuthService = Depends(get_auth_service),
     _: None = Depends(rate_limit_auth)
 ):
@@ -86,51 +85,40 @@ async def verify_otp(
     Verify OTP and authenticate user.
     
     Args:
-        request: Dictionary with phone, otp, and tenant_id
+        phone: Phone number
+        otp: One-time password
+        tenant_id: Tenant identifier from URL parameter (enforced)
         auth_service: Authentication service dependency
         
     Returns:
-        Authentication result with tokens
+        Authentication result with access and refresh tokens
         
     Raises:
         HTTPException: If OTP verification fails
     """
     try:
-        phone = request.get("phone")
-        otp = request.get("otp")
-        tenant_id = request.get("tenant_id")
-        
-        if not phone or not otp or not tenant_id:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Phone, OTP, and tenant_id are required"
-            )
-        
         result = await auth_service.verify_otp(phone, otp, tenant_id)
         
         logger.info("OTP verified successfully", phone=phone, tenant_id=tenant_id)
         return result
         
-    except OTPError as e:
-        logger.warning("OTP verification failed", phone=phone, tenant_id=tenant_id, error=str(e))
+    except OTPExpiredError as e:
+        logger.warning("OTP verification failed", phone=request.phone, tenant_id=request.tenant_id, error=str(e))
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail=str(e.message),
-            headers={"X-Error-Code": e.error_code}
+            detail=e.message
         )
     except AuthenticationError as e:
-        logger.warning("Authentication failed", phone=phone, tenant_id=tenant_id, error=str(e))
+        logger.warning("Authentication failed", phone=request.phone, tenant_id=request.tenant_id, error=str(e))
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail=str(e.message),
-            headers={"X-Error-Code": e.error_code}
+            detail=str(e.message)
         )
     except NotFoundError as e:
-        logger.warning("User not found", phone=phone, tenant_id=tenant_id, error=str(e))
+        logger.warning("User not found", phone=request.phone, tenant_id=request.tenant_id, error=str(e))
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail=str(e.message),
-            headers={"X-Error-Code": e.error_code}
+            detail=str(e.message)
         )
     except Exception as e:
         logger.error("Unexpected error in OTP verification", error=str(e))
@@ -140,9 +128,9 @@ async def verify_otp(
         )
 
 
-@router.post("/token/refresh")
+@router.post("/token/refresh", response_model=TokenRefreshResponse)
 async def refresh_token(
-    request: Dict[str, Any],
+    request: TokenRefreshRequest,
     auth_service: AuthService = Depends(get_auth_service),
     _: None = Depends(rate_limit_auth)
 ):
@@ -150,25 +138,17 @@ async def refresh_token(
     Refresh access token using refresh token.
     
     Args:
-        request: Dictionary with refresh_token
+        request: Token refresh request with refresh_token
         auth_service: Authentication service dependency
         
     Returns:
-        New access token
+        New access and refresh tokens
         
     Raises:
         HTTPException: If token refresh fails
     """
     try:
-        refresh_token = request.get("refresh_token")
-        
-        if not refresh_token:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Refresh token is required"
-            )
-        
-        result = await auth_service.refresh_token(refresh_token)
+        result = await auth_service.refresh_token(request.refresh_token)
         
         logger.info("Token refreshed successfully")
         return result
@@ -177,8 +157,7 @@ async def refresh_token(
         logger.warning("Token refresh failed", error=str(e))
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail=str(e.message),
-            headers={"X-Error-Code": e.error_code}
+            detail=str(e.message)
         )
     except Exception as e:
         logger.error("Unexpected error in token refresh", error=str(e))
@@ -190,15 +169,15 @@ async def refresh_token(
 
 @router.post("/logout")
 async def logout(
-    auth_service: AuthService = Depends(get_auth_service),
-    current_user: Dict[str, Any] = Depends(security)
+    current_user: Dict[str, Any] = Depends(get_current_user),
+    auth_service: AuthService = Depends(get_auth_service)
 ):
     """
     Logout user by invalidating refresh token.
     
     Args:
-        auth_service: Authentication service dependency
         current_user: Current authenticated user from token
+        auth_service: Authentication service dependency
         
     Returns:
         Logout success message
@@ -207,23 +186,14 @@ async def logout(
         HTTPException: If logout fails
     """
     try:
-        # Extract user ID from token
-        token = current_user.credentials
-        user_info = await auth_service.validate_token(token)
-        user_id = user_info["user_id"]
+        user_id = current_user.get("id")
+        tenant_id = current_user.get("tenant_id")
         
-        result = await auth_service.logout(user_id)
+        result = await auth_service.logout(user_id, tenant_id)
         
-        logger.info("User logged out successfully", user_id=user_id)
+        logger.info(f"User logged out successfully: user {user_id}")
         return result
         
-    except AuthenticationError as e:
-        logger.warning("Logout failed", error=str(e))
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail=str(e.message),
-            headers={"X-Error-Code": e.error_code}
-        )
     except Exception as e:
         logger.error("Unexpected error in logout", error=str(e))
         raise HTTPException(
@@ -234,14 +204,12 @@ async def logout(
 
 @router.get("/me")
 async def get_current_user_info(
-    auth_service: AuthService = Depends(get_auth_service),
-    current_user: Dict[str, Any] = Depends(security)
+    current_user: Dict[str, Any] = Depends(get_current_user)
 ):
     """
     Get current user information from token.
     
     Args:
-        auth_service: Authentication service dependency
         current_user: Current authenticated user from token
         
     Returns:
@@ -251,19 +219,18 @@ async def get_current_user_info(
         HTTPException: If token validation fails
     """
     try:
-        token = current_user.credentials
-        user_info = await auth_service.validate_token(token)
+        logger.info(f"User info retrieved successfully: user {current_user.get('id')}")
+        return {
+            "id": current_user.get("id"),
+            "phone": current_user.get("phone"),
+            "name": current_user.get("name"),
+            "role": current_user.get("role"),
+            "status": current_user.get("status"),
+            "tenant_id": current_user.get("tenant_id"),
+            "created_at": current_user.get("created_at"),
+            "updated_at": current_user.get("updated_at")
+        }
         
-        logger.info("User info retrieved successfully", user_id=user_info["user_id"])
-        return user_info
-        
-    except AuthenticationError as e:
-        logger.warning("Token validation failed", error=str(e))
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail=str(e.message),
-            headers={"X-Error-Code": e.error_code}
-        )
     except Exception as e:
         logger.error("Unexpected error getting user info", error=str(e))
         raise HTTPException(

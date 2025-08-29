@@ -1,284 +1,244 @@
 """
-Error handling and custom exceptions for the application.
+Custom exception classes for the application.
 
-Provides standardized error responses and custom exceptions
-for different types of business logic errors.
+Provides structured error handling with consistent error messages
+and additional context information.
 """
 
-from typing import Any, Dict, Optional
-from fastapi import HTTPException, status
-from pydantic import ValidationError
-import structlog
-
-logger = structlog.get_logger(__name__)
+from typing import Optional, Dict, Any
 
 
-class SalesManagerException(Exception):
-    """Base exception for Sales Manager application."""
+class BaseError(Exception):
+    """Base exception class for all custom errors."""
     
-    def __init__(
-        self,
-        message: str,
-        error_code: Optional[str] = None,
-        details: Optional[Dict[str, Any]] = None,
-        status_code: int = status.HTTP_500_INTERNAL_SERVER_ERROR
-    ):
+    def __init__(self, message: str, details: Optional[Dict[str, Any]] = None, status_code: int = 500):
         self.message = message
-        self.error_code = error_code
         self.details = details or {}
         self.status_code = status_code
         super().__init__(self.message)
+    
+    def to_response(self) -> Dict[str, Any]:
+        """Convert error to response format."""
+        response = {
+            "error": {
+                "message": self.message,
+                "type": self.__class__.__name__,
+                "details": self.details
+            }
+        }
+        return response
 
 
-class AuthenticationError(SalesManagerException):
-    """Authentication related errors."""
+class AuthenticationError(BaseError):
+    """Raised when authentication fails."""
     
     def __init__(self, message: str = "Authentication failed", details: Optional[Dict[str, Any]] = None):
-        super().__init__(
-            message=message,
-            error_code="AUTH_ERROR",
-            details=details,
-            status_code=status.HTTP_401_UNAUTHORIZED
-        )
+        super().__init__(message, details, 401)
 
 
-class AuthorizationError(SalesManagerException):
-    """Authorization related errors."""
+class AuthorizationError(BaseError):
+    """Raised when authorization fails."""
     
     def __init__(self, message: str = "Insufficient permissions", details: Optional[Dict[str, Any]] = None):
-        super().__init__(
-            message=message,
-            error_code="AUTHZ_ERROR",
-            details=details,
-            status_code=status.HTTP_403_FORBIDDEN
-        )
+        super().__init__(message, details, 403)
 
 
-class ValidationError(SalesManagerException):
-    """Data validation errors."""
+class ValidationError(BaseError):
+    """Raised when data validation fails."""
     
     def __init__(self, message: str = "Validation failed", details: Optional[Dict[str, Any]] = None):
-        super().__init__(
-            message=message,
-            error_code="VALIDATION_ERROR",
-            details=details,
-            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY
-        )
+        super().__init__(message, details, 422)
 
 
-class NotFoundError(SalesManagerException):
-    """Resource not found errors."""
+class NotFoundError(BaseError):
+    """Raised when a requested resource is not found."""
     
     def __init__(self, message: str = "Resource not found", details: Optional[Dict[str, Any]] = None):
-        super().__init__(
-            message=message,
-            error_code="NOT_FOUND",
-            details=details,
-            status_code=status.HTTP_404_NOT_FOUND
-        )
+        super().__init__(message, details, 404)
 
 
-class ConflictError(SalesManagerException):
-    """Resource conflict errors."""
+class ConflictError(BaseError):
+    """Raised when there's a conflict with existing data."""
     
     def __init__(self, message: str = "Resource conflict", details: Optional[Dict[str, Any]] = None):
-        super().__init__(
-            message=message,
-            error_code="CONFLICT",
-            details=details,
-            status_code=status.HTTP_409_CONFLICT
-        )
+        super().__init__(message, details, 409)
 
 
-class RateLimitError(SalesManagerException):
-    """Rate limiting errors."""
+class RateLimitError(BaseError):
+    """Raised when rate limits are exceeded."""
     
     def __init__(self, message: str = "Rate limit exceeded", details: Optional[Dict[str, Any]] = None):
-        super().__init__(
-            message=message,
-            error_code="RATE_LIMIT",
-            details=details,
-            status_code=status.HTTP_429_TOO_MANY_REQUESTS
-        )
+        super().__init__(message, details, 429)
 
 
-class DataLayerError(SalesManagerException):
-    """Data Layer service errors."""
+class DatabaseError(BaseError):
+    """Raised when database operations fail."""
     
-    def __init__(self, message: str = "Data Layer service error", details: Optional[Dict[str, Any]] = None):
-        super().__init__(
-            message=message,
-            error_code="DATA_LAYER_ERROR",
-            details=details,
-            status_code=status.HTTP_503_SERVICE_UNAVAILABLE
-        )
+    def __init__(self, message: str = "Database operation failed", details: Optional[Dict[str, Any]] = None):
+        super().__init__(message, details, 500)
 
 
-class OTPError(SalesManagerException):
-    """OTP related errors."""
+class ExternalServiceError(BaseError):
+    """Raised when external service calls fail."""
     
-    def __init__(self, message: str = "OTP error", details: Optional[Dict[str, Any]] = None):
-        super().__init__(
-            message=message,
-            error_code="OTP_ERROR",
-            details=details,
-            status_code=status.HTTP_400_BAD_REQUEST
-        )
+    def __init__(self, message: str = "External service error", details: Optional[Dict[str, Any]] = None):
+        super().__init__(message, details, 503)
 
 
-class TenantError(SalesManagerException):
-    """Tenant related errors."""
+# User Management Errors
+class UserNotFoundError(NotFoundError):
+    """Raised when a user is not found."""
     
-    def __init__(self, message: str = "Tenant error", details: Optional[Dict[str, Any]] = None):
-        super().__init__(
-            message=message,
-            error_code="TENANT_ERROR",
-            details=details,
-            status_code=status.HTTP_400_BAD_REQUEST
-        )
+    def __init__(self, message: str = "User not found", details: Optional[Dict[str, Any]] = None):
+        super().__init__(message, details)
 
 
-def create_error_response(
-    error: SalesManagerException,
-    include_details: bool = True
-) -> Dict[str, Any]:
-    """
-    Create standardized error response.
+class UserAlreadyExistsError(ConflictError):
+    """Raised when trying to create a user that already exists."""
     
-    Args:
-        error: SalesManagerException instance
-        include_details: Whether to include error details
-        
-    Returns:
-        Standardized error response dictionary
-    """
-    response = {
-        "error": {
-            "message": error.message,
-            "code": error.error_code,
-            "type": error.__class__.__name__
-        }
-    }
+    def __init__(self, message: str = "User already exists", details: Optional[Dict[str, Any]] = None):
+        super().__init__(message, details)
+
+
+class TenantAlreadyExistsError(ConflictError):
+    """Raised when trying to create a user with a tenant ID that already exists."""
     
-    if include_details and error.details:
-        response["error"]["details"] = error.details
+    def __init__(self, message: str = "Tenant already exists", details: Optional[Dict[str, Any]] = None):
+        super().__init__(message, details)
+
+
+class InvalidUserDataError(ValidationError):
+    """Raised when user data is invalid."""
     
-    return response
+    def __init__(self, message: str = "Invalid user data", details: Optional[Dict[str, Any]] = None):
+        super().__init__(message, details)
 
 
-def handle_validation_error(exc: ValidationError) -> Dict[str, Any]:
-    """
-    Handle Pydantic validation errors.
+class InsufficientPermissionsError(AuthorizationError):
+    """Raised when user lacks required permissions."""
     
-    Args:
-        exc: ValidationError instance
-        
-    Returns:
-        Standardized validation error response
-    """
-    error_details = []
-    for error in exc.errors():
-        error_details.append({
-            "field": " -> ".join(str(loc) for loc in error["loc"]),
-            "message": error["msg"],
-            "type": error["type"]
-        })
+    def __init__(self, message: str = "Insufficient permissions", details: Optional[Dict[str, Any]] = None):
+        super().__init__(message, details)
+
+
+class ProfileUpdatePendingApprovalError(ConflictError):
+    """Raised when profile update is pending approval."""
     
-    return create_error_response(
-        ValidationError(
-            message="Validation failed",
-            details={"validation_errors": error_details}
-        )
-    )
+    def __init__(self, message: str = "Profile update pending approval", details: Optional[Dict[str, Any]] = None):
+        super().__init__(message, details)
 
 
-def log_error(error: Exception, context: Optional[Dict[str, Any]] = None) -> None:
-    """
-    Log error with context information.
+class ApprovalRequiredError(AuthorizationError):
+    """Raised when approval is required for an operation."""
     
-    Args:
-        error: Exception to log
-        context: Additional context information
-    """
-    if isinstance(error, SalesManagerException):
-        logger.error(
-            "Business logic error",
-            error_type=error.__class__.__name__,
-            error_code=error.error_code,
-            message=error.message,
-            details=error.details,
-            status_code=error.status_code,
-            context=context or {}
-        )
-    else:
-        logger.error(
-            "Unexpected error",
-            error_type=error.__class__.__name__,
-            message=str(error),
-            context=context or {},
-            exc_info=True
-        )
+    def __init__(self, message: str = "Approval required", details: Optional[Dict[str, Any]] = None):
+        super().__init__(message, details)
 
 
-def raise_not_found_if_none(
-    obj: Any,
-    message: str = "Resource not found",
-    details: Optional[Dict[str, Any]] = None
-) -> Any:
-    """
-    Raise NotFoundError if object is None.
+class InvalidApproverError(AuthorizationError):
+    """Raised when the approver is not authorized."""
     
-    Args:
-        obj: Object to check
-        message: Error message
-        details: Error details
-        
-    Returns:
-        Object if not None
-        
-    Raises:
-        NotFoundError: If object is None
-    """
-    if obj is None:
-        raise NotFoundError(message=message, details=details)
-    return obj
+    def __init__(self, message: str = "Invalid approver", details: Optional[Dict[str, Any]] = None):
+        super().__init__(message, details)
 
 
-def raise_unauthorized_if_false(
-    condition: bool,
-    message: str = "Unauthorized access",
-    details: Optional[Dict[str, Any]] = None
-) -> None:
-    """
-    Raise AuthenticationError if condition is False.
-    
-    Args:
-        condition: Boolean condition to check
-        message: Error message
-        details: Error details
-        
-    Raises:
-        AuthenticationError: If condition is False
-    """
-    if not condition:
-        raise AuthenticationError(message=message, details=details)
+# Territory Management Errors
+class TerritoryNotFoundError(NotFoundError):
+    """Raised when a territory is not found."""
+    pass
 
 
-def raise_forbidden_if_false(
-    condition: bool,
-    message: str = "Insufficient permissions",
-    details: Optional[Dict[str, Any]] = None
-) -> None:
-    """
-    Raise AuthorizationError if condition is False.
-    
-    Args:
-        condition: Boolean condition to check
-        message: Error message
-        details: Error details
-        
-    Raises:
-        AuthorizationError: If condition is False
-    """
-    if not condition:
-        raise AuthorizationError(message=message, details=details)
+class TerritoryAlreadyExistsError(ConflictError):
+    """Raised when trying to create a territory that already exists."""
+    pass
+
+
+class InvalidTerritoryDataError(ValidationError):
+    """Raised when territory data is invalid."""
+    pass
+
+
+# Shop Management Errors
+class ShopNotFoundError(NotFoundError):
+    """Raised when a shop is not found."""
+    pass
+
+
+class ShopAlreadyExistsError(ConflictError):
+    """Raised when trying to create a shop that already exists."""
+    pass
+
+
+class InvalidShopDataError(ValidationError):
+    """Raised when shop data is invalid."""
+    pass
+
+
+# Route Management Errors
+class RouteNotFoundError(NotFoundError):
+    """Raised when a route is not found."""
+    pass
+
+
+class RouteAlreadyExistsError(ConflictError):
+    """Raised when trying to create a route that already exists."""
+    pass
+
+
+class InvalidRouteDataError(ValidationError):
+    """Raised when route data is invalid."""
+    pass
+
+
+# Visit Management Errors
+class VisitNotFoundError(NotFoundError):
+    """Raised when a visit is not found."""
+    pass
+
+
+class VisitAlreadyExistsError(ConflictError):
+    """Raised when trying to create a visit that already exists."""
+    pass
+
+
+class InvalidVisitDataError(ValidationError):
+    """Raised when visit data is invalid."""
+    pass
+
+
+# OTP and SMS Errors
+class OTPExpiredError(AuthenticationError):
+    """Raised when OTP has expired."""
+    pass
+
+
+class OTPInvalidError(AuthenticationError):
+    """Raised when OTP is invalid."""
+    pass
+
+
+class SMSSendError(ExternalServiceError):
+    """Raised when SMS sending fails."""
+    pass
+
+
+# Data Layer Communication Errors
+class DataLayerConnectionError(ExternalServiceError):
+    """Raised when Data Layer service is unreachable."""
+    pass
+
+
+class DataLayerResponseError(ExternalServiceError):
+    """Raised when Data Layer service returns an error."""
+    pass
+
+
+# Redis Errors
+class RedisConnectionError(ExternalServiceError):
+    """Raised when Redis connection fails."""
+    pass
+
+
+class RedisOperationError(ExternalServiceError):
+    """Raised when Redis operations fail."""
+    pass

@@ -51,7 +51,8 @@ def create_access_token(
 
 def create_refresh_token(
     subject: Union[str, Any], 
-    expires_delta: Optional[timedelta] = None
+    expires_delta: Optional[timedelta] = None,
+    tenant_id: Optional[str] = None
 ) -> str:
     """Create JWT refresh token."""
     if expires_delta:
@@ -62,6 +63,8 @@ def create_refresh_token(
         )
     
     to_encode = {"exp": expire, "sub": str(subject), "type": "refresh"}
+    if tenant_id:
+        to_encode["tenant_id"] = tenant_id
     
     encoded_jwt = jwt.encode(
         to_encode, 
