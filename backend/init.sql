@@ -19,7 +19,8 @@ CREATE TABLE IF NOT EXISTS users (
     created_by INT,
     updated_by INT,
     INDEX idx_tenant_phone (tenant_id, phone),
-    INDEX idx_role_status (role, status)
+    INDEX idx_role_status (role, status),
+    UNIQUE KEY unique_tenant_id (tenant_id)
 );
 
 -- Create tenants table

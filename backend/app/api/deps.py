@@ -5,14 +5,12 @@ Provides common dependencies like database sessions,
 authentication, and authorization checks.
 """
 
-from typing import Generator, Optional
+from typing import Generator, Optional, Dict, Any
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
-from sqlalchemy.orm import Session
 
-from app.core.database import get_db
 from app.core.security import verify_token
-from app.domain.models.user import User, UserRole
+from app.services.data_layer_client import get_data_layer_client
 from app.core.logging import get_logger
 
 logger = get_logger(__name__)
@@ -21,33 +19,23 @@ logger = get_logger(__name__)
 security = HTTPBearer()
 
 
-def get_current_user(
-    credentials: HTTPAuthorizationCredentials = Depends(security),
-    db: Session = Depends(get_db)
-) -> User:
+async def get_current_user(
+    credentials: HTTPAuthorizationCredentials = Depends(security)
+) -> Dict[str, Any]:
     """
     Get current authenticated user from JWT token.
     
     Args:
         credentials: HTTP authorization credentials
-        db: Database session
         
     Returns:
-        User: Authenticated user instance
+        Dict: Authenticated user data from Data Layer
         
     Raises:
         HTTPException: If token is invalid or user not found
     """
     token = credentials.credentials
     payload = verify_token(token)
-    
-    if not payload:
-        logger.warning("Invalid authentication token")
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid authentication token",
-            headers={"WWW-Authenticate": "Bearer"},
-        )
     
     user_id = payload.get("sub")
     if not user_id:
@@ -58,28 +46,55 @@ def get_current_user(
             headers={"WWW-Authenticate": "Bearer"},
         )
     
-    user = db.get(User, int(user_id))
-    if not user:
-        logger.warning("User not found", user_id=user_id)
+    tenant_id = payload.get("tenant_id")
+    if not tenant_id:
+        logger.warning("Token missing tenant ID")
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="User not found",
+            detail="Token missing tenant ID",
             headers={"WWW-Authenticate": "Bearer"},
         )
     
-    if user.status != "active":
-        logger.warning("User account not active", user_id=user_id, status=user.status)
+    # Get user from Data Layer service
+    try:
+        data_layer = await get_data_layer_client()
+        users = await data_layer.get_users(tenant_id)
+        
+        user = None
+        for u in users:
+            if str(u.get("id")) == str(user_id):
+                user = u
+                break
+        
+        if not user:
+            logger.warning("User not found", user_id=user_id, tenant_id=tenant_id)
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="User not found",
+                headers={"WWW-Authenticate": "Bearer"},
+            )
+        
+        # Check if user is not suspended or inactive
+        if user.get("status") != "active":
+            logger.warning("User account not active", user_id=user_id, status=user.get("status"))
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="User account not active",
+                headers={"WWW-Authenticate": "Bearer"},
+            )
+        
+        logger.info(f"User authenticated: user {user.get('id')}, role {user.get('role')}")
+        return user
+        
+    except Exception as e:
+        logger.error("Error getting user from Data Layer", error=str(e))
         raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="User account not active",
-            headers={"WWW-Authenticate": "Bearer"},
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Internal server error"
         )
-    
-    logger.info("User authenticated", user_id=user.id, role=user.role)
-    return user
 
 
-def get_current_active_user(current_user: User = Depends(get_current_user)) -> User:
+async def get_current_active_user(current_user: Dict[str, Any] = Depends(get_current_user)) -> Dict[str, Any]:
     """
     Get current active user.
     
@@ -87,12 +102,12 @@ def get_current_active_user(current_user: User = Depends(get_current_user)) -> U
         current_user: Current authenticated user
         
     Returns:
-        User: Active user instance
+        Dict: Active user data
         
     Raises:
         HTTPException: If user is not active
     """
-    if current_user.status != "active":
+    if current_user.get("status") != "active":
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Inactive user"
@@ -100,7 +115,7 @@ def get_current_active_user(current_user: User = Depends(get_current_user)) -> U
     return current_user
 
 
-def require_role(required_role: UserRole):
+def require_role(required_role: str):
     """
     Dependency factory for role-based access control.
     
@@ -110,7 +125,7 @@ def require_role(required_role: UserRole):
     Returns:
         Dependency function that checks user role
     """
-    def check_role(current_user: User = Depends(get_current_user)) -> User:
+    def check_role(current_user: Dict[str, Any] = Depends(get_current_user)) -> Dict[str, Any]:
         """
         Check if current user has required role.
         
@@ -118,26 +133,26 @@ def require_role(required_role: UserRole):
             current_user: Current authenticated user
             
         Returns:
-            User: User if role check passes
+            Dict: User if role check passes
             
         Raises:
             HTTPException: If user lacks required role
         """
         role_hierarchy = {
-            UserRole.SALES_EXECUTIVE: 1,
-            UserRole.AREA_MANAGER: 2,
-            UserRole.CLIENT_ADMIN: 3,
-            UserRole.SUPERADMIN: 4
+            "sales_executive": 1,
+            "area_manager": 2,
+            "client_admin": 3,
+            "superadmin": 4
         }
         
-        user_level = role_hierarchy.get(current_user.role, 0)
+        user_level = role_hierarchy.get(current_user.get("role"), 0)
         required_level = role_hierarchy.get(required_role, 0)
         
         if user_level < required_level:
             logger.warning(
                 "Insufficient role access",
-                user_id=current_user.id,
-                user_role=current_user.role,
+                user_id=current_user.get("id"),
+                user_role=current_user.get("role"),
                 required_role=required_role
             )
             raise HTTPException(
@@ -150,7 +165,7 @@ def require_role(required_role: UserRole):
     return check_role
 
 
-def require_superadmin(current_user: User = Depends(get_current_user)) -> User:
+def require_superadmin(current_user: Dict[str, Any] = Depends(get_current_user)) -> Dict[str, Any]:
     """
     Require superadmin role for access.
     
@@ -158,16 +173,16 @@ def require_superadmin(current_user: User = Depends(get_current_user)) -> User:
         current_user: Current authenticated user
         
     Returns:
-        User: User if superadmin
+        Dict: User if superadmin
         
     Raises:
         HTTPException: If user is not superadmin
     """
-    if current_user.role != UserRole.SUPERADMIN:
+    if current_user.get("role") != "superadmin":
         logger.warning(
             "Superadmin access required",
-            user_id=current_user.id,
-            user_role=current_user.role
+            user_id=current_user.get("id"),
+            user_role=current_user.get("role")
         )
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
@@ -176,7 +191,7 @@ def require_superadmin(current_user: User = Depends(get_current_user)) -> User:
     return current_user
 
 
-def require_client_admin(current_user: User = Depends(get_current_user)) -> User:
+def require_client_admin(current_user: Dict[str, Any] = Depends(get_current_user)) -> Dict[str, Any]:
     """
     Require client admin or higher role for access.
     
@@ -184,16 +199,16 @@ def require_client_admin(current_user: User = Depends(get_current_user)) -> User
         current_user: Current authenticated user
         
     Returns:
-        User: User if client admin or higher
+        Dict: User if client admin or higher
         
     Raises:
         HTTPException: If user lacks required role
     """
-    if current_user.role not in [UserRole.CLIENT_ADMIN, UserRole.SUPERADMIN]:
+    if current_user.get("role") not in ["client_admin", "superadmin"]:
         logger.warning(
             "Client admin access required",
-            user_id=current_user.id,
-            user_role=current_user.role
+            user_id=current_user.get("id"),
+            user_role=current_user.get("role")
         )
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
@@ -202,7 +217,7 @@ def require_client_admin(current_user: User = Depends(get_current_user)) -> User
     return current_user
 
 
-def require_area_manager(current_user: User = Depends(get_current_user)) -> User:
+def require_area_manager(current_user: Dict[str, Any] = Depends(get_current_user)) -> Dict[str, Any]:
     """
     Require area manager or higher role for access.
     
@@ -210,16 +225,16 @@ def require_area_manager(current_user: User = Depends(get_current_user)) -> User
         current_user: Current authenticated user
         
     Returns:
-        User: User if area manager or higher
+        Dict: User if area manager or higher
         
     Raises:
         HTTPException: If user lacks required role
     """
-    if current_user.role not in [UserRole.AREA_MANAGER, UserRole.CLIENT_ADMIN, UserRole.SUPERADMIN]:
+    if current_user.get("role") not in ["area_manager", "client_admin", "superadmin"]:
         logger.warning(
             "Area manager access required",
-            user_id=current_user.id,
-            user_role=current_user.role
+            user_id=current_user.get("id"),
+            user_role=current_user.get("role")
         )
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,

@@ -6,13 +6,14 @@ and OTP generation for the application.
 """
 
 from datetime import datetime, timedelta
-from typing import Optional, Union, Any
+from typing import Optional, Union, Any, Dict
 from jose import JWTError, jwt
 from passlib.context import CryptContext
 import secrets
 import structlog
 
 from app.core.config import settings
+from app.core.errors import AuthenticationError
 
 logger = structlog.get_logger(__name__)
 
@@ -23,109 +24,67 @@ pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 def create_access_token(
     subject: Union[str, Any], 
     expires_delta: Optional[timedelta] = None,
-    **kwargs
+    role: Optional[str] = None,
+    tenant_id: Optional[str] = None
 ) -> str:
-    """
-    Create JWT access token.
-    
-    Args:
-        subject: Subject claim (usually user ID)
-        expires_delta: Optional custom expiration time
-        **kwargs: Additional claims to include in token
-        
-    Returns:
-        str: Encoded JWT token
-        
-    Note:
-        Token includes standard claims: sub, exp, iat, type
-        Additional claims can be passed as kwargs.
-    """
+    """Create JWT access token."""
     if expires_delta:
         expire = datetime.utcnow() + expires_delta
     else:
         expire = datetime.utcnow() + timedelta(
-            minutes=settings.security.access_token_expire_minutes
+            minutes=settings.access_token_expire_minutes
         )
     
-    to_encode = {
-        "exp": expire,
-        "sub": str(subject),
-        "iat": datetime.utcnow(),
-        "type": "access",
-        **kwargs
-    }
+    to_encode = {"exp": expire, "sub": str(subject)}
+    if role:
+        to_encode["role"] = role
+    if tenant_id:
+        to_encode["tenant_id"] = tenant_id
     
     encoded_jwt = jwt.encode(
         to_encode, 
-        settings.security.secret_key, 
-        algorithm=settings.security.algorithm
+        settings.secret_key,
+        algorithm=settings.algorithm
     )
-    
-    logger.info("Access token created", subject=subject, expires_at=expire)
     return encoded_jwt
 
 
 def create_refresh_token(
-    subject: Union[str, Any],
-    expires_delta: Optional[timedelta] = None
+    subject: Union[str, Any], 
+    expires_delta: Optional[timedelta] = None,
+    tenant_id: Optional[str] = None
 ) -> str:
-    """
-    Create JWT refresh token.
-    
-    Args:
-        subject: Subject claim (usually user ID)
-        expires_delta: Optional custom expiration time
-        
-    Returns:
-        str: Encoded JWT refresh token
-    """
+    """Create JWT refresh token."""
     if expires_delta:
         expire = datetime.utcnow() + expires_delta
     else:
         expire = datetime.utcnow() + timedelta(
-            days=settings.security.refresh_token_expire_days
+            days=settings.refresh_token_expire_days
         )
     
-    to_encode = {
-        "exp": expire,
-        "sub": str(subject),
-        "iat": datetime.utcnow(),
-        "type": "refresh"
-    }
+    to_encode = {"exp": expire, "sub": str(subject), "type": "refresh"}
+    if tenant_id:
+        to_encode["tenant_id"] = tenant_id
     
     encoded_jwt = jwt.encode(
         to_encode, 
-        settings.security.secret_key, 
-        algorithm=settings.security.algorithm
+        settings.secret_key,
+        algorithm=settings.algorithm
     )
-    
-    logger.info("Refresh token created", subject=subject, expires_at=expire)
     return encoded_jwt
 
 
-def verify_token(token: str) -> Optional[dict]:
-    """
-    Verify and decode JWT token.
-    
-    Args:
-        token: JWT token to verify
-        
-    Returns:
-        Optional[dict]: Decoded token payload if valid, None otherwise
-        
-    Note:
-        Logs security events for invalid tokens.
-    """
+def verify_token(token: str) -> Dict[str, Any]:
+    """Verify JWT token and return payload."""
     try:
         payload = jwt.decode(
             token, 
-            settings.security.secret_key, 
-            algorithms=[settings.security.algorithm]
+            settings.secret_key,
+            algorithms=[settings.algorithm]
         )
         return payload
-    except JWTError as e:
-        logger.warning("Invalid JWT token", error=str(e))
-        return None
+    except JWTError:
+        raise AuthenticationError(message="Invalid token")
 
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:

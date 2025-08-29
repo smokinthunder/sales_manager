@@ -1,67 +1,103 @@
 """
 Tenant domain model.
 
-Represents client organizations in the multi-tenant system
-with configurable branding and feature flags.
+Represents multi-tenant organizations in the system.
 """
 
 from datetime import datetime
 from typing import Optional, List
 from enum import Enum
-from sqlmodel import SQLModel, Field, Relationship
-from pydantic import validator
+from sqlalchemy import String, Integer, DateTime, ForeignKey, Enum as SQLEnum
+from sqlalchemy.orm import relationship, Mapped, mapped_column
+from pydantic import Field
+from .base import Base, BaseEntity, BasePydanticModel
 
 
 class TenantStatus(str, Enum):
-    """Tenant account status."""
+    """Tenant status in the system."""
     ACTIVE = "active"
     INACTIVE = "inactive"
     SUSPENDED = "suspended"
-    TRIAL = "trial"
+    PENDING_APPROVAL = "pending_approval"
 
 
-class TenantBase(SQLModel):
-    """Base tenant model with common fields."""
-    
-    name: str = Field(..., description="Organization name")
-    code: str = Field(..., description="Unique tenant code")
-    status: TenantStatus = Field(default=TenantStatus.TRIAL, description="Account status")
-    max_users: int = Field(default=10, description="Maximum number of users")
-    branding_logo_url: Optional[str] = Field(None, description="Custom logo URL")
-    primary_color: Optional[str] = Field(None, description="Primary brand color")
-    secondary_color: Optional[str] = Field(None, description="Secondary brand color")
-    
-    @validator("code")
-    def validate_code(cls, v):
-        """Validate tenant code format."""
-        if not v or len(v) < 3:
-            raise ValueError("Tenant code must be at least 3 characters")
-        if not v.isalnum():
-            raise ValueError("Tenant code must be alphanumeric")
-        return v.upper()
-
-
-class Tenant(TenantBase, table=True):
+class Tenant(BaseEntity):
     """Tenant entity model."""
     
     __tablename__ = "tenants"
     
-    id: Optional[int] = Field(default=None, primary_key=True)
-    created_at: datetime = Field(default_factory=datetime.utcnow)
-    updated_at: datetime = Field(default_factory=datetime.utcnow)
-    created_by: Optional[int] = Field(default=None, foreign_key="users.id")
-    updated_by: Optional[int] = Field(default=None, foreign_key="users.id")
-    
-    # Feature flags
-    enable_analytics: bool = Field(default=True, description="Enable analytics module")
-    enable_file_uploads: bool = Field(default=True, description="Enable file uploads")
-    enable_sync: bool = Field(default=True, description="Enable data synchronization")
-    enable_approvals: bool = Field(default=True, description="Enable approval workflows")
+    name: Mapped[str] = mapped_column(String(100), nullable=False)
+    code: Mapped[str] = mapped_column(String(20), unique=True, nullable=False, index=True)
+    status: Mapped[TenantStatus] = mapped_column(SQLEnum(TenantStatus), default=TenantStatus.PENDING_APPROVAL)
+    address: Mapped[Optional[str]] = mapped_column(String(500), nullable=True)
+    phone: Mapped[Optional[str]] = mapped_column(String(20), nullable=True)
+    email: Mapped[Optional[str]] = mapped_column(String(100), nullable=True)
+    contact_person: Mapped[Optional[str]] = mapped_column(String(100), nullable=True)
     
     # Relationships
-    users: List["User"] = Relationship(back_populates="tenant")
-    territories: List["Territory"] = Relationship(back_populates="tenant")
-    shops: List["Shop"] = Relationship(back_populates="tenant")
+    users: Mapped[List["User"]] = relationship(
+        "User",
+        back_populates="tenant",
+        lazy="selectin"
+    )
+    territories: Mapped[List["Territory"]] = relationship(
+        "Territory",
+        back_populates="tenant",
+        lazy="selectin"
+    )
+    shops: Mapped[List["Shop"]] = relationship(
+        "Shop",
+        back_populates="tenant",
+        lazy="selectin"
+    )
+    routes: Mapped[List["Route"]] = relationship(
+        "Route",
+        back_populates="tenant",
+        lazy="selectin"
+    )
+    visits: Mapped[List["Visit"]] = relationship(
+        "Visit",
+        back_populates="tenant",
+        lazy="selectin"
+    )
+    products: Mapped[List["Product"]] = relationship(
+        "Product",
+        back_populates="tenant",
+        lazy="selectin"
+    )
+    orders: Mapped[List["Order"]] = relationship(
+        "Order",
+        back_populates="tenant",
+        lazy="selectin"
+    )
+    payments: Mapped[List["Payment"]] = relationship(
+        "Payment",
+        back_populates="tenant",
+        lazy="selectin"
+    )
+    outstandings: Mapped[List["Outstanding"]] = relationship(
+        "Outstanding",
+        back_populates="tenant",
+        lazy="selectin"
+    )
+    approvals: Mapped[List["Approval"]] = relationship(
+        "Approval",
+        back_populates="tenant",
+        lazy="selectin"
+    )
+
+
+# Pydantic models for API
+class TenantBase(BasePydanticModel):
+    """Base tenant model with common fields."""
+    
+    name: str = Field(..., description="Tenant organization name")
+    code: str = Field(..., description="Unique tenant code")
+    status: TenantStatus = Field(default=TenantStatus.PENDING_APPROVAL, description="Tenant status")
+    address: Optional[str] = Field(None, description="Tenant address")
+    phone: Optional[str] = Field(None, description="Contact phone number")
+    email: Optional[str] = Field(None, description="Contact email")
+    contact_person: Optional[str] = Field(None, description="Primary contact person")
 
 
 class TenantCreate(TenantBase):
@@ -69,19 +105,16 @@ class TenantCreate(TenantBase):
     pass
 
 
-class TenantUpdate(SQLModel):
+class TenantUpdate(BasePydanticModel):
     """Model for updating existing tenants."""
     
     name: Optional[str] = None
+    code: Optional[str] = None
     status: Optional[TenantStatus] = None
-    max_users: Optional[int] = None
-    branding_logo_url: Optional[str] = None
-    primary_color: Optional[str] = None
-    secondary_color: Optional[str] = None
-    enable_analytics: Optional[bool] = None
-    enable_file_uploads: Optional[bool] = None
-    enable_sync: Optional[bool] = None
-    enable_approvals: Optional[bool] = None
+    address: Optional[str] = None
+    phone: Optional[str] = None
+    email: Optional[str] = None
+    contact_person: Optional[str] = None
 
 
 class TenantRead(TenantBase):
@@ -92,7 +125,3 @@ class TenantRead(TenantBase):
     updated_at: datetime
     created_by: Optional[int] = None
     updated_by: Optional[int] = None
-    enable_analytics: bool
-    enable_file_uploads: bool
-    enable_sync: bool
-    enable_approvals: bool

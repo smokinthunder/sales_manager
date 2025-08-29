@@ -20,6 +20,18 @@ import os
 
 from app.core.config import settings
 from app.core.logging import setup_logging, get_logger
+from app.core.redis_client import get_redis_client, close_redis_client
+from app.core.errors import (
+    BaseError,
+    AuthenticationError,
+    AuthorizationError,
+    ValidationError,
+    NotFoundError,
+    ConflictError,
+    RateLimitError,
+    DatabaseError,
+    ExternalServiceError
+)
 from app.api.deps import get_current_user
 
 
@@ -43,6 +55,19 @@ async def lifespan(app: FastAPI):
     logger.info("Starting Sales Manager Backend API", version=settings.version, environment=settings.environment)
     
     try:
+        # Initialize Redis client
+        redis_client = await get_redis_client()
+        if await redis_client.is_connected():
+            logger.info("Redis client initialized successfully")
+            app.state.redis = redis_client.client
+        else:
+            logger.warning("Redis client not available")
+            app.state.redis = None
+    except Exception as e:
+        logger.warning("Could not initialize Redis client", error=str(e))
+        app.state.redis = None
+    
+    try:
         # Verify Data Layer service is accessible
         async with httpx.AsyncClient() as client:
             response = await client.get(f"{DATA_LAYER_URL}/health")
@@ -64,6 +89,13 @@ async def lifespan(app: FastAPI):
         logger.info("Data Layer client closed")
     except Exception as e:
         logger.error("Error closing Data Layer client", error=str(e))
+    
+    try:
+        # Close Redis client
+        await close_redis_client()
+        logger.info("Redis client closed")
+    except Exception as e:
+        logger.error("Error closing Redis client", error=str(e))
 
 
 # Create FastAPI application
@@ -214,6 +246,33 @@ async def http_exception_handler(request: Request, exc: StarletteHTTPException):
     )
 
 
+@app.exception_handler(BaseError)
+async def base_error_handler(request: Request, exc: BaseError):
+    """
+    Handle Sales Manager custom exceptions.
+    
+    Args:
+        request: Request that caused the error
+        exc: SalesManagerException instance
+        
+    Returns:
+        JSON response with error details
+    """
+    logger.error(
+        "Sales Manager exception",
+        url=str(request.url),
+        error_type=exc.__class__.__name__,
+        message=exc.message,
+        details=exc.details,
+        status_code=exc.status_code
+    )
+    
+    return JSONResponse(
+        status_code=exc.status_code,
+        content=exc.to_response()
+    )
+
+
 @app.exception_handler(Exception)
 async def general_exception_handler(request: Request, exc: Exception):
     """
@@ -288,8 +347,9 @@ async def health_check():
 
 
 # Import and include API routers
-from app.api.v1 import users_router
+from app.api.v1 import users_router, auth_router
 
+app.include_router(auth_router, prefix="/api/v1/auth", tags=["authentication"])
 app.include_router(users_router, prefix="/api/v1/users", tags=["users"])
 
 

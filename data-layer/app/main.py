@@ -50,15 +50,25 @@ engine = create_engine(DATABASE_URL, pool_pre_ping=True)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 # Data models for API responses
+class UserUpdate(BaseModel):
+    name: Optional[str] = None
+    email: Optional[str] = None
+    role: Optional[str] = None
+    status: Optional[str] = None
+    updated_by: Optional[int] = None
+
 class UserResponse(BaseModel):
     id: int
     phone: str
     name: str
+    email: Optional[str] = None
     role: str
     status: str
     tenant_id: str
     created_at: datetime
     updated_at: datetime
+    created_by: Optional[int] = None
+    updated_by: Optional[int] = None
 
 class ShopResponse(BaseModel):
     id: int
@@ -143,7 +153,7 @@ async def get_users(tenant_id: str, db=Depends(get_db)):
     """Get users for a specific tenant"""
     try:
         query = text("""
-            SELECT id, phone, name, role, status, tenant_id, created_at, updated_at
+            SELECT id, phone, name, email, role, status, tenant_id, created_at, updated_at, created_by, updated_by
             FROM users 
             WHERE tenant_id = :tenant_id
         """)
@@ -156,11 +166,14 @@ async def get_users(tenant_id: str, db=Depends(get_db)):
                 id=row[0],
                 phone=row[1],
                 name=row[2],
-                role=row[3],
-                status=row[4],
-                tenant_id=row[5],
-                created_at=row[6],
-                updated_at=row[7]
+                email=row[3],
+                role=row[4],
+                status=row[5],
+                tenant_id=row[6],
+                created_at=row[7],
+                updated_at=row[8],
+                created_by=row[9],
+                updated_by=row[10]
             ))
         
         return users
@@ -168,6 +181,256 @@ async def get_users(tenant_id: str, db=Depends(get_db)):
         logger.error(f"Database error: {e}")
         raise HTTPException(status_code=500, detail="Database error")
     except Exception as e:
+        logger.error(f"Unexpected error: {e}")
+        raise HTTPException(status_code=500, detail="Internal server error")
+
+
+@app.delete("/api/users/{tenant_id}/{user_id}")
+async def delete_user(tenant_id: str, user_id: str, db=Depends(get_db)):
+    """Soft delete a user by setting status to inactive"""
+    try:
+        # Check if user exists
+        check_query = text("""
+            SELECT id, status FROM users 
+            WHERE id = :user_id AND tenant_id = :tenant_id
+        """)
+        
+        existing_user = db.execute(check_query, {
+            "user_id": user_id,
+            "tenant_id": tenant_id
+        }).fetchone()
+        
+        if not existing_user:
+            raise HTTPException(status_code=404, detail="User not found")
+        
+        if existing_user[1] == "inactive":
+            raise HTTPException(status_code=400, detail="User is already inactive")
+        
+        # Soft delete by setting status to inactive
+        update_query = text("""
+            UPDATE users 
+            SET status = 'inactive', updated_at = NOW() 
+            WHERE id = :user_id AND tenant_id = :tenant_id
+        """)
+        
+        result = db.execute(update_query, {
+            "user_id": user_id,
+            "tenant_id": tenant_id
+        })
+        
+        db.commit()
+        
+        if result.rowcount == 0:
+            raise HTTPException(status_code=500, detail="Failed to update user")
+        
+        return {
+            "message": "User deleted successfully",
+            "user_id": user_id,
+            "status": "inactive",
+            "deleted_at": datetime.now().isoformat()
+        }
+        
+    except HTTPException:
+        raise
+    except SQLAlchemyError as e:
+        db.rollback()
+        logger.error(f"Database error: {e}")
+        raise HTTPException(status_code=500, detail="Database error")
+    except Exception as e:
+        db.rollback()
+        logger.error(f"Unexpected error: {e}")
+        raise HTTPException(status_code=500, detail="Internal server error")
+
+
+@app.put("/api/users/{tenant_id}/{user_id}")
+async def update_user(tenant_id: str, user_id: str, user_data: UserUpdate, db=Depends(get_db)):
+    """Update user data"""
+    try:
+        # Check if user exists
+        check_query = text("""
+            SELECT id FROM users 
+            WHERE id = :user_id AND tenant_id = :tenant_id
+        """)
+        
+        existing_user = db.execute(check_query, {
+            "user_id": user_id,
+            "tenant_id": tenant_id
+        }).fetchone()
+        
+        if not existing_user:
+            raise HTTPException(status_code=404, detail="User not found")
+        
+        # Build dynamic UPDATE query based on provided fields
+        update_fields = []
+        params = {"user_id": user_id, "tenant_id": tenant_id}
+        
+        if user_data.name is not None:
+            update_fields.append("name = :name")
+            params["name"] = user_data.name
+        
+        if user_data.email is not None:
+            update_fields.append("email = :email")
+            params["email"] = user_data.email
+        
+        if user_data.role is not None:
+            update_fields.append("role = :role")
+            params["role"] = user_data.role
+        
+        if user_data.status is not None:
+            update_fields.append("status = :status")
+            params["status"] = user_data.status
+        
+        if not update_fields:
+            raise HTTPException(status_code=400, detail="No fields to update")
+        
+        # Add timestamp and updated_by if provided
+        update_fields.append("updated_at = NOW()")
+        if user_data.updated_by is not None:
+            update_fields.append("updated_by = :updated_by")
+            params["updated_by"] = user_data.updated_by
+        
+        update_query = text(f"""
+            UPDATE users 
+            SET {', '.join(update_fields)}
+            WHERE id = :user_id AND tenant_id = :tenant_id
+        """)
+        
+        result = db.execute(update_query, params)
+        db.commit()
+        
+        if result.rowcount == 0:
+            raise HTTPException(status_code=500, detail="Failed to update user")
+        
+        # Get the updated user
+        select_query = text("""
+            SELECT id, phone, name, email, role, status, tenant_id, created_at, updated_at, created_by, updated_by
+            FROM users 
+            WHERE id = :user_id
+        """)
+        
+        user_result = db.execute(select_query, {"user_id": user_id})
+        user_row = user_result.fetchone()
+        
+        return UserResponse(
+            id=user_row[0],
+            phone=user_row[1],
+            name=user_row[2],
+            email=user_row[3],
+            role=user_row[4],
+            status=user_row[5],
+            tenant_id=user_row[6],
+            created_at=user_row[7],
+            updated_at=user_row[8],
+            created_by=user_row[9],
+            updated_by=user_row[10]
+        )
+        
+    except HTTPException:
+        raise
+    except SQLAlchemyError as e:
+        db.rollback()
+        logger.error(f"Database error: {e}")
+        raise HTTPException(status_code=500, detail="Database error")
+    except Exception as e:
+        db.rollback()
+        logger.error(f"Unexpected error: {e}")
+        raise HTTPException(status_code=500, detail="Internal server error")
+
+
+# User creation model
+class UserCreate(BaseModel):
+    phone: str
+    name: str
+    email: Optional[str] = None
+    role: str
+    tenant_id: str
+    status: str = "pending_approval"
+    created_by: Optional[int] = None
+    updated_by: Optional[int] = None
+
+@app.post("/api/users/{tenant_id}", response_model=UserResponse)
+async def create_user(tenant_id: str, user_data: UserCreate, db=Depends(get_db)):
+    """Create a new user for a specific tenant"""
+    try:
+        # Check if user with same phone already exists
+        check_phone_query = text("""
+            SELECT id FROM users 
+            WHERE phone = :phone AND tenant_id = :tenant_id
+        """)
+        
+        existing_user_by_phone = db.execute(check_phone_query, {
+            "phone": user_data.phone,
+            "tenant_id": tenant_id
+        }).fetchone()
+        
+        if existing_user_by_phone:
+            raise HTTPException(status_code=400, detail="User with this phone number already exists")
+        
+        # Check if tenant_id already exists (only one user per tenant)
+        check_tenant_query = text("""
+            SELECT id FROM users 
+            WHERE tenant_id = :tenant_id
+        """)
+        
+        existing_user_by_tenant = db.execute(check_tenant_query, {
+            "tenant_id": tenant_id
+        }).fetchone()
+        
+        if existing_user_by_tenant:
+            raise HTTPException(status_code=400, detail="A user with this tenant ID already exists. Each tenant can only have one user.")
+        
+        # Create new user
+        insert_query = text("""
+            INSERT INTO users (phone, name, email, role, tenant_id, status, created_at, updated_at, created_by, updated_by)
+            VALUES (:phone, :name, :email, :role, :tenant_id, :status, NOW(), NOW(), :created_by, :updated_by)
+        """)
+        
+        result = db.execute(insert_query, {
+            "phone": user_data.phone,
+            "name": user_data.name,
+            "email": getattr(user_data, 'email', None),
+            "role": user_data.role,
+            "tenant_id": tenant_id,
+            "status": user_data.status,
+            "created_by": getattr(user_data, 'created_by', None),
+            "updated_by": getattr(user_data, 'created_by', None)
+        })
+        
+        db.commit()
+        
+        # Get the created user
+        user_id = result.lastrowid
+        select_query = text("""
+            SELECT id, phone, name, email, role, status, tenant_id, created_at, updated_at, created_by, updated_by
+            FROM users 
+            WHERE id = :user_id
+        """)
+        
+        user_result = db.execute(select_query, {"user_id": user_id})
+        user_row = user_result.fetchone()
+        
+        return UserResponse(
+            id=user_row[0],
+            phone=user_row[1],
+            name=user_row[2],
+            email=user_row[3],
+            role=user_row[4],
+            status=user_row[5],
+            tenant_id=user_row[6],
+            created_at=user_row[7],
+            updated_at=user_row[8],
+            created_by=user_row[9],
+            updated_by=user_row[10]
+        )
+        
+    except HTTPException:
+        raise
+    except SQLAlchemyError as e:
+        db.rollback()
+        logger.error(f"Database error: {e}")
+        raise HTTPException(status_code=500, detail="Database error")
+    except Exception as e:
+        db.rollback()
         logger.error(f"Unexpected error: {e}")
         raise HTTPException(status_code=500, detail="Internal server error")
 

@@ -1,3 +1,105 @@
 """
-Core application configuration and utilities.
+Core module.
+
+Contains core configuration, database, security, and error handling.
 """
+
+from .config import settings
+from .database import get_db, get_db_context, init_db, close_db
+from .security import (
+    create_access_token, 
+    create_refresh_token, 
+    verify_token,
+    get_password_hash,
+    verify_password,
+    generate_otp
+)
+from .redis_client import get_redis_client, close_redis_client
+from .errors import (
+    BaseError,
+    AuthenticationError,
+    AuthorizationError,
+    ValidationError,
+    NotFoundError,
+    ConflictError,
+    RateLimitError,
+    DatabaseError,
+    ExternalServiceError,
+    UserNotFoundError,
+    UserAlreadyExistsError,
+    InvalidUserDataError,
+    InsufficientPermissionsError,
+    ProfileUpdatePendingApprovalError,
+    ApprovalRequiredError,
+    InvalidApproverError,
+    TerritoryNotFoundError,
+    TerritoryAlreadyExistsError,
+    InvalidTerritoryDataError,
+    ShopNotFoundError,
+    ShopAlreadyExistsError,
+    InvalidShopDataError,
+    RouteNotFoundError,
+    RouteAlreadyExistsError,
+    InvalidRouteDataError,
+    VisitNotFoundError,
+    VisitAlreadyExistsError,
+    InvalidVisitDataError,
+    OTPExpiredError,
+    OTPInvalidError,
+    SMSSendError,
+    DataLayerConnectionError,
+    DataLayerResponseError,
+    RedisConnectionError,
+    RedisOperationError
+)
+
+__all__ = [
+    "settings",
+    "get_db",
+    "get_db_context", 
+    "init_db",
+    "close_db",
+    "create_access_token",
+    "create_refresh_token",
+    "verify_token",
+    "get_password_hash",
+    "verify_password",
+    "generate_otp",
+    "get_redis_client",
+    "close_redis_client",
+    "BaseError",
+    "AuthenticationError",
+    "AuthorizationError",
+    "ValidationError",
+    "NotFoundError",
+    "ConflictError",
+    "RateLimitError",
+    "DatabaseError",
+    "ExternalServiceError",
+    "UserNotFoundError",
+    "UserAlreadyExistsError",
+    "InvalidUserDataError",
+    "InsufficientPermissionsError",
+    "ProfileUpdatePendingApprovalError",
+    "ApprovalRequiredError",
+    "InvalidApproverError",
+    "TerritoryNotFoundError",
+    "TerritoryAlreadyExistsError",
+    "InvalidTerritoryDataError",
+    "ShopNotFoundError",
+    "ShopAlreadyExistsError",
+    "InvalidShopDataError",
+    "RouteNotFoundError",
+    "RouteAlreadyExistsError",
+    "InvalidRouteDataError",
+    "VisitNotFoundError",
+    "VisitAlreadyExistsError",
+    "InvalidVisitDataError",
+    "OTPExpiredError",
+    "OTPInvalidError",
+    "SMSSendError",
+    "DataLayerConnectionError",
+    "DataLayerResponseError",
+    "RedisConnectionError",
+    "RedisOperationError"
+]
