@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:sales_manager/config/assets.dart';
 import 'package:sales_manager/config/providers/current_user_notifier.dart';
+import 'package:sales_manager/routing/route_paths.dart';
 import 'package:sales_manager/ui/core/colors.dart';
 
 class CustomAppBar extends ConsumerWidget implements PreferredSizeWidget {
@@ -10,6 +12,11 @@ class CustomAppBar extends ConsumerWidget implements PreferredSizeWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final user = ref.watch(currentUserNotifierProvider);
+    final textButtonStyle = TextButton.styleFrom(
+      padding: EdgeInsets.zero,
+      minimumSize: Size(0, 0),
+      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+    );
     return Container(
       decoration: const BoxDecoration(gradient: AppColors.blueGreenGradient),
       child: Container(
@@ -68,12 +75,30 @@ class CustomAppBar extends ConsumerWidget implements PreferredSizeWidget {
                 const Spacer(),
 
                 // Icons
-                Icon(Icons.chat_outlined, color: Colors.white, size: 24),
+                TextButton(
+                  style: textButtonStyle,
+                  onPressed: () {
+                    //TODO: handle chat
+                    context.push(RoutePaths.chat);
+                  },
+                  child: Icon(
+                    Icons.chat_outlined,
+                    color: Colors.white,
+                    size: 24,
+                  ),
+                ),
                 const SizedBox(width: 16),
-                Icon(
-                  Icons.notifications_none_rounded,
-                  color: Colors.white,
-                  size: 24,
+                TextButton(
+                  onPressed: () {
+                    //TODO: handle notification or do we navigate to notification screen
+                    context.push(RoutePaths.notifications);
+                  },
+                  style: textButtonStyle,
+                  child: Icon(
+                    Icons.notifications_none_rounded,
+                    color: Colors.white,
+                    size: 24,
+                  ),
                 ),
               ],
             ),

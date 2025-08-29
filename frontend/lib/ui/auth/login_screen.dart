@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:sales_manager/routing/routes.dart';
+import 'package:sales_manager/routing/route_paths.dart';
 import 'package:sales_manager/ui/auth/viewmodel/auth_viewmodel.dart';
 import 'package:sales_manager/utils/show_snackbar.dart';
 
@@ -27,7 +27,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     ref.listen(authViewModelProvider, (_, next) {
       next?.when(
         data: (data) async {
-          context.go(AppRoutes.otp, extra: phoneController.text);
+          context.go(RoutePaths.otp, extra: phoneController.text);
           WidgetsBinding.instance.addPostFrameCallback((_) {
             showSnackBar(context, "OTP sent to ${phoneController.text}");
           });

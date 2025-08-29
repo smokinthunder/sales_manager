@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:sales_manager/domain/models/shops/shop.dart';
-import 'package:sales_manager/routing/routes.dart';
+import 'package:sales_manager/routing/route_paths.dart';
 
 ///Provide sorted list for this widget
 class TopCustomersScreen extends StatelessWidget {
@@ -15,7 +15,7 @@ class TopCustomersScreen extends StatelessWidget {
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios_new),
           onPressed: () {
-            context.go(AppRoutes.executiveHome);
+            context.go(RoutePaths.home);
           },
         ),
         centerTitle: true,
@@ -95,7 +95,7 @@ class _PaginatedListState extends State<PaginatedList> {
                 itemBuilder: (context, index) => InkWell(
                   onTap: () {
                     // TODO: implement navigation
-                    context.push(AppRoutes.executiveShopDetails);
+                    context.push(RoutePaths.executiveShopDetails);
                   },
                   child: ShopCard(shop: pageItems[index]),
                 ),
@@ -107,32 +107,33 @@ class _PaginatedListState extends State<PaginatedList> {
         const SizedBox(height: 8),
 
         // Navigation buttons
-        Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            _buildNavButton(
-              enabled: currentPage > 0,
-              onTap: () => _pageController.previousPage(
-                duration: const Duration(milliseconds: 300),
-                curve: Curves.easeInOut,
+        if (itemsPerPage < widget.items.length)
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              _buildNavButton(
+                enabled: currentPage > 0,
+                onTap: () => _pageController.previousPage(
+                  duration: const Duration(milliseconds: 300),
+                  curve: Curves.easeInOut,
+                ),
+                icon: Icons.arrow_back_ios_new,
+                color: colors.primary,
+                iconColor: colors.onPrimary,
               ),
-              icon: Icons.arrow_back_ios_new,
-              color: colors.primary,
-              iconColor: colors.onPrimary,
-            ),
-            const SizedBox(width: 16),
-            _buildNavButton(
-              enabled: currentPage < totalPages - 1,
-              onTap: () => _pageController.nextPage(
-                duration: const Duration(milliseconds: 300),
-                curve: Curves.easeInOut,
+              const SizedBox(width: 16),
+              _buildNavButton(
+                enabled: currentPage < totalPages - 1,
+                onTap: () => _pageController.nextPage(
+                  duration: const Duration(milliseconds: 300),
+                  curve: Curves.easeInOut,
+                ),
+                icon: Icons.arrow_forward_ios,
+                color: colors.primary,
+                iconColor: colors.onPrimary,
               ),
-              icon: Icons.arrow_forward_ios,
-              color: colors.primary,
-              iconColor: colors.onPrimary,
-            ),
-          ],
-        ),
+            ],
+          ),
 
         const SizedBox(height: 12),
       ],

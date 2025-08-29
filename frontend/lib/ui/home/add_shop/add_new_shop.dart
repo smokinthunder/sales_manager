@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:sales_manager/routing/routes.dart';
+import 'package:sales_manager/routing/route_paths.dart';
 
 class AddNewShopScreen extends StatelessWidget {
   const AddNewShopScreen({super.key});
@@ -185,7 +185,7 @@ class AddNewShopScreen extends StatelessWidget {
                 child: ElevatedButton(
                   onPressed: () {
                     //TODO: write proper code
-                    context.go(AppRoutes.executiveWaitForApproval);
+                    context.go(RoutePaths.addShopSuccess);
                   },
                   child: const Text("Create New Customer"),
                 ),

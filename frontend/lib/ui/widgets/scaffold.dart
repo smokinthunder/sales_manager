@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:sales_manager/routing/routes.dart';
-import 'package:sales_manager/ui/common/widgets/app_bar.dart';
+import 'package:sales_manager/routing/route_paths.dart';
+import 'package:sales_manager/ui/widgets/app_bar.dart';
 
 class ExecutiveScaffold extends StatelessWidget {
   final Widget child;
@@ -12,25 +12,25 @@ class ExecutiveScaffold extends StatelessWidget {
       label: 'Home',
       title: 'Home',
       icon: Icons.home_outlined,
-      route: AppRoutes.executiveHome,
+      route: RoutePaths.home,
     ),
     _NavTab(
       label: 'Analytics',
       title: 'Analytics',
       icon: Icons.pie_chart_outline,
-      route: AppRoutes.executiveAnalytics,
+      route: RoutePaths.analyticsRoot,
     ),
     _NavTab(
       label: 'Outstanding',
       title: 'Outstanding',
       icon: Icons.access_time,
-      route: AppRoutes.executiveOutStanding,
+      route: RoutePaths.outstanding,
     ),
     _NavTab(
       label: 'Profile',
       title: 'Profile Editing',
       icon: Icons.person_outline_rounded,
-      route: AppRoutes.executiveProfile,
+      route: RoutePaths.profile,
     ),
   ];
 
@@ -41,7 +41,7 @@ class ExecutiveScaffold extends StatelessWidget {
       (tab) => location.startsWith(tab.route),
     );
     final safeIndex = currentIndex == -1 ? 0 : currentIndex;
-    final isHome = tabs[safeIndex].route == AppRoutes.executiveHome;
+    final isHome = tabs[safeIndex].route == RoutePaths.home;
 
     return Scaffold(
       backgroundColor: isHome
@@ -55,7 +55,7 @@ class ExecutiveScaffold extends StatelessWidget {
               leading: IconButton(
                 icon: const Icon(Icons.arrow_back_ios_new),
                 onPressed: () {
-                  context.go(AppRoutes.executiveHome);
+                  context.go(RoutePaths.home);
                 },
               ),
               centerTitle: true,

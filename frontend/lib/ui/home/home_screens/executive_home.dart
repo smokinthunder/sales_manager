@@ -5,7 +5,7 @@ import 'package:sales_manager/config/providers/login_message_provider.dart';
 import 'package:sales_manager/domain/models/shops/shop.dart';
 import 'package:sales_manager/utils/show_snackbar.dart';
 import 'package:go_router/go_router.dart';
-import 'package:sales_manager/routing/routes.dart';
+import 'package:sales_manager/routing/route_paths.dart';
 
 class ExecutiveHome extends ConsumerStatefulWidget {
   const ExecutiveHome({super.key});
@@ -50,7 +50,7 @@ class _ExecutiveHomeState extends ConsumerState<ExecutiveHome> {
               Text("Total Customers : 58", style: textTheme.headlineSmall),
               TextButton(
                 onPressed: () {
-                  context.push(AppRoutes.executiveAddShop);
+                  context.push(RoutePaths.addShop);
                 },
                 child: Text(
                   "Add new customer",
@@ -202,7 +202,7 @@ class _ExecutiveHomeState extends ConsumerState<ExecutiveHome> {
           const SizedBox(height: 10),
           InkWell(
             onTap: () {
-              context.push(AppRoutes.executiveTopCustomers);
+              context.push(RoutePaths.executiveTopCustomers);
             },
             child: Row(
               mainAxisAlignment: MainAxisAlignment.end,
@@ -276,7 +276,7 @@ class _CustomerCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return InkWell(
       onTap: () {
-        context.push(AppRoutes.executiveShopDetails);
+        context.push(RoutePaths.executiveShopDetails);
         //TODO
       },
       child: Card(
@@ -393,7 +393,7 @@ class _CategoryScrollState extends State<CategoryScroll> {
                 icon: const Icon(Icons.chat_outlined),
                 onPressed: () {
                   setState(() {
-                    context.push(AppRoutes.executiveNotVisiting, extra: shop);
+                    context.push(RoutePaths.reasonForNotVisting, extra: shop);
                   });
                 },
               );

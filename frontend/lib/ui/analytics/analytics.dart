@@ -1,5 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:sales_manager/ui/executive/analytics/individual_analytics.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
+import 'package:sales_manager/config/providers/current_user_notifier.dart';
+import 'package:sales_manager/domain/models/user/user.dart';
+import 'package:sales_manager/routing/route_paths.dart';
 
 enum AnalyticsType {
   allShops("All Shops"),
@@ -9,18 +13,19 @@ enum AnalyticsType {
   const AnalyticsType(this.displayText);
 }
 
-class ExecutiveAnalytics extends StatefulWidget {
+class ExecutiveAnalytics extends ConsumerStatefulWidget {
   const ExecutiveAnalytics({super.key});
 
   @override
-  State<ExecutiveAnalytics> createState() => _ExecutiveAnalyticsState();
+  ConsumerState<ExecutiveAnalytics> createState() => _ExecutiveAnalyticsState();
 }
 
-class _ExecutiveAnalyticsState extends State<ExecutiveAnalytics> {
+class _ExecutiveAnalyticsState extends ConsumerState<ExecutiveAnalytics> {
   AnalyticsType? selectedType;
 
   @override
   Widget build(BuildContext context) {
+    final user = ref.watch(currentUserNotifierProvider);
     final textTheme = Theme.of(context).textTheme;
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 20),
@@ -29,10 +34,16 @@ class _ExecutiveAnalyticsState extends State<ExecutiveAnalytics> {
         children: [
           Text("Select your type for analysis", style: textTheme.bodyLarge),
           SizedBox(height: 12),
-          _buildButtonTile(textTheme, "All Shops", AnalyticsType.allShops),
           _buildButtonTile(
             textTheme,
-            "Individual Shops",
+            (user!.type == UserType.areaManager) ? "Executive" : "All Shops",
+            AnalyticsType.allShops,
+          ),
+          _buildButtonTile(
+            textTheme,
+            (user.type == UserType.areaManager)
+                ? "All Shops"
+                : "Individual Shops",
             AnalyticsType.individualShops,
           ),
           Spacer(),
@@ -49,12 +60,15 @@ class _ExecutiveAnalyticsState extends State<ExecutiveAnalytics> {
         onPressed: (selectedType == null)
             ? null
             : () {
-                //TODO: complete
-                Navigator.of(context).push(
-                  MaterialPageRoute(
-                    builder: (context) => IndividualAnalyticsScreen(),
-                  ),
-                );
+                switch (selectedType) {
+                  case AnalyticsType.allShops:
+                    context.push(RoutePaths.consolidatedOrExecutiveAnalytics);
+                    break;
+                  case AnalyticsType.individualShops:
+                    context.push(RoutePaths.shopAnalytics);
+                    break;
+                  case null:
+                }
               },
         child: const Text("Continue"),
       ),
