@@ -12,7 +12,6 @@ class AuthViewModel extends _$AuthViewModel {
   late AuthLocalRepository _authLocalRepository;
   late CurrentUserNotifier _currentUserNotifier;
   late AuthRemoteRepository _authRemoteRepository;
-  // late String _phoneNumberStore;
 
   @override
   AsyncValue<AppUser>? build() {

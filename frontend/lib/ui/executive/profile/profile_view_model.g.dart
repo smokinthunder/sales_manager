@@ -1,27 +1,26 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
 
-part of 'current_user_notifier.dart';
+part of 'profile_view_model.dart';
 
 // **************************************************************************
 // RiverpodGenerator
 // **************************************************************************
 
-String _$currentUserNotifierHash() =>
-    r'9d8d1b359311ac22887727a856f25491a8670372';
+String _$profileViewModelHash() => r'f47f2745c0b320a2a87aadf4bdc25c5c00b45c4c';
 
-/// See also [CurrentUserNotifier].
-@ProviderFor(CurrentUserNotifier)
-final currentUserNotifierProvider =
-    NotifierProvider<CurrentUserNotifier, AppUser?>.internal(
-      CurrentUserNotifier.new,
-      name: r'currentUserNotifierProvider',
+/// See also [ProfileViewModel].
+@ProviderFor(ProfileViewModel)
+final profileViewModelProvider =
+    AutoDisposeNotifierProvider<ProfileViewModel, AsyncValue<void>?>.internal(
+      ProfileViewModel.new,
+      name: r'profileViewModelProvider',
       debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
           ? null
-          : _$currentUserNotifierHash,
+          : _$profileViewModelHash,
       dependencies: null,
       allTransitiveDependencies: null,
     );
 
-typedef _$CurrentUserNotifier = Notifier<AppUser?>;
+typedef _$ProfileViewModel = AutoDisposeNotifier<AsyncValue<void>?>;
 // ignore_for_file: type=lint
 // ignore_for_file: subtype_of_sealed_class, invalid_use_of_internal_member, invalid_use_of_visible_for_testing_member, deprecated_member_use_from_same_package

@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:sales_manager/config/providers/current_user_notifier.dart';
 import 'package:sales_manager/domain/models/user/user.dart';
 import 'package:sales_manager/ui/core/colors.dart';
+import 'package:sales_manager/ui/executive/profile/profile_view_model.dart';
 
 class ExecutiveProfile extends ConsumerStatefulWidget {
   const ExecutiveProfile({super.key});
@@ -108,9 +109,9 @@ class _ExecutiveProfileState extends ConsumerState<ExecutiveProfile> {
 
                     const SizedBox(height: 16),
                     InkWell(
-                      onTap: () {
-                        //TODO: implement logout
-                      },
+                      onTap: () async => await ref
+                          .read(profileViewModelProvider.notifier)
+                          .logout(),
                       child: Align(
                         alignment: Alignment.centerLeft,
                         child: Row(

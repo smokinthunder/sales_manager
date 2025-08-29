@@ -1,6 +1,6 @@
 class ApiEndpoints {
   // Should change this wrt your network
-  static const String _ipAddr = "192.168.63.207";
+  static const String _ipAddr = "192.168.63.95";
   static const String _baseUrl = "http://$_ipAddr:8000/";
   static const String _apiUrl = "${_baseUrl}api/v1/";
 

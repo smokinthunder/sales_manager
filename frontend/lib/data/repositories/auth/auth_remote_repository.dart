@@ -15,16 +15,16 @@ class AuthRemoteRepository {
   final RemoteAuthService remoteAuthService = RemoteAuthService();
   Future<Result<Response<Map<String, dynamic>>>> generateOtp(
     String phoneNumber,
-  ) async {
-    final res = await remoteAuthService.generateOtp(phoneNumber);
-    return res;
-  }
+  ) async => await remoteAuthService.generateOtp(phoneNumber);
 
   Future<Result<Response<Map<String, dynamic>>>> verifyOtp(
     String phoneNumber,
     String otp,
-  ) async {
-    final res = await remoteAuthService.verifyOtp(phoneNumber, otp);
-    return res;
-  }
+  ) async => await remoteAuthService.verifyOtp(phoneNumber, otp);
+
+  Future<Result<Response<Map<String, dynamic>>>> refreshTocken(
+    String refreshToken,
+  ) async => await remoteAuthService.refreshTocken(refreshToken);
+  Future<Result<Response<String>>> logout() async =>
+      await remoteAuthService.logout();
 }
