@@ -59,10 +59,10 @@ class AuthService:
                     phone=phone,
                     name="",  # Will be filled during profile completion
                     role=UserRole.SALES_EXECUTIVE,  # Default role
-                    tenant_id=tenant_id,
                     status=UserStatus.PENDING_APPROVAL
                 )
-                user = await data_layer.create_user(user_data)
+                # SECURITY: Always use the URL parameter tenant_id, ignore any tenant_id in request body
+                user = await data_layer.create_user(user_data, tenant_id)
                 logger.info("New user created", phone=phone, tenant_id=tenant_id)
             
             # Generate OTP

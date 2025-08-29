@@ -84,10 +84,14 @@ class TerritoryResponse(BaseModel):
     id: int
     territory_id: str
     name: str
-    description: str
+    code: str
+    description: Optional[str] = None
+    area_manager_id: Optional[int] = None
     tenant_id: str
     created_at: datetime
     updated_at: datetime
+    created_by: Optional[int] = None
+    updated_by: Optional[int] = None
 
 class VisitResponse(BaseModel):
     id: int
@@ -337,6 +341,24 @@ async def update_user(tenant_id: str, user_id: str, user_data: UserUpdate, db=De
         raise HTTPException(status_code=500, detail="Internal server error")
 
 
+# Territory creation model
+class TerritoryCreate(BaseModel):
+    territory_id: str
+    name: str
+    code: str
+    description: Optional[str] = None
+    area_manager_id: Optional[int] = None
+    created_by: Optional[int] = None
+    # SECURITY: tenant_id is NOT allowed in request body - it's enforced via URL parameter
+
+# Territory update model
+class TerritoryUpdate(BaseModel):
+    name: Optional[str] = None
+    code: Optional[str] = None
+    description: Optional[str] = None
+    area_manager_id: Optional[int] = None
+    updated_by: Optional[int] = None
+
 # User creation model
 class UserCreate(BaseModel):
     phone: str
@@ -481,7 +503,7 @@ async def get_territories(tenant_id: str, db=Depends(get_db)):
     """Get territories for a specific tenant"""
     try:
         query = text("""
-            SELECT id, territory_id, name, description, tenant_id, created_at, updated_at
+            SELECT id, territory_id, name, code, description, area_manager_id, tenant_id, created_at, updated_at, created_by, updated_by
             FROM territories 
             WHERE tenant_id = :tenant_id
         """)
@@ -494,10 +516,14 @@ async def get_territories(tenant_id: str, db=Depends(get_db)):
                 id=row[0],
                 territory_id=row[1],
                 name=row[2],
-                description=row[3],
-                tenant_id=row[4],
-                created_at=row[5],
-                updated_at=row[6]
+                code=row[3],
+                description=row[4],
+                area_manager_id=row[5],
+                tenant_id=row[6],
+                created_at=row[7],
+                updated_at=row[8],
+                created_by=row[9],
+                updated_by=row[10]
             ))
         
         return territories
@@ -505,6 +531,249 @@ async def get_territories(tenant_id: str, db=Depends(get_db)):
         logger.error(f"Database error: {e}")
         raise HTTPException(status_code=500, detail="Database error")
     except Exception as e:
+        logger.error(f"Unexpected error: {e}")
+        raise HTTPException(status_code=500, detail="Internal server error")
+
+
+@app.post("/api/territories/{tenant_id}", response_model=TerritoryResponse)
+async def create_territory(tenant_id: str, territory_data: TerritoryCreate, db=Depends(get_db)):
+    """Create a new territory for a specific tenant"""
+    try:
+        # SECURITY: Always use the URL parameter tenant_id, ignore any tenant_id in request body
+        # This prevents users from creating resources in other tenants
+        
+        # Check if territory with same territory_id or code already exists
+        check_query = text("""
+            SELECT id FROM territories 
+            WHERE (territory_id = :territory_id OR code = :code) AND tenant_id = :tenant_id
+        """)
+        
+        existing_territory = db.execute(check_query, {
+            "territory_id": territory_data.territory_id,
+            "code": territory_data.code,
+            "tenant_id": tenant_id  # Use URL parameter, not request body
+        }).fetchone()
+        
+        if existing_territory:
+            raise HTTPException(status_code=400, detail="Territory with this ID or code already exists")
+        
+        # Create new territory - ALWAYS use URL parameter tenant_id
+        insert_query = text("""
+            INSERT INTO territories (territory_id, name, code, description, area_manager_id, tenant_id, created_at, updated_at, created_by, updated_by)
+            VALUES (:territory_id, :name, :code, :description, :area_manager_id, :tenant_id, NOW(), NOW(), :created_by, :updated_by)
+        """)
+        
+        result = db.execute(insert_query, {
+            "territory_id": territory_data.territory_id,
+            "name": territory_data.name,
+            "code": territory_data.code,
+            "description": territory_data.description,
+            "area_manager_id": territory_data.area_manager_id,
+            "tenant_id": tenant_id,  # Use URL parameter, not request body
+            "created_by": territory_data.created_by,
+            "updated_by": territory_data.created_by
+        })
+        
+        db.commit()
+        
+        # Get the created territory
+        territory_id = result.lastrowid
+        select_query = text("""
+            SELECT id, territory_id, name, code, description, area_manager_id, tenant_id, created_at, updated_at, created_by, updated_by
+            FROM territories 
+            WHERE id = :territory_id
+        """)
+        
+        territory_result = db.execute(select_query, {"territory_id": territory_id})
+        territory_row = territory_result.fetchone()
+        
+        return TerritoryResponse(
+            id=territory_row[0],
+            territory_id=territory_row[1],
+            name=territory_row[2],
+            code=territory_row[3],
+            description=territory_row[4],
+            area_manager_id=territory_row[5],
+            tenant_id=territory_row[6],
+            created_at=territory_row[7],
+            updated_at=territory_row[8],
+            created_by=territory_row[9],
+            updated_by=territory_row[10]
+        )
+        
+    except HTTPException:
+        raise
+    except SQLAlchemyError as e:
+        db.rollback()
+        logger.error(f"Database error: {e}")
+        raise HTTPException(status_code=500, detail="Database error")
+    except Exception as e:
+        db.rollback()
+        logger.error(f"Unexpected error: {e}")
+        raise HTTPException(status_code=500, detail="Internal server error")
+
+
+@app.put("/api/territories/{tenant_id}/{territory_id}", response_model=TerritoryResponse)
+async def update_territory(tenant_id: str, territory_id: str, territory_data: TerritoryUpdate, db=Depends(get_db)):
+    """Update territory data"""
+    try:
+        # Check if territory exists
+        check_query = text("""
+            SELECT id FROM territories 
+            WHERE territory_id = :territory_id AND tenant_id = :tenant_id
+        """)
+        
+        existing_territory = db.execute(check_query, {
+            "territory_id": territory_id,
+            "tenant_id": tenant_id
+        }).fetchone()
+        
+        if not existing_territory:
+            raise HTTPException(status_code=404, detail="Territory not found")
+        
+        # Build dynamic UPDATE query based on provided fields
+        update_fields = []
+        params = {"territory_id": territory_id, "tenant_id": tenant_id}
+        
+        if territory_data.name is not None:
+            update_fields.append("name = :name")
+            params["name"] = territory_data.name
+        
+        if territory_data.code is not None:
+            update_fields.append("code = :code")
+            params["code"] = territory_data.code
+        
+        if territory_data.description is not None:
+            update_fields.append("description = :description")
+            params["description"] = territory_data.description
+        
+        if territory_data.area_manager_id is not None:
+            update_fields.append("area_manager_id = :area_manager_id")
+            params["area_manager_id"] = territory_data.area_manager_id
+        
+        if not update_fields:
+            raise HTTPException(status_code=400, detail="No fields to update")
+        
+        # Add timestamp and updated_by if provided
+        update_fields.append("updated_at = NOW()")
+        if territory_data.updated_by is not None:
+            update_fields.append("updated_by = :updated_by")
+            params["updated_by"] = territory_data.updated_by
+        
+        update_query = text(f"""
+            UPDATE territories 
+            SET {', '.join(update_fields)}
+            WHERE territory_id = :territory_id AND tenant_id = :tenant_id
+        """)
+        
+        result = db.execute(update_query, params)
+        db.commit()
+        
+        if result.rowcount == 0:
+            raise HTTPException(status_code=500, detail="Failed to update territory")
+        
+        # Get the updated territory
+        select_query = text("""
+            SELECT id, territory_id, name, code, description, area_manager_id, tenant_id, created_at, updated_at, created_by, updated_by
+            FROM territories 
+            WHERE territory_id = :territory_id
+        """)
+        
+        territory_result = db.execute(select_query, {"territory_id": territory_id})
+        territory_row = territory_result.fetchone()
+        
+        return TerritoryResponse(
+            id=territory_row[0],
+            territory_id=territory_row[1],
+            name=territory_row[2],
+            code=territory_row[3],
+            description=territory_row[4],
+            area_manager_id=territory_row[5],
+            tenant_id=territory_row[6],
+            created_at=territory_row[7],
+            updated_at=territory_row[8],
+            created_by=territory_row[9],
+            updated_by=territory_row[10]
+        )
+        
+    except HTTPException:
+        raise
+    except SQLAlchemyError as e:
+        db.rollback()
+        logger.error(f"Database error: {e}")
+        raise HTTPException(status_code=500, detail="Database error")
+    except Exception as e:
+        db.rollback()
+        logger.error(f"Unexpected error: {e}")
+        raise HTTPException(status_code=500, detail="Internal server error")
+
+
+@app.delete("/api/territories/{tenant_id}/{territory_id}")
+async def delete_territory(tenant_id: str, territory_id: str, db=Depends(get_db)):
+    """Delete a territory (soft delete by setting status to inactive)"""
+    try:
+        # Check if territory exists
+        check_query = text("""
+            SELECT id FROM territories 
+            WHERE territory_id = :territory_id AND tenant_id = :tenant_id
+        """)
+        
+        existing_territory = db.execute(check_query, {
+            "territory_id": territory_id,
+            "tenant_id": tenant_id
+        }).fetchone()
+        
+        if not existing_territory:
+            raise HTTPException(status_code=404, detail="Territory not found")
+        
+        # Check if territory has associated shops or routes
+        check_dependencies_query = text("""
+            SELECT 
+                (SELECT COUNT(*) FROM shops WHERE territory_id = :territory_id AND tenant_id = :tenant_id) as shop_count,
+                (SELECT COUNT(*) FROM routes WHERE territory_id = :territory_id AND tenant_id = :tenant_id) as route_count
+        """)
+        
+        dependencies_result = db.execute(check_dependencies_query, {
+            "territory_id": territory_id,
+            "tenant_id": tenant_id
+        }).fetchone()
+        
+        if dependencies_result[0] > 0 or dependencies_result[1] > 0:
+            raise HTTPException(
+                status_code=400, 
+                detail=f"Cannot delete territory. It has {dependencies_result[0]} shops and {dependencies_result[1]} routes associated with it."
+            )
+        
+        # Delete territory
+        delete_query = text("""
+            DELETE FROM territories 
+            WHERE territory_id = :territory_id AND tenant_id = :tenant_id
+        """)
+        
+        result = db.execute(delete_query, {
+            "territory_id": territory_id,
+            "tenant_id": tenant_id
+        })
+        
+        db.commit()
+        
+        if result.rowcount == 0:
+            raise HTTPException(status_code=500, detail="Failed to delete territory")
+        
+        return {
+            "message": "Territory deleted successfully",
+            "territory_id": territory_id,
+            "deleted_at": datetime.now().isoformat()
+        }
+        
+    except HTTPException:
+        raise
+    except SQLAlchemyError as e:
+        db.rollback()
+        logger.error(f"Database error: {e}")
+        raise HTTPException(status_code=500, detail="Database error")
+    except Exception as e:
+        db.rollback()
         logger.error(f"Unexpected error: {e}")
         raise HTTPException(status_code=500, detail="Internal server error")
 

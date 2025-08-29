@@ -67,9 +67,15 @@ class TerritoryBase(BasePydanticModel):
     tenant_id: str = Field(..., description="Tenant identifier")
 
 
-class TerritoryCreate(TerritoryBase):
+class TerritoryCreate(BasePydanticModel):
     """Model for creating new territories."""
-    pass
+    
+    territory_id: str = Field(..., description="Unique territory identifier")
+    name: str = Field(..., description="Territory name")
+    code: str = Field(..., description="Unique territory code")
+    description: Optional[str] = Field(None, description="Territory description")
+    area_manager_id: Optional[int] = Field(None, description="Area manager user ID")
+    # SECURITY: tenant_id is NOT allowed in request body - it's enforced via URL parameter
 
 
 class TerritoryUpdate(BasePydanticModel):
