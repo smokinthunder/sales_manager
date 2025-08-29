@@ -237,9 +237,15 @@ class UserBase(BasePydanticModel):
         return v
 
 
-class UserCreate(UserBase):
+class UserCreate(BasePydanticModel):
     """Model for creating new users."""
-    pass
+    
+    phone: str = Field(..., description="Phone number as primary identifier")
+    name: str = Field(..., description="Full name of the user")
+    email: Optional[str] = Field(None, description="Email address")
+    role: UserRole = Field(..., description="User role in the system")
+    status: UserStatus = Field(default=UserStatus.PENDING_APPROVAL, description="Account status")
+    # SECURITY: tenant_id is NOT allowed in request body - it's enforced via URL parameter
 
 
 class UserUpdate(BasePydanticModel):
@@ -291,7 +297,7 @@ class OTPGenerateRequest(BasePydanticModel):
     """Request model for OTP generation."""
     
     phone: str = Field(..., description="Phone number for OTP")
-    tenant_id: str = Field(..., description="Tenant identifier")
+    # SECURITY: tenant_id is NOT allowed in request body - it's enforced via URL parameter
 
 
 class OTPVerifyRequest(BasePydanticModel):
@@ -299,7 +305,7 @@ class OTPVerifyRequest(BasePydanticModel):
     
     phone: str = Field(..., description="Phone number")
     otp: str = Field(..., description="One-time password")
-    tenant_id: str = Field(..., description="Tenant identifier")
+    # SECURITY: tenant_id is NOT allowed in request body - it's enforced via URL parameter
 
 
 class TokenRefreshRequest(BasePydanticModel):

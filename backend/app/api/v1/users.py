@@ -30,6 +30,7 @@ router = APIRouter()
 @router.post("/", response_model=UserRead, status_code=status.HTTP_201_CREATED)
 async def create_user(
     user_data: UserCreate,
+    tenant_id: str = Query(..., description="Tenant identifier (required)"),
     current_user: Dict[str, Any] = Depends(get_current_user),
     user_service: UserService = Depends(get_user_service)
 ):
@@ -37,9 +38,10 @@ async def create_user(
     Create a new user.
     
     Only client_admin and superadmin users can create new users.
+    tenant_id is mandatory and enforced for tenant isolation.
     """
     try:
-        created_user = await user_service.create_user(user_data, current_user)
+        created_user = await user_service.create_user(user_data, tenant_id, current_user)
         return created_user
     except InsufficientPermissionsError as e:
         raise HTTPException(

@@ -39,7 +39,7 @@ class TerritoryService:
         
         Args:
             territory_data: Territory data to create
-            tenant_id: Tenant identifier
+            tenant_id: Tenant identifier from URL parameter (enforced)
             current_user: Current authenticated user
             
         Returns:
@@ -55,7 +55,7 @@ class TerritoryService:
                 message="Insufficient permissions to create territories"
             )
         
-        # Enforce tenant isolation - users can only create territories in their own tenant
+        # SECURITY: Enforce tenant isolation - users can only create territories in their own tenant
         user_tenant_id = current_user.get("tenant_id")
         if current_user.get("role") != "superadmin" and tenant_id != user_tenant_id:
             raise InsufficientPermissionsError(
@@ -83,6 +83,7 @@ class TerritoryService:
                 "updated_by": current_user.get("id")
             }
             
+            # SECURITY: Always use the URL parameter tenant_id, ignore any tenant_id in request body
             created_territory = await data_layer.create_territory(enriched_territory_data, tenant_id)
             logger.info(
                 f"Territory created successfully: territory {created_territory.get('territory_id')}, name {territory_data.name}, created_by {current_user.get('id')}"

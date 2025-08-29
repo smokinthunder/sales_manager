@@ -5,7 +5,7 @@ Handles user authentication, OTP generation/verification,
 token refresh, and logout functionality.
 """
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, Query
 from fastapi.security import HTTPBearer
 from typing import Dict, Any
 import structlog
@@ -34,7 +34,8 @@ rate_limit_auth = create_rate_limit_dependency(limit=5)  # 5 requests per minute
 
 @router.post("/otp/generate", response_model=OTPResponse)
 async def generate_otp(
-    request: OTPGenerateRequest,
+    phone: str = Query(..., description="Phone number for OTP"),
+    tenant_id: str = Query(..., description="Tenant identifier (required)"),
     auth_service: AuthService = Depends(get_auth_service),
     _: None = Depends(rate_limit_auth)
 ):
@@ -42,7 +43,8 @@ async def generate_otp(
     Generate OTP for user authentication.
     
     Args:
-        request: OTP generation request with phone and tenant_id
+        phone: Phone number for OTP
+        tenant_id: Tenant identifier from URL parameter (enforced)
         auth_service: Authentication service dependency
         
     Returns:
@@ -52,9 +54,9 @@ async def generate_otp(
         HTTPException: If OTP generation fails
     """
     try:
-        result = await auth_service.generate_otp(request.phone, request.tenant_id)
+        result = await auth_service.generate_otp(phone, tenant_id)
         
-        logger.info("OTP generated successfully", phone=request.phone, tenant_id=request.tenant_id)
+        logger.info("OTP generated successfully", phone=phone, tenant_id=tenant_id)
         return result
         
     except OTPExpiredError as e:
@@ -73,7 +75,9 @@ async def generate_otp(
 
 @router.post("/otp/verify", response_model=AuthResponse)
 async def verify_otp(
-    request: OTPVerifyRequest,
+    phone: str = Query(..., description="Phone number"),
+    otp: str = Query(..., description="One-time password"),
+    tenant_id: str = Query(..., description="Tenant identifier (required)"),
     auth_service: AuthService = Depends(get_auth_service),
     _: None = Depends(rate_limit_auth)
 ):
@@ -81,7 +85,9 @@ async def verify_otp(
     Verify OTP and authenticate user.
     
     Args:
-        request: OTP verification request with phone, otp, and tenant_id
+        phone: Phone number
+        otp: One-time password
+        tenant_id: Tenant identifier from URL parameter (enforced)
         auth_service: Authentication service dependency
         
     Returns:
@@ -91,9 +97,9 @@ async def verify_otp(
         HTTPException: If OTP verification fails
     """
     try:
-        result = await auth_service.verify_otp(request.phone, request.otp, request.tenant_id)
+        result = await auth_service.verify_otp(phone, otp, tenant_id)
         
-        logger.info("OTP verified successfully", phone=request.phone, tenant_id=request.tenant_id)
+        logger.info("OTP verified successfully", phone=phone, tenant_id=tenant_id)
         return result
         
     except OTPExpiredError as e:

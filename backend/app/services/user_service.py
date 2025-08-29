@@ -43,12 +43,13 @@ class UserService:
             self.data_layer = await get_data_layer_client()
         return self.data_layer
     
-    async def create_user(self, user_data: UserCreate, current_user: Dict[str, Any]) -> Dict[str, Any]:
+    async def create_user(self, user_data: UserCreate, tenant_id: str, current_user: Dict[str, Any]) -> Dict[str, Any]:
         """
         Create a new user.
         
         Args:
             user_data: User data to create
+            tenant_id: Tenant identifier from URL parameter (enforced)
             current_user: Current authenticated user
             
         Returns:
@@ -64,9 +65,9 @@ class UserService:
                 message="Insufficient permissions to create users"
             )
         
-        # Enforce tenant isolation - users can only be created in their own tenant
+        # SECURITY: Enforce tenant isolation - users can only be created in their own tenant
         user_tenant_id = current_user.get("tenant_id")
-        if current_user.get("role") != "superadmin" and user_data.tenant_id != user_tenant_id:
+        if current_user.get("role") != "superadmin" and tenant_id != user_tenant_id:
             raise InsufficientPermissionsError(
                 message="You can only create users in your own tenant"
             )
@@ -76,7 +77,7 @@ class UserService:
         # Check if user with phone already exists
         existing_user = await data_layer.get_user_by_phone(
             user_data.phone, 
-            user_data.tenant_id
+            tenant_id  # Use URL parameter, not request body
         )
         if existing_user:
             raise UserAlreadyExistsError(
@@ -102,7 +103,8 @@ class UserService:
             # Debug logging to see what's being sent
             logger.info(f"Sending enriched user data to Data Layer: {enriched_user_data}")
             
-            created_user = await data_layer.create_user(enriched_user_data)
+            # SECURITY: Always use the URL parameter tenant_id, ignore any tenant_id in request body
+            created_user = await data_layer.create_user(enriched_user_data, tenant_id)
             logger.info(
                 f"User created successfully: user {created_user.get('id')}, phone {user_data.phone}, created_by {current_user.get('id')}"
             )

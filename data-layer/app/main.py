@@ -349,6 +349,7 @@ class TerritoryCreate(BaseModel):
     description: Optional[str] = None
     area_manager_id: Optional[int] = None
     created_by: Optional[int] = None
+    # SECURITY: tenant_id is NOT allowed in request body - it's enforced via URL parameter
 
 # Territory update model
 class TerritoryUpdate(BaseModel):
@@ -538,6 +539,9 @@ async def get_territories(tenant_id: str, db=Depends(get_db)):
 async def create_territory(tenant_id: str, territory_data: TerritoryCreate, db=Depends(get_db)):
     """Create a new territory for a specific tenant"""
     try:
+        # SECURITY: Always use the URL parameter tenant_id, ignore any tenant_id in request body
+        # This prevents users from creating resources in other tenants
+        
         # Check if territory with same territory_id or code already exists
         check_query = text("""
             SELECT id FROM territories 
@@ -547,13 +551,13 @@ async def create_territory(tenant_id: str, territory_data: TerritoryCreate, db=D
         existing_territory = db.execute(check_query, {
             "territory_id": territory_data.territory_id,
             "code": territory_data.code,
-            "tenant_id": tenant_id
+            "tenant_id": tenant_id  # Use URL parameter, not request body
         }).fetchone()
         
         if existing_territory:
             raise HTTPException(status_code=400, detail="Territory with this ID or code already exists")
         
-        # Create new territory
+        # Create new territory - ALWAYS use URL parameter tenant_id
         insert_query = text("""
             INSERT INTO territories (territory_id, name, code, description, area_manager_id, tenant_id, created_at, updated_at, created_by, updated_by)
             VALUES (:territory_id, :name, :code, :description, :area_manager_id, :tenant_id, NOW(), NOW(), :created_by, :updated_by)
@@ -565,7 +569,7 @@ async def create_territory(tenant_id: str, territory_data: TerritoryCreate, db=D
             "code": territory_data.code,
             "description": territory_data.description,
             "area_manager_id": territory_data.area_manager_id,
-            "tenant_id": tenant_id,
+            "tenant_id": tenant_id,  # Use URL parameter, not request body
             "created_by": territory_data.created_by,
             "updated_by": territory_data.created_by
         })
