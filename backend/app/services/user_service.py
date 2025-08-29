@@ -64,6 +64,13 @@ class UserService:
                 message="Insufficient permissions to create users"
             )
         
+        # Enforce tenant isolation - users can only be created in their own tenant
+        user_tenant_id = current_user.get("tenant_id")
+        if current_user.get("role") != "superadmin" and user_data.tenant_id != user_tenant_id:
+            raise InsufficientPermissionsError(
+                message="You can only create users in your own tenant"
+            )
+        
         data_layer = await self._get_data_layer()
         
         # Check if user with phone already exists
@@ -132,6 +139,13 @@ class UserService:
                 message="Insufficient permissions to view this user"
             )
         
+        # Enforce tenant isolation
+        user_tenant_id = current_user.get("tenant_id")
+        if current_user.get("role") != "superadmin" and tenant_id != user_tenant_id:
+            raise InsufficientPermissionsError(
+                message="You can only access users from your own tenant"
+            )
+        
         data_layer = await self._get_data_layer()
         user = await data_layer.get_user_by_id(user_id, tenant_id)
         
@@ -144,7 +158,7 @@ class UserService:
     
     async def get_users(
         self, 
-        tenant_id: str, 
+        tenant_id: Optional[str], 
         current_user: Dict[str, Any],
         role: Optional[str] = None,
         status: Optional[str] = None,
@@ -154,7 +168,7 @@ class UserService:
         Get users with optional filtering.
         
         Args:
-            tenant_id: Tenant identifier
+            tenant_id: Optional tenant identifier for filtering
             current_user: Current authenticated user
             role: Optional role filter
             status: Optional status filter
@@ -173,7 +187,27 @@ class UserService:
             )
         
         data_layer = await self._get_data_layer()
-        users = await data_layer.get_users(tenant_id)
+        
+        # Enforce tenant isolation based on user role
+        user_tenant_id = current_user.get("tenant_id")
+        
+        if current_user.get("role") == "superadmin":
+            # Superadmin can view all users across all tenants
+            if tenant_id:
+                # If specific tenant requested, use that
+                target_tenant = tenant_id
+            else:
+                # If no tenant specified, superadmin can see all
+                target_tenant = None
+        else:
+            # Non-superadmin users can ONLY access their own tenant
+            if tenant_id and tenant_id != user_tenant_id:
+                raise InsufficientPermissionsError(
+                    message="You can only access users from your own tenant"
+                )
+            target_tenant = user_tenant_id
+        
+        users = await data_layer.get_users(target_tenant)
         
         # Apply filters
         if role:
@@ -187,6 +221,10 @@ class UserService:
             users = [u for u in users if 
                     search_lower in u.get("name", "").lower() or
                     search_lower in u.get("phone", "")]
+        
+        logger.info(
+            f"Retrieved {len(users)} users for tenant {target_tenant}, requested by user {current_user.get('id')}"
+        )
         
         return users
     
@@ -219,6 +257,13 @@ class UserService:
             current_user.get("role") not in ["client_admin", "superadmin"]):
             raise InsufficientPermissionsError(
                 message="Insufficient permissions to update this user"
+            )
+        
+        # Enforce tenant isolation
+        user_tenant_id = current_user.get("tenant_id")
+        if current_user.get("role") != "superadmin" and tenant_id != user_tenant_id:
+            raise InsufficientPermissionsError(
+                message="You can only update users from your own tenant"
             )
         
         data_layer = await self._get_data_layer()
@@ -369,6 +414,13 @@ class UserService:
         if current_user.get("role") not in ["client_admin", "superadmin"]:
             raise InsufficientPermissionsError(
                 message="Insufficient permissions to delete users"
+            )
+        
+        # Enforce tenant isolation
+        user_tenant_id = current_user.get("tenant_id")
+        if current_user.get("role") != "superadmin" and tenant_id != user_tenant_id:
+            raise InsufficientPermissionsError(
+                message="You can only delete users from your own tenant"
             )
         
         # Prevent self-deletion

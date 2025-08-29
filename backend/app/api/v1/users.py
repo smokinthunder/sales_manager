@@ -60,7 +60,7 @@ async def create_user(
 
 @router.get("/", response_model=List[UserRead])
 async def get_users(
-    tenant_id: Optional[str] = Query(None, description="Filter by tenant identifier"),
+    tenant_id: str = Query(..., description="Tenant identifier (required)"),
     role: Optional[str] = Query(None, description="Filter by user role"),
     status: Optional[str] = Query(None, description="Filter by user status"),
     search: Optional[str] = Query(None, description="Search by name or phone"),
@@ -71,15 +71,9 @@ async def get_users(
     Get users with optional filtering.
     
     Only admin roles (client_admin, superadmin, area_manager) can list users.
-    Superadmin can view all users without tenant_id, others need tenant_id.
+    tenant_id is mandatory for all users.
     """
     try:
-        # Superadmin can view all users, others need tenant_id
-        if not tenant_id and current_user.get("role") != "superadmin":
-            raise InsufficientPermissionsError(
-                message="Tenant ID is required for non-superadmin users"
-            )
-        
         users = await user_service.get_users(
             tenant_id, 
             current_user, 

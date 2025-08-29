@@ -217,6 +217,46 @@ class DataLayerClient:
             List of territories
         """
         return await self._make_request("GET", f"/api/territories/{tenant_id}")
+
+    async def create_territory(self, territory_data: Dict[str, Any], tenant_id: str) -> Dict[str, Any]:
+        """
+        Create a new territory in the Data Layer service.
+        
+        Args:
+            territory_data: Territory data to create
+            tenant_id: Tenant identifier
+            
+        Returns:
+            Created territory data
+        """
+        return await self._make_request("POST", f"/api/territories/{tenant_id}", json=territory_data)
+
+    async def update_territory(self, territory_id: str, territory_data: Dict[str, Any], tenant_id: str) -> Dict[str, Any]:
+        """
+        Update territory data in the Data Layer service.
+        
+        Args:
+            territory_id: Territory ID to update
+            territory_data: Territory data to update
+            tenant_id: Tenant identifier
+            
+        Returns:
+            Updated territory data
+        """
+        return await self._make_request("PUT", f"/api/territories/{tenant_id}/{territory_id}", json=territory_data)
+
+    async def delete_territory(self, territory_id: str, tenant_id: str) -> Dict[str, Any]:
+        """
+        Delete territory in the Data Layer service.
+        
+        Args:
+            territory_id: Territory ID to delete
+            tenant_id: Tenant identifier
+            
+        Returns:
+            Deletion result
+        """
+        return await self._make_request("DELETE", f"/api/territories/{tenant_id}/{territory_id}")
     
     async def get_visits(
         self, 
