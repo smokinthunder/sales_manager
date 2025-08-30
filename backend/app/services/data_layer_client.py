@@ -145,7 +145,7 @@ class DataLayerClient:
             
         return await self._make_request("POST", f"/api/users/{user_dict['tenant_id']}", json=user_dict)
 
-    async def update_user(self, user_id: str, user_data: Any, tenant_id: str, updated_by: Optional[int] = None) -> Dict[str, Any]:
+    async def update_user(self, user_id: str, user_data: Any, tenant_id: str, updated_by: Optional[str] = None) -> Dict[str, Any]:
         """
         Update user data in the Data Layer service.
         
@@ -174,14 +174,14 @@ class DataLayerClient:
 
     async def delete_user(self, user_id: str, tenant_id: str) -> Dict[str, Any]:
         """
-        Delete user (soft delete) in the Data Layer service.
+        Delete user (hard delete) in the Data Layer service.
         
         Args:
-            user_id: User ID to delete
+            user_id: User identifier
             tenant_id: Tenant identifier
             
         Returns:
-            Deletion result
+            Deletion confirmation
         """
         return await self._make_request("DELETE", f"/api/users/{tenant_id}/{user_id}")
     
@@ -356,16 +356,16 @@ class DataLayerClient:
         """
         return await self._make_request("PUT", f"/api/routes/{tenant_id}/{route_id}", json=route_data)
     
-    async def delete_route(self, route_id: str, tenant_id: str) -> Dict[str, Any]:
+    async def delete_route(self, route_id: int, tenant_id: str) -> Dict[str, Any]:
         """
-        Delete a route for a specific tenant (soft delete).
+        Delete a route for a specific tenant (hard delete).
         
         Args:
-            route_id: Route identifier
+            route_id: Route database ID
             tenant_id: Tenant identifier
             
         Returns:
-            Deletion result
+            Deletion confirmation
         """
         return await self._make_request("DELETE", f"/api/routes/{tenant_id}/{route_id}")
     

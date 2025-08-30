@@ -327,56 +327,50 @@ class RouteService:
                 details={"error": str(e)}
             )
     
-    async def delete_route(self, route_id: str, tenant_id: str, current_user: Dict[str, Any]) -> Dict[str, Any]:
+    async def delete_route(self, route_id: str, tenant_id: str, current_user: Dict[str, Any]) -> None:
         """
-        Delete a route (soft delete by setting status to cancelled).
+        Delete a route (hard delete - completely removes from database).
         
         Args:
-            route_id: Route identifier
-            tenant_id: Tenant identifier from URL parameter (enforced)
+            route_id: Route database ID
+            tenant_id: Tenant identifier
             current_user: Current authenticated user
             
-        Returns:
-            Deletion result
-            
         Raises:
-            RouteNotFoundError: If route doesn't exist
-            InsufficientPermissionsError: If user lacks permission
-            InvalidRouteDataError: If deletion fails
+            RouteNotFoundError: If route not found
+            InsufficientPermissionsError: If user lacks permissions
         """
-        # Check permissions - only client_admin and superadmin can delete routes
+        # Check permissions
         if current_user.get("role") not in ["client_admin", "superadmin"]:
             raise InsufficientPermissionsError(
                 message="Insufficient permissions to delete routes"
             )
         
-        # SECURITY: Enforce tenant isolation - users can only delete routes in their own tenant
-        user_tenant_id = current_user.get("tenant_id")
-        if current_user.get("role") != "superadmin" and tenant_id != user_tenant_id:
+        # Superadmin can access any tenant, others only their own
+        if current_user.get("role") != "superadmin" and current_user.get("tenant_id") != tenant_id:
             raise InsufficientPermissionsError(
-                message="You can only delete routes in your own tenant"
+                message="Access denied to this tenant"
             )
         
         data_layer = await self._get_data_layer()
         
-        # Check if route exists
+        # Check if route exists before deletion
         existing_route = await data_layer.get_route(route_id, tenant_id)
         if not existing_route:
             raise RouteNotFoundError(
                 message=f"Route with ID {route_id} not found"
             )
         
-        # Delete route (soft delete)
         try:
-            result = await data_layer.delete_route(route_id, tenant_id)
+            # Delete route completely from database
+            await data_layer.delete_route(route_id, tenant_id)
+            
             logger.info(
-                f"Route deleted successfully: route {route_id}, deleted_by {current_user.get('id')}"
+                f"Route hard deleted successfully: route_id {route_id}, deleted_by {current_user.get('id')}"
             )
-            return result
+            
         except Exception as e:
-            logger.error(
-                f"Failed to delete route {route_id}: {str(e)}"
-            )
+            logger.error(f"Failed to delete route {route_id}: {str(e)}")
             raise InvalidRouteDataError(
                 message="Failed to delete route",
                 details={"error": str(e)}
