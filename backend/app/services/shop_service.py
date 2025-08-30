@@ -21,17 +21,3 @@ class ShopService:
             return None
         resp.raise_for_status()
         return resp.json()
-
-# app/services/shop_service.py
-
-class ShopService:
-    def __init__(self):
-        pass
-
-    def get_all_shops(self):
-        # TODO: implement fetching shops
-        return []
-
-    def get_shop_by_id(self, shop_id: str):
-        # TODO: implement fetching a shop by id
-        return None
