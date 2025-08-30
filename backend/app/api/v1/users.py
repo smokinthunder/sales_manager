@@ -153,18 +153,25 @@ async def update_user(
         )
 
 
-@router.delete("/{user_id}", status_code=status.HTTP_200_OK)
+@router.delete("/{user_id}", status_code=204)
 async def delete_user(
-    user_id: str,
-    tenant_id: str = Query(..., description="Tenant identifier"),
+    user_id: int = Path(..., description="User ID to delete"),
+    tenant_id: str = Query(..., description="Tenant identifier (required)"),
     current_user: Dict[str, Any] = Depends(get_current_user),
     user_service: UserService = Depends(get_user_service)
 ):
     """
-    Delete user (soft delete).
+    Delete a user (hard delete - completely removes from database).
     
-    Only client_admin and superadmin users can delete users.
-    Users cannot delete their own account.
+    **Delete Behavior:**
+    - User is completely removed from the database
+    - Cannot delete users who have created routes or territories
+    - This action cannot be undone
+    
+    **Security:**
+    - Requires authentication
+    - Only client_admin and superadmin can delete users
+    - Users can only delete users from their assigned tenant
     """
     try:
         result = await user_service.delete_user(user_id, tenant_id, current_user)
