@@ -312,6 +312,105 @@ class DataLayerClient:
         
         return await self._make_request("GET", f"/api/routes/{tenant_id}", params=params)
     
+    async def get_route(self, route_id: str, tenant_id: str) -> Optional[Dict[str, Any]]:
+        """
+        Get a specific route by ID for a specific tenant.
+        
+        Args:
+            route_id: Route identifier
+            tenant_id: Tenant identifier
+            
+        Returns:
+            Route data or None if not found
+        """
+        routes = await self.get_routes(tenant_id)
+        for route in routes:
+            if route.get("route_id") == route_id:
+                return route
+        return None
+    
+    async def create_route(self, route_data: Dict[str, Any], tenant_id: str) -> Dict[str, Any]:
+        """
+        Create a new route for a specific tenant.
+        
+        Args:
+            route_data: Route data to create
+            tenant_id: Tenant identifier
+            
+        Returns:
+            Created route data
+        """
+        return await self._make_request("POST", f"/api/routes/{tenant_id}", json=route_data)
+    
+    async def update_route(self, route_id: str, route_data: Dict[str, Any], tenant_id: str) -> Dict[str, Any]:
+        """
+        Update an existing route for a specific tenant.
+        
+        Args:
+            route_id: Route identifier
+            route_data: Route data to update
+            tenant_id: Tenant identifier
+            
+        Returns:
+            Updated route data
+        """
+        return await self._make_request("PUT", f"/api/routes/{tenant_id}/{route_id}", json=route_data)
+    
+    async def delete_route(self, route_id: str, tenant_id: str) -> Dict[str, Any]:
+        """
+        Delete a route for a specific tenant (soft delete).
+        
+        Args:
+            route_id: Route identifier
+            tenant_id: Tenant identifier
+            
+        Returns:
+            Deletion result
+        """
+        return await self._make_request("DELETE", f"/api/routes/{tenant_id}/{route_id}")
+    
+    async def create_route_assignment(self, assignment_data: Dict[str, Any], tenant_id: str) -> Dict[str, Any]:
+        """
+        Create a new route assignment (add shop to route).
+        
+        Args:
+            assignment_data: Assignment data to create
+            tenant_id: Tenant identifier
+            
+        Returns:
+            Created assignment data
+        """
+        return await self._make_request("POST", f"/api/routes/{tenant_id}/assignments", json=assignment_data)
+    
+    async def delete_route_assignment(self, assignment_id: str, tenant_id: str) -> Dict[str, Any]:
+        """
+        Delete a route assignment (remove shop from route).
+        
+        Args:
+            assignment_id: Assignment identifier
+            tenant_id: Tenant identifier
+            
+        Returns:
+            Deletion result
+        """
+        return await self._make_request("DELETE", f"/api/routes/{tenant_id}/assignments/{assignment_id}")
+    
+    async def get_route_with_assignments(self, route_id: str, tenant_id: str) -> Optional[Dict[str, Any]]:
+        """
+        Get a route with all its shop assignments.
+        
+        Args:
+            route_id: Route identifier
+            tenant_id: Tenant identifier
+            
+        Returns:
+            Route data with assignments or None if not found
+        """
+        try:
+            return await self._make_request("GET", f"/api/routes/{tenant_id}/{route_id}/assignments")
+        except Exception:
+            return None
+    
     async def get_shop_analytics(self, tenant_id: str) -> List[Dict[str, Any]]:
         """
         Get shop performance analytics for a specific tenant.
@@ -345,6 +444,46 @@ class DataLayerClient:
             Health status
         """
         return await self._make_request("GET", "/health")
+
+    async def get_route_by_route_id(self, route_id: str, tenant_id: str) -> Dict[str, Any]:
+        """
+        Get a specific route by its business identifier (route_id).
+        
+        Args:
+            route_id: Business-friendly route identifier (e.g., RT-001)
+            tenant_id: Tenant identifier
+            
+        Returns:
+            Route data dictionary
+        """
+        return await self._make_request("GET", f"/api/routes/{tenant_id}/{route_id}")
+    
+    async def update_route_by_route_id(self, route_id: str, route_data: Dict[str, Any], tenant_id: str) -> Dict[str, Any]:
+        """
+        Update an existing route by its business identifier (route_id).
+        
+        Args:
+            route_id: Business-friendly route identifier (e.g., RT-001)
+            route_data: Route update data
+            tenant_id: Tenant identifier
+            
+        Returns:
+            Updated route data dictionary
+        """
+        return await self._make_request("PUT", f"/api/routes/{tenant_id}/{route_id}", json=route_data)
+    
+    async def delete_route_by_route_id(self, route_id: str, tenant_id: str) -> Dict[str, Any]:
+        """
+        Delete a route by its business identifier (route_id).
+        
+        Args:
+            route_id: Business-friendly route identifier (e.g., RT-001)
+            tenant_id: Tenant identifier
+            
+        Returns:
+            Deletion confirmation
+        """
+        return await self._make_request("DELETE", f"/api/routes/{tenant_id}/{route_id}")
 
 
 # Global instance
