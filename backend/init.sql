@@ -85,6 +85,7 @@ CREATE TABLE IF NOT EXISTS shops (
 -- Create routes table
 CREATE TABLE IF NOT EXISTS routes (
     id INT AUTO_INCREMENT PRIMARY KEY,
+    route_id VARCHAR(20) UNIQUE NOT NULL,
     name VARCHAR(255) NOT NULL,
     territory_id VARCHAR(20) NOT NULL,
     tenant_id VARCHAR(50) NOT NULL,
@@ -94,6 +95,7 @@ CREATE TABLE IF NOT EXISTS routes (
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     created_by INT,
     updated_by INT,
+    INDEX idx_route_id (route_id),
     INDEX idx_tenant_territory (tenant_id, territory_id),
     INDEX idx_week_start (week_start_date)
 );

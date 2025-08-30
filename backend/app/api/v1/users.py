@@ -6,7 +6,7 @@ and authorization checks.
 """
 
 from typing import List, Optional, Dict, Any
-from fastapi import APIRouter, Depends, HTTPException, status, Query
+from fastapi import APIRouter, Depends, HTTPException, status, Query, Path, Body
 from app.api.deps import get_current_user, get_current_active_user
 from app.core.errors import (
     UserNotFoundError, 
@@ -64,7 +64,7 @@ async def create_user(
 async def get_users(
     tenant_id: str = Query(..., description="Tenant identifier (required)"),
     role: Optional[str] = Query(None, description="Filter by user role"),
-    status: Optional[str] = Query(None, description="Filter by user status"),
+    user_status: Optional[str] = Query(None, description="Filter by user status"),
     search: Optional[str] = Query(None, description="Search by name or phone"),
     current_user: Dict[str, Any] = Depends(get_current_user),
     user_service: UserService = Depends(get_user_service)
@@ -80,7 +80,7 @@ async def get_users(
             tenant_id, 
             current_user, 
             role=role, 
-            status=status, 
+            status=user_status, 
             search=search
         )
         return users
@@ -93,7 +93,7 @@ async def get_users(
 
 @router.get("/{user_id}", response_model=UserRead)
 async def get_user(
-    user_id: str,
+    user_id: int = Path(..., description="User ID"),
     tenant_id: str = Query(..., description="Tenant identifier"),
     current_user: Dict[str, Any] = Depends(get_current_user),
     user_service: UserService = Depends(get_user_service)
@@ -120,8 +120,8 @@ async def get_user(
 
 @router.put("/{user_id}", response_model=ProfileUpdateResponse)
 async def update_user(
-    user_id: str,
-    user_data: UserUpdate,
+    user_id: int = Path(..., description="User ID"),
+    user_data: UserUpdate = Body(..., description="User data to update"),
     tenant_id: str = Query(..., description="Tenant identifier"),
     current_user: Dict[str, Any] = Depends(get_current_user),
     user_service: UserService = Depends(get_user_service)
@@ -153,22 +153,29 @@ async def update_user(
         )
 
 
-@router.delete("/{user_id}", status_code=status.HTTP_200_OK)
+@router.delete("/{user_id}", status_code=204)
 async def delete_user(
-    user_id: str,
-    tenant_id: str = Query(..., description="Tenant identifier"),
+    user_id: str = Path(..., description="User ID to delete"),
+    tenant_id: str = Query(..., description="Tenant identifier (required)"),
     current_user: Dict[str, Any] = Depends(get_current_user),
     user_service: UserService = Depends(get_user_service)
 ):
     """
-    Delete user (soft delete).
+    Delete a user (hard delete - completely removes from database).
     
-    Only client_admin and superadmin users can delete users.
-    Users cannot delete their own account.
+    **Delete Behavior:**
+    - User is completely removed from the database
+    - Cannot delete users who have created routes or territories
+    - This action cannot be undone
+    
+    **Security:**
+    - Requires authentication
+    - Only client_admin and superadmin can delete users
+    - Users can only delete users from their assigned tenant
     """
     try:
-        result = await user_service.delete_user(user_id, tenant_id, current_user)
-        return result
+        await user_service.delete_user(user_id, tenant_id, current_user)
+        return {"message": "User deleted successfully"}
     except UserNotFoundError as e:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
