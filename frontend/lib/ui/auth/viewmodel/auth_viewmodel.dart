@@ -3,6 +3,8 @@ import 'package:sales_manager/config/providers/current_user_notifier.dart';
 import 'package:sales_manager/data/repositories/auth/auth_local_repository.dart';
 import 'package:sales_manager/data/repositories/auth/auth_remote_repository.dart';
 import 'package:sales_manager/domain/models/user/user.dart';
+import 'package:sales_manager/domain/models/user/user_role.dart';
+import 'package:sales_manager/domain/models/user/user_status.dart';
 import 'package:sales_manager/utils/result.dart';
 
 part 'auth_viewmodel.g.dart';
@@ -51,12 +53,13 @@ class AuthViewModel extends _$AuthViewModel {
         final user = data?["user"];
         final appUser = AppUser(
           name: user["name"],
-          email: "",
+          email: user["email"] ?? "",
           phoneNumber: user["phone"],
           pictureUrl: "",
           id: user["id"].toString(),
-          type: UserType.fromBackend(user["role"]),
+          role: UserRole.fromBackend(user["role"]),
           location: "",
+          status: UserStatus.fromBackend(user["status"]),
         );
         _currentUserNotifier.addUser(appUser);
         state = AsyncValue.data(appUser);
@@ -74,12 +77,13 @@ class AuthViewModel extends _$AuthViewModel {
           final userData = user.value.data;
           AppUser appUser = AppUser(
             name: userData?["name"] ?? "",
-            email: "",
+            email: userData?["email"] ?? "",
             phoneNumber: userData?["phone"] ?? "",
             pictureUrl: "",
             id: userData?["id"].toString() ?? "",
-            type: UserType.fromBackend(userData?["role"]),
+            role: UserRole.fromBackend(userData?["role"]),
             location: "",
+            status: UserStatus.fromBackend(userData?["status"]),
           );
           _currentUserNotifier.addUser(appUser);
         case Error():

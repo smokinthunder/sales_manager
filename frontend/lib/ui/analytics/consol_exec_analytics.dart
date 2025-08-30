@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:sales_manager/config/providers/current_user_notifier.dart';
-import 'package:sales_manager/domain/models/user/user.dart';
+import 'package:sales_manager/domain/models/user/user_role.dart';
 import 'package:sales_manager/ui/analytics/widgets/best_selling_product.dart';
 import 'package:sales_manager/ui/analytics/widgets/sales_report.dart';
 import 'package:sales_manager/ui/analytics/widgets/switch_row.dart';
@@ -50,13 +50,13 @@ class _ConsolidatedAnalyticsScreenState
                       Padding(
                         padding: const EdgeInsets.all(8.0),
                         child: Text(
-                          (user!.type == UserType.areaManager)
+                          (user!.role == UserRole.areaManager)
                               ? "Select Executive"
                               : "Select Items",
                           style: textTheme.bodyLarge,
                         ),
                       ),
-                      if (user.type == UserType.areaManager)
+                      if (user.role == UserRole.areaManager)
                         Padding(
                           padding: const EdgeInsets.all(8.0),
                           child: CustomDropDownMenu(

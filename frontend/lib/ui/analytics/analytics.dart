@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:sales_manager/config/providers/current_user_notifier.dart';
-import 'package:sales_manager/domain/models/user/user.dart';
+import 'package:sales_manager/domain/models/user/user_role.dart';
 import 'package:sales_manager/routing/route_paths.dart';
 
 enum AnalyticsType {
@@ -36,12 +36,12 @@ class _ExecutiveAnalyticsState extends ConsumerState<ExecutiveAnalytics> {
           SizedBox(height: 12),
           _buildButtonTile(
             textTheme,
-            (user!.type == UserType.areaManager) ? "Executive" : "All Shops",
+            (user!.role == UserRole.areaManager) ? "Executive" : "All Shops",
             AnalyticsType.allShops,
           ),
           _buildButtonTile(
             textTheme,
-            (user.type == UserType.areaManager)
+            (user.role == UserRole.areaManager)
                 ? "All Shops"
                 : "Individual Shops",
             AnalyticsType.individualShops,

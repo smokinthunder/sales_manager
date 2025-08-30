@@ -14,4 +14,8 @@ class ApiEndpoints {
   static final String refreshToken = "${_authApi}token/refresh";
   static final String logout = "${_authApi}logout";
   static final String getCurrentUser = "${_authApi}me";
+
+  //User Apis
+  static final String _userApi = "${_apiUrl}users/";
+  static final String getUserProfile = "${_userApi}profile/me";
 }

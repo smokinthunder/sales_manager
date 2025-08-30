@@ -62,7 +62,7 @@ class CustomAppBar extends ConsumerWidget implements PreferredSizeWidget {
                       ),
                     ),
                     Text(
-                      user?.type.toString() ?? "User Type",
+                      user?.role.displayName ?? "User Type",
                       style: TextStyle(
                         color: Colors.white70,
                         fontSize: 10,

@@ -88,11 +88,13 @@ class RemoteAuthService {
   Future<Result<Response<Map<String, dynamic>>>> getCurrentUser() async {
     try {
       Response<Map<String, dynamic>> response = await dio.get(
-        ApiEndpoints.getCurrentUser,
+        ApiEndpoints.getUserProfile,
       );
       return Result.ok(response);
     } on DioException catch (e) {
       return Result.error(Exception(e.response?.data['detail'] ?? e.message));
     }
   }
+
+  
 }

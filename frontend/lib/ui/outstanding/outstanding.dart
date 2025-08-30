@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:sales_manager/config/providers/current_user_notifier.dart';
-import 'package:sales_manager/domain/models/user/user.dart';
+import 'package:sales_manager/domain/models/user/user_role.dart';
 import 'package:sales_manager/ui/widgets/drop_down_menu.dart';
 
 class ExecutiveOutStanding extends ConsumerStatefulWidget {
@@ -22,7 +22,7 @@ class _ExecutiveOutStandingState extends ConsumerState<ExecutiveOutStanding> {
   @override
   Widget build(BuildContext context) {
     final user = ref.read(currentUserNotifierProvider);
-    final userType = user?.type;
+    final userType = user?.role;
 
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
@@ -34,7 +34,7 @@ class _ExecutiveOutStandingState extends ConsumerState<ExecutiveOutStanding> {
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 18.0),
           child: Text(
-            (userType == UserType.executive)
+            (userType == UserRole.salesExecutive)
                 ? "Select Shop"
                 : "Select Executive",
             style: textTheme.bodyLarge,
@@ -48,7 +48,7 @@ class _ExecutiveOutStandingState extends ConsumerState<ExecutiveOutStanding> {
             children: [
               Flexible(
                 flex: 5,
-                child: (userType == UserType.areaManager)
+                child: (userType == UserRole.areaManager)
                     ? CustomDropDownMenu(
                         hintText: "Varun Kumar",
                         dropdownMenuEntries: [],

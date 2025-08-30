@@ -13,8 +13,7 @@ class ExecutiveProfile extends ConsumerStatefulWidget {
 
 class _ExecutiveProfileState extends ConsumerState<ExecutiveProfile> {
   AppUser? user;
-  final TextEditingController firstNameController = TextEditingController();
-  final TextEditingController lastNameController = TextEditingController();
+  final TextEditingController nameController = TextEditingController();
   final TextEditingController emailController = TextEditingController();
   final TextEditingController phoneController = TextEditingController();
   final TextEditingController locationController = TextEditingController();
@@ -22,8 +21,7 @@ class _ExecutiveProfileState extends ConsumerState<ExecutiveProfile> {
   @override
   didChangeDependencies() {
     user = ref.watch(currentUserNotifierProvider);
-    firstNameController.text = user?.name.split(" ").first ?? "";
-    lastNameController.text = user?.name.split(" ").last ?? "";
+    nameController.text = user?.name ?? "";
     emailController.text = user?.email ?? "";
     phoneController.text = user?.phoneNumber ?? "";
     locationController.text = user?.location ?? "";
@@ -32,8 +30,7 @@ class _ExecutiveProfileState extends ConsumerState<ExecutiveProfile> {
 
   @override
   void dispose() {
-    firstNameController.dispose();
-    lastNameController.dispose();
+    nameController.dispose();
     emailController.dispose();
     phoneController.dispose();
     locationController.dispose();
@@ -86,8 +83,7 @@ class _ExecutiveProfileState extends ConsumerState<ExecutiveProfile> {
                 padding: const EdgeInsets.symmetric(horizontal: 16.0),
                 child: Column(
                   children: [
-                    _buildTextField("First Name", firstNameController),
-                    _buildTextField("Last Name", lastNameController),
+                    _buildTextField("Name", nameController),
                     _buildTextField("E-mail Address", emailController),
                     _buildTextField("Phone Number", phoneController),
                     _buildTextField("Location", locationController),
@@ -118,7 +114,14 @@ class _ExecutiveProfileState extends ConsumerState<ExecutiveProfile> {
                     SizedBox(
                       width: double.infinity,
                       child: ElevatedButton(
-                        onPressed: () {},
+                        onPressed: () {
+                          ref
+                              .read(profileViewModelProvider.notifier)
+                              .updateProfile(
+                                nameController.text,
+                                emailController.text,
+                              );
+                        },
                         child: const Text(
                           "Update",
                           style: TextStyle(fontSize: 16),
