@@ -145,7 +145,7 @@ class DataLayerClient:
             
         return await self._make_request("POST", f"/api/users/{user_dict['tenant_id']}", json=user_dict)
 
-    async def update_user(self, user_id: str, user_data: Any, tenant_id: str, updated_by: Optional[int] = None) -> Dict[str, Any]:
+    async def update_user(self, user_id: str, user_data: Any, tenant_id: str, updated_by: Optional[str] = None) -> Dict[str, Any]:
         """
         Update user data in the Data Layer service.
         

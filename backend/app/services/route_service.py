@@ -327,7 +327,7 @@ class RouteService:
                 details={"error": str(e)}
             )
     
-    async def delete_route(self, route_id: int, tenant_id: str, current_user: Dict[str, Any]) -> None:
+    async def delete_route(self, route_id: str, tenant_id: str, current_user: Dict[str, Any]) -> None:
         """
         Delete a route (hard delete - completely removes from database).
         
@@ -353,6 +353,13 @@ class RouteService:
             )
         
         data_layer = await self._get_data_layer()
+        
+        # Check if route exists before deletion
+        existing_route = await data_layer.get_route(route_id, tenant_id)
+        if not existing_route:
+            raise RouteNotFoundError(
+                message=f"Route with ID {route_id} not found"
+            )
         
         try:
             # Delete route completely from database

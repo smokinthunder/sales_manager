@@ -396,7 +396,7 @@ class UserService:
             message="Insufficient permissions to update this user"
         )
     
-    async def delete_user(self, user_id: int, tenant_id: str, current_user: Dict[str, Any]) -> None:
+    async def delete_user(self, user_id: str, tenant_id: str, current_user: Dict[str, Any]) -> None:
         """
         Delete user (hard delete - completely removes from database).
         
@@ -432,7 +432,7 @@ class UserService:
         data_layer = await self._get_data_layer()
         
         # Check if user exists
-        existing_user = await data_layer.get_user(user_id, tenant_id)
+        existing_user = await data_layer.get_user_by_id(user_id, tenant_id)
         if not existing_user:
             raise UserNotFoundError(
                 message=f"User with ID {user_id} not found"
