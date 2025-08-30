@@ -9,7 +9,6 @@ import 'package:sales_manager/ui/widgets/scaffold.dart';
 import 'package:sales_manager/ui/loading_screen.dart';
 
 final routerProvider = Provider<GoRouter>((ref) {
-  // final user = ref.watch(authStreamProvider).valueOrNull;
   final user = ref.watch(currentUserNotifierProvider);
 
   return GoRouter(

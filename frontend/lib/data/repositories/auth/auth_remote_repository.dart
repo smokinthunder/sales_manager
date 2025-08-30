@@ -27,4 +27,6 @@ class AuthRemoteRepository {
   ) async => await remoteAuthService.refreshTocken(refreshToken);
   Future<Result<Response<String>>> logout() async =>
       await remoteAuthService.logout();
+  Future<Result<Response<Map<String, dynamic>>>> getCurrentUser() async =>
+      await remoteAuthService.getCurrentUser();
 }

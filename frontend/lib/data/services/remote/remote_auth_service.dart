@@ -1,17 +1,28 @@
 import 'package:dio/dio.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:sales_manager/data/services/local/local_auth_service.dart';
 import 'package:sales_manager/data/services/remote/api_endpoints.dart';
+import 'package:sales_manager/data/services/remote/auth_interceptor.dart';
 import 'package:sales_manager/utils/result.dart';
 
 class RemoteAuthService {
-  final dio = Dio();
+  late final Dio dio;
+  final LocalAuthService localAuth = LocalAuthService();
+  final tenantId = dotenv.env['TENANT_ID'] ?? "super_tenant";
+
+  RemoteAuthService() {
+    dio = Dio();
+    dio.interceptors.add(AuthInterceptor(localAuth));
+  }
+
   Future<Result<Response<Map<String, dynamic>>>> generateOtp(
     String phoneNumber,
   ) async {
-    final data = {"phone": phoneNumber, "tenant_id": "default"};
+    final queryParameters = {"phone": phoneNumber, "tenant_id": tenantId};
     try {
       Response<Map<String, dynamic>> response = await dio.post(
         ApiEndpoints.generateOtp,
-        data: data,
+        queryParameters: queryParameters,
       );
       return Result.ok(response);
     } on DioException catch (e) {
@@ -23,11 +34,15 @@ class RemoteAuthService {
     String phoneNumber,
     String otp,
   ) async {
-    final data = {"phone": phoneNumber, "otp": otp, "tenant_id": "default"};
+    final queryParameters = {
+      "phone": phoneNumber,
+      "otp": otp,
+      "tenant_id": tenantId,
+    };
     try {
       Response<Map<String, dynamic>> response = await dio.post(
         ApiEndpoints.verifyOtp,
-        data: data,
+        queryParameters: queryParameters,
       );
       return Result.ok(response);
     } on DioException catch (e) {
@@ -67,6 +82,17 @@ class RemoteAuthService {
       }
 
       return Result.error(Exception(errorMessage));
+    }
+  }
+
+  Future<Result<Response<Map<String, dynamic>>>> getCurrentUser() async {
+    try {
+      Response<Map<String, dynamic>> response = await dio.get(
+        ApiEndpoints.getCurrentUser,
+      );
+      return Result.ok(response);
+    } on DioException catch (e) {
+      return Result.error(Exception(e.response?.data['detail'] ?? e.message));
     }
   }
 }

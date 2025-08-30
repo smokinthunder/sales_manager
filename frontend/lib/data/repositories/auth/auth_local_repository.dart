@@ -49,6 +49,7 @@ class AuthLocalRepository {
   Future<bool> isAccessTokenExpired() async =>
       await _localAuthService.isAccessTokenExpired();
 
+
   /// Clear all tokens (logout)
   Future<void> clearTokens() async => await _localAuthService.clearTokens();
 }

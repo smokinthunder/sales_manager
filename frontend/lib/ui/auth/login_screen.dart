@@ -19,6 +19,12 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   final TextEditingController phoneController = TextEditingController();
 
   @override
+  void initState() {
+    super.initState();
+    ref.read(authViewModelProvider.notifier).getUser();
+  }
+
+  @override
   Widget build(BuildContext context) {
     final isLoading = ref.watch(
       authViewModelProvider.select((val) => val?.isLoading == true),

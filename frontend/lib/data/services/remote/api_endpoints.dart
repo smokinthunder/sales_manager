@@ -1,16 +1,17 @@
+import 'package:flutter_dotenv/flutter_dotenv.dart';
+
 class ApiEndpoints {
-  // Should change this wrt your network
-  static const String _ipAddr = "192.168.63.95";
-  static const String _baseUrl = "http://$_ipAddr:8000/";
-  static const String _apiUrl = "${_baseUrl}api/v1/";
+  static final String _ipAddr = dotenv.env['IP_ADDR'] ?? "192.168.63.132";
+  static final String _baseUrl = "http://$_ipAddr:8000/";
+  static final String _apiUrl = "${_baseUrl}api/v1/";
 
   // End Points
 
   //Auth Apis
-  static const String _authApi = "${_apiUrl}auth/";
-  static const String generateOtp = "${_authApi}otp/generate";
-  static const String verifyOtp = "${_authApi}otp/verify";
-  static const String refreshToken = "${_authApi}token/refresh";
-  static const String logout = "${_authApi}logout";
-  static const String userProfile = "${_authApi}me";
+  static final String _authApi = "${_apiUrl}auth/";
+  static final String generateOtp = "${_authApi}otp/generate";
+  static final String verifyOtp = "${_authApi}otp/verify";
+  static final String refreshToken = "${_authApi}token/refresh";
+  static final String logout = "${_authApi}logout";
+  static final String getCurrentUser = "${_authApi}me";
 }

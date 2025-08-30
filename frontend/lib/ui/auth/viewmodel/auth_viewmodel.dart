@@ -64,4 +64,26 @@ class AuthViewModel extends _$AuthViewModel {
         state = AsyncError(res.error, StackTrace.current);
     }
   }
+
+  Future<void> getUser() async {
+    final token = await _authLocalRepository.getAccessToken();
+    if (token != null) {
+      final user = await _authRemoteRepository.getCurrentUser();
+      switch (user) {
+        case Ok():
+          final userData = user.value.data;
+          AppUser appUser = AppUser(
+            name: userData?["name"] ?? "",
+            email: "",
+            phoneNumber: userData?["phone"] ?? "",
+            pictureUrl: "",
+            id: userData?["id"].toString() ?? "",
+            type: UserType.fromBackend(userData?["role"]),
+            location: "",
+          );
+          _currentUserNotifier.addUser(appUser);
+        case Error():
+      }
+    }
+  }
 }
