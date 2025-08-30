@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   # Server A: MySQL Database (completely isolated)
   mysql:
@@ -12,7 +10,7 @@ services:
       MYSQL_USER: sales_user
       MYSQL_PASSWORD: sales_password
     ports:
-      - "3306:3306"
+      - "3307:3306"
     volumes:
       - mysql_data:/var/lib/mysql
       - ./backend/init.sql:/docker-entrypoint-initdb.d/init.sql
@@ -66,12 +64,23 @@ services:
       test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
       timeout: 20s
       retries: 10
+    develop:
+      watch:
+        - action: sync
+          path: ./data-layer
+          target: /app
+          ignore:
+            - __pycache__/
+            - .pyc
+            - .git/
+        - action: rebuild
+          path: ./data-layer/requirements.txt
 
   # Server C: Backend API Gateway (communicates with Data Layer)
   backend:
     build:
       context: ./backend
-      dockerfile: Dockerfile.backend
+      dockerfile: Dockerfile
     container_name: sales_manager_backend
     restart: unless-stopped
     environment:
@@ -96,6 +105,17 @@ services:
       test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
       timeout: 20s
       retries: 10
+    develop:
+      watch:
+        - action: sync
+          path: ./backend
+          target: /app
+          ignore:
+            - __pycache__/
+            - .pyc
+            - .git/
+        - action: rebuild
+          path: ./backend/requirements.txt
 
   # Mock Client Finance API (Tally-like)
   mock-client-api:
@@ -113,6 +133,8 @@ services:
     networks:
       - backend_network
 
+
+
 volumes:
   mysql_data:
   redis_data:
@@ -124,3 +146,5 @@ networks:
   backend_network:
     name: sales_manager_backend_network
     driver: bridge
+
+

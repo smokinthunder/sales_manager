@@ -91,6 +91,100 @@ class DataLayerClient:
         """
         return await self._make_request("GET", f"/api/users/{tenant_id}")
     
+    async def get_user_by_phone(self, phone: str, tenant_id: str) -> Optional[Dict[str, Any]]:
+        """
+        Get user by phone number for a specific tenant.
+        
+        Args:
+            phone: User's phone number
+            tenant_id: Tenant identifier
+            
+        Returns:
+            User data or None if not found
+        """
+        users = await self.get_users(tenant_id)
+        for user in users:
+            if user.get("phone") == phone:
+                return user
+        return None
+    
+    async def get_user_by_id(self, user_id: str, tenant_id: str) -> Optional[Dict[str, Any]]:
+        """
+        Get user by ID for a specific tenant.
+        
+        Args:
+            user_id: User ID
+            tenant_id: Tenant identifier
+            
+        Returns:
+            User data or None if not found
+        """
+        users = await self.get_users(tenant_id)
+        for user in users:
+            if str(user.get("id")) == str(user_id):
+                return user
+        return None
+    
+    async def create_user(self, user_data: Dict[str, Any]) -> Dict[str, Any]:
+        """
+        Create a new user.
+        
+        Args:
+            user_data: User data to create (can be Pydantic model or dict)
+            
+        Returns:
+            Created user data
+        """
+        # Convert Pydantic model to dict if needed
+        if hasattr(user_data, 'model_dump'):
+            user_dict = user_data.model_dump()
+        elif hasattr(user_data, 'dict'):
+            user_dict = user_data.dict()
+        else:
+            user_dict = dict(user_data)
+            
+        return await self._make_request("POST", f"/api/users/{user_dict['tenant_id']}", json=user_dict)
+
+    async def update_user(self, user_id: str, user_data: Any, tenant_id: str, updated_by: Optional[int] = None) -> Dict[str, Any]:
+        """
+        Update user data in the Data Layer service.
+        
+        Args:
+            user_id: User ID to update
+            user_data: User data to update (can be Pydantic model or dict)
+            tenant_id: Tenant identifier
+            updated_by: ID of user making the update
+            
+        Returns:
+            Updated user data
+        """
+        # Convert Pydantic model to dict if needed
+        if hasattr(user_data, 'model_dump'):
+            user_dict = user_data.model_dump(exclude_none=True)
+        elif hasattr(user_data, 'dict'):
+            user_dict = user_data.dict(exclude_none=True)
+        else:
+            user_dict = dict(user_data)
+        
+        # Add updated_by if provided
+        if updated_by is not None:
+            user_dict["updated_by"] = updated_by
+            
+        return await self._make_request("PUT", f"/api/users/{tenant_id}/{user_id}", json=user_dict)
+
+    async def delete_user(self, user_id: str, tenant_id: str) -> Dict[str, Any]:
+        """
+        Delete user (soft delete) in the Data Layer service.
+        
+        Args:
+            user_id: User ID to delete
+            tenant_id: Tenant identifier
+            
+        Returns:
+            Deletion result
+        """
+        return await self._make_request("DELETE", f"/api/users/{tenant_id}/{user_id}")
+    
     async def get_shops(
         self, 
         tenant_id: str, 
@@ -123,6 +217,46 @@ class DataLayerClient:
             List of territories
         """
         return await self._make_request("GET", f"/api/territories/{tenant_id}")
+
+    async def create_territory(self, territory_data: Dict[str, Any], tenant_id: str) -> Dict[str, Any]:
+        """
+        Create a new territory in the Data Layer service.
+        
+        Args:
+            territory_data: Territory data to create
+            tenant_id: Tenant identifier
+            
+        Returns:
+            Created territory data
+        """
+        return await self._make_request("POST", f"/api/territories/{tenant_id}", json=territory_data)
+
+    async def update_territory(self, territory_id: str, territory_data: Dict[str, Any], tenant_id: str) -> Dict[str, Any]:
+        """
+        Update territory data in the Data Layer service.
+        
+        Args:
+            territory_id: Territory ID to update
+            territory_data: Territory data to update
+            tenant_id: Tenant identifier
+            
+        Returns:
+            Updated territory data
+        """
+        return await self._make_request("PUT", f"/api/territories/{tenant_id}/{territory_id}", json=territory_data)
+
+    async def delete_territory(self, territory_id: str, tenant_id: str) -> Dict[str, Any]:
+        """
+        Delete territory in the Data Layer service.
+        
+        Args:
+            territory_id: Territory ID to delete
+            tenant_id: Tenant identifier
+            
+        Returns:
+            Deletion result
+        """
+        return await self._make_request("DELETE", f"/api/territories/{tenant_id}/{territory_id}")
     
     async def get_visits(
         self, 
@@ -178,6 +312,105 @@ class DataLayerClient:
         
         return await self._make_request("GET", f"/api/routes/{tenant_id}", params=params)
     
+    async def get_route(self, route_id: str, tenant_id: str) -> Optional[Dict[str, Any]]:
+        """
+        Get a specific route by ID for a specific tenant.
+        
+        Args:
+            route_id: Route identifier
+            tenant_id: Tenant identifier
+            
+        Returns:
+            Route data or None if not found
+        """
+        routes = await self.get_routes(tenant_id)
+        for route in routes:
+            if route.get("route_id") == route_id:
+                return route
+        return None
+    
+    async def create_route(self, route_data: Dict[str, Any], tenant_id: str) -> Dict[str, Any]:
+        """
+        Create a new route for a specific tenant.
+        
+        Args:
+            route_data: Route data to create
+            tenant_id: Tenant identifier
+            
+        Returns:
+            Created route data
+        """
+        return await self._make_request("POST", f"/api/routes/{tenant_id}", json=route_data)
+    
+    async def update_route(self, route_id: str, route_data: Dict[str, Any], tenant_id: str) -> Dict[str, Any]:
+        """
+        Update an existing route for a specific tenant.
+        
+        Args:
+            route_id: Route identifier
+            route_data: Route data to update
+            tenant_id: Tenant identifier
+            
+        Returns:
+            Updated route data
+        """
+        return await self._make_request("PUT", f"/api/routes/{tenant_id}/{route_id}", json=route_data)
+    
+    async def delete_route(self, route_id: str, tenant_id: str) -> Dict[str, Any]:
+        """
+        Delete a route for a specific tenant (soft delete).
+        
+        Args:
+            route_id: Route identifier
+            tenant_id: Tenant identifier
+            
+        Returns:
+            Deletion result
+        """
+        return await self._make_request("DELETE", f"/api/routes/{tenant_id}/{route_id}")
+    
+    async def create_route_assignment(self, assignment_data: Dict[str, Any], tenant_id: str) -> Dict[str, Any]:
+        """
+        Create a new route assignment (add shop to route).
+        
+        Args:
+            assignment_data: Assignment data to create
+            tenant_id: Tenant identifier
+            
+        Returns:
+            Created assignment data
+        """
+        return await self._make_request("POST", f"/api/routes/{tenant_id}/assignments", json=assignment_data)
+    
+    async def delete_route_assignment(self, assignment_id: str, tenant_id: str) -> Dict[str, Any]:
+        """
+        Delete a route assignment (remove shop from route).
+        
+        Args:
+            assignment_id: Assignment identifier
+            tenant_id: Tenant identifier
+            
+        Returns:
+            Deletion result
+        """
+        return await self._make_request("DELETE", f"/api/routes/{tenant_id}/assignments/{assignment_id}")
+    
+    async def get_route_with_assignments(self, route_id: str, tenant_id: str) -> Optional[Dict[str, Any]]:
+        """
+        Get a route with all its shop assignments.
+        
+        Args:
+            route_id: Route identifier
+            tenant_id: Tenant identifier
+            
+        Returns:
+            Route data with assignments or None if not found
+        """
+        try:
+            return await self._make_request("GET", f"/api/routes/{tenant_id}/{route_id}/assignments")
+        except Exception:
+            return None
+    
     async def get_shop_analytics(self, tenant_id: str) -> List[Dict[str, Any]]:
         """
         Get shop performance analytics for a specific tenant.
@@ -211,6 +444,46 @@ class DataLayerClient:
             Health status
         """
         return await self._make_request("GET", "/health")
+
+    async def get_route_by_route_id(self, route_id: str, tenant_id: str) -> Dict[str, Any]:
+        """
+        Get a specific route by its business identifier (route_id).
+        
+        Args:
+            route_id: Business-friendly route identifier (e.g., RT-001)
+            tenant_id: Tenant identifier
+            
+        Returns:
+            Route data dictionary
+        """
+        return await self._make_request("GET", f"/api/routes/{tenant_id}/{route_id}")
+    
+    async def update_route_by_route_id(self, route_id: str, route_data: Dict[str, Any], tenant_id: str) -> Dict[str, Any]:
+        """
+        Update an existing route by its business identifier (route_id).
+        
+        Args:
+            route_id: Business-friendly route identifier (e.g., RT-001)
+            route_data: Route update data
+            tenant_id: Tenant identifier
+            
+        Returns:
+            Updated route data dictionary
+        """
+        return await self._make_request("PUT", f"/api/routes/{tenant_id}/{route_id}", json=route_data)
+    
+    async def delete_route_by_route_id(self, route_id: str, tenant_id: str) -> Dict[str, Any]:
+        """
+        Delete a route by its business identifier (route_id).
+        
+        Args:
+            route_id: Business-friendly route identifier (e.g., RT-001)
+            tenant_id: Tenant identifier
+            
+        Returns:
+            Deletion confirmation
+        """
+        return await self._make_request("DELETE", f"/api/routes/{tenant_id}/{route_id}")
 
 
 # Global instance

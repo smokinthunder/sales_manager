@@ -19,7 +19,8 @@ CREATE TABLE IF NOT EXISTS users (
     created_by INT,
     updated_by INT,
     INDEX idx_tenant_phone (tenant_id, phone),
-    INDEX idx_role_status (role, status)
+    INDEX idx_role_status (role, status),
+    UNIQUE KEY unique_tenant_id (tenant_id)
 );
 
 -- Create tenants table
@@ -47,16 +48,19 @@ CREATE TABLE IF NOT EXISTS tenants (
 -- Create territories table
 CREATE TABLE IF NOT EXISTS territories (
     id INT AUTO_INCREMENT PRIMARY KEY,
+    territory_id VARCHAR(20) UNIQUE NOT NULL,
     name VARCHAR(255) NOT NULL,
     code VARCHAR(50) NOT NULL,
-    tenant_id VARCHAR(50) NOT NULL,
+    description TEXT,
     area_manager_id INT,
+    tenant_id VARCHAR(50) NOT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     created_by INT,
     updated_by INT,
     INDEX idx_tenant_code (tenant_id, code),
-    INDEX idx_area_manager (area_manager_id)
+    INDEX idx_area_manager (area_manager_id),
+    INDEX idx_territory_id (territory_id)
 );
 
 -- Create shops table
@@ -66,7 +70,7 @@ CREATE TABLE IF NOT EXISTS shops (
     name VARCHAR(255) NOT NULL,
     address TEXT,
     phone VARCHAR(20),
-    territory_id INT,
+    territory_id VARCHAR(20),
     tenant_id VARCHAR(50) NOT NULL,
     status ENUM('active', 'inactive', 'pending_approval') DEFAULT 'pending_approval',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -81,8 +85,9 @@ CREATE TABLE IF NOT EXISTS shops (
 -- Create routes table
 CREATE TABLE IF NOT EXISTS routes (
     id INT AUTO_INCREMENT PRIMARY KEY,
+    route_id VARCHAR(20) UNIQUE NOT NULL,
     name VARCHAR(255) NOT NULL,
-    territory_id INT NOT NULL,
+    territory_id VARCHAR(20) NOT NULL,
     tenant_id VARCHAR(50) NOT NULL,
     week_start_date DATE NOT NULL,
     status ENUM('planned', 'in_progress', 'completed') DEFAULT 'planned',
@@ -90,6 +95,7 @@ CREATE TABLE IF NOT EXISTS routes (
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     created_by INT,
     updated_by INT,
+    INDEX idx_route_id (route_id),
     INDEX idx_tenant_territory (tenant_id, territory_id),
     INDEX idx_week_start (week_start_date)
 );

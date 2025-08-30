@@ -1,6 +1,5 @@
 """
-Test suite for the Sales Manager backend.
+Test package for Sales Manager Backend.
 
-Contains unit tests, integration tests, and API tests
-for all application components.
+This package contains all test modules for the application.
 """
