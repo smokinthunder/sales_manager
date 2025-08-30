@@ -248,11 +248,11 @@ async def get_users(tenant_id: str, db=Depends(get_db)):
 
 @app.delete("/api/users/{tenant_id}/{user_id}")
 async def delete_user(tenant_id: str, user_id: str, db=Depends(get_db)):
-    """Soft delete a user by setting status to inactive"""
+    """Hard delete a user (completely removes from database)"""
     try:
         # Check if user exists
         check_query = text("""
-            SELECT id, status FROM users 
+            SELECT id FROM users 
             WHERE id = :user_id AND tenant_id = :tenant_id
         """)
         
@@ -264,17 +264,31 @@ async def delete_user(tenant_id: str, user_id: str, db=Depends(get_db)):
         if not existing_user:
             raise HTTPException(status_code=404, detail="User not found")
         
-        if existing_user[1] == "inactive":
-            raise HTTPException(status_code=400, detail="User is already inactive")
+        # Check if user has any dependencies (e.g., created routes, territories)
+        dependencies_check_query = text("""
+            SELECT 
+                (SELECT COUNT(*) FROM routes WHERE created_by = :user_id AND tenant_id = :tenant_id) as routes_created,
+                (SELECT COUNT(*) FROM territories WHERE created_by = :user_id AND tenant_id = :tenant_id) as territories_created
+        """)
         
-        # Soft delete by setting status to inactive
-        update_query = text("""
-            UPDATE users 
-            SET status = 'inactive', updated_at = NOW() 
+        dependencies_result = db.execute(dependencies_check_query, {
+            "user_id": user_id,
+            "tenant_id": tenant_id
+        }).fetchone()
+        
+        if dependencies_result[0] > 0 or dependencies_result[1] > 0:
+            raise HTTPException(
+                status_code=400, 
+                detail=f"Cannot delete user. They have created {dependencies_result[0]} routes and {dependencies_result[1]} territories."
+            )
+        
+        # Hard delete the user
+        delete_query = text("""
+            DELETE FROM users 
             WHERE id = :user_id AND tenant_id = :tenant_id
         """)
         
-        result = db.execute(update_query, {
+        result = db.execute(delete_query, {
             "user_id": user_id,
             "tenant_id": tenant_id
         })
@@ -282,12 +296,11 @@ async def delete_user(tenant_id: str, user_id: str, db=Depends(get_db)):
         db.commit()
         
         if result.rowcount == 0:
-            raise HTTPException(status_code=500, detail="Failed to update user")
+            raise HTTPException(status_code=500, detail="Failed to delete user")
         
         return {
             "message": "User deleted successfully",
             "user_id": user_id,
-            "status": "inactive",
             "deleted_at": datetime.now().isoformat()
         }
         
@@ -767,7 +780,7 @@ async def update_territory(tenant_id: str, territory_id: str, territory_data: Te
 
 @app.delete("/api/territories/{tenant_id}/{territory_id}")
 async def delete_territory(tenant_id: str, territory_id: str, db=Depends(get_db)):
-    """Delete a territory (soft delete by setting status to inactive)"""
+    """Delete a territory (hard delete - completely removes from database)"""
     try:
         # Check if territory exists
         check_query = text("""

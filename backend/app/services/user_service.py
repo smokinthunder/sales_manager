@@ -396,21 +396,19 @@ class UserService:
             message="Insufficient permissions to update this user"
         )
     
-    async def delete_user(self, user_id: str, tenant_id: str, current_user: Dict[str, Any]) -> bool:
+    async def delete_user(self, user_id: str, tenant_id: str, current_user: Dict[str, Any]) -> None:
         """
-        Delete user (soft delete by setting status to inactive).
+        Delete user (hard delete - completely removes from database).
         
         Args:
             user_id: User ID to delete
             tenant_id: Tenant identifier
             current_user: Current authenticated user
             
-        Returns:
-            True if successful
-            
         Raises:
             UserNotFoundError: If user not found
-            InsufficientPermissionsError: If user lacks permission
+            InsufficientPermissionsError: If user lacks permissions
+            InvalidUserDataError: If deletion fails
         """
         # Check permissions - only client_admin and superadmin can delete users
         if current_user.get("role") not in ["client_admin", "superadmin"]:
@@ -418,17 +416,17 @@ class UserService:
                 message="Insufficient permissions to delete users"
             )
         
-        # Enforce tenant isolation
+        # SECURITY: Enforce tenant isolation - users can only delete users in their own tenant
         user_tenant_id = current_user.get("tenant_id")
         if current_user.get("role") != "superadmin" and tenant_id != user_tenant_id:
             raise InsufficientPermissionsError(
-                message="You can only delete users from your own tenant"
+                message="You can only delete users in your own tenant"
             )
         
-        # Prevent self-deletion
-        if current_user.get("id") == user_id:
+        # Prevent users from deleting themselves
+        if str(current_user.get("id")) == str(user_id):
             raise InvalidUserDataError(
-                message="Cannot delete your own account"
+                message="Users cannot delete their own account"
             )
         
         data_layer = await self._get_data_layer()
@@ -440,14 +438,22 @@ class UserService:
                 message=f"User with ID {user_id} not found"
             )
         
-        # Soft delete by setting status to inactive
-        result = await data_layer.delete_user(user_id, tenant_id)
-        
-        logger.info(
-            f"User soft deleted successfully: user {user_id} deleted by {current_user.get('id')}"
-        )
-        
-        return result
+        # Delete user completely from database
+        try:
+            result = await data_layer.delete_user(user_id, tenant_id)
+            
+            logger.info(
+                f"User hard deleted successfully: user {user_id} deleted by {current_user.get('id')}"
+            )
+            
+        except Exception as e:
+            logger.error(
+                f"Failed to delete user {user_id}: {str(e)}"
+            )
+            raise InvalidUserDataError(
+                message="Failed to delete user",
+                details={"error": str(e)}
+            )
     
     async def get_user_profile(self, current_user: Dict[str, Any]) -> Dict[str, Any]:
         """
