@@ -64,7 +64,7 @@ async def create_user(
 async def get_users(
     tenant_id: str = Query(..., description="Tenant identifier (required)"),
     role: Optional[str] = Query(None, description="Filter by user role"),
-    status: Optional[str] = Query(None, description="Filter by user status"),
+    user_status: Optional[str] = Query(None, description="Filter by user status"),
     search: Optional[str] = Query(None, description="Search by name or phone"),
     current_user: Dict[str, Any] = Depends(get_current_user),
     user_service: UserService = Depends(get_user_service)
@@ -80,7 +80,7 @@ async def get_users(
             tenant_id, 
             current_user, 
             role=role, 
-            status=status, 
+            status=user_status, 
             search=search
         )
         return users
