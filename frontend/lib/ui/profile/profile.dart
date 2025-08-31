@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:sales_manager/config/providers/current_user_notifier.dart';
+import 'package:sales_manager/data/repositories/auth/auth_local_repository.dart';
 import 'package:sales_manager/domain/models/user/user.dart';
+import 'package:sales_manager/ui/auth/viewmodel/auth_viewmodel.dart';
 import 'package:sales_manager/ui/profile/profile_view_model.dart';
 
 class ExecutiveProfile extends ConsumerStatefulWidget {
@@ -17,6 +19,7 @@ class _ExecutiveProfileState extends ConsumerState<ExecutiveProfile> {
   final TextEditingController emailController = TextEditingController();
   final TextEditingController phoneController = TextEditingController();
   final TextEditingController locationController = TextEditingController();
+
 
   @override
   didChangeDependencies() {

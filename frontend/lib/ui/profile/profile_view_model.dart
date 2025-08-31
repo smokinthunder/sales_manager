@@ -52,4 +52,5 @@ class ProfileViewModel extends _$ProfileViewModel {
         state = AsyncValue.error(res.error, StackTrace.current);
     }
   }
+  
 }
