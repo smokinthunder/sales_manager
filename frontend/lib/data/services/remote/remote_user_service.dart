@@ -24,7 +24,7 @@ class RemoteUserService {
     final data = {"name": name, "email": email, "role": role, "status": status};
     try {
       Response<Map<String, dynamic>> response = await dio.put(
-        ApiEndpoints.getUserProfile,
+        ApiEndpoints.profileMe,
         data: data,
       );
       return Result.ok(response);
