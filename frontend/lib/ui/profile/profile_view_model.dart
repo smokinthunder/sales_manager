@@ -38,7 +38,7 @@ class ProfileViewModel extends _$ProfileViewModel {
     final status =
         ref.read(currentUserNotifierProvider)?.status.backendName ?? "active";
     if (name == currentName && email == currentEmail) return;
-    final res = await _userRemoteRepository.updateUser(
+    final res = await _userRemoteRepository.updateUserProfile(
       name: name,
       email: email,
       role: role,
