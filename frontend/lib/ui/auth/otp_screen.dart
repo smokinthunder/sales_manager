@@ -149,6 +149,9 @@ class _OtpVerificationScreenState extends ConsumerState<OtpVerificationScreen> {
                                 phoneNumber: widget.phoneNumber,
                                 otp: otpValue,
                               );
+                          await ref
+                              .read(authViewModelProvider.notifier)
+                              .getUser();
                         },
                         child: const Text("Verify"),
                       ),
