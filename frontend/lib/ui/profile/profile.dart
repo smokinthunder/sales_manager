@@ -95,6 +95,9 @@ class _ExecutiveProfileState extends ConsumerState<ExecutiveProfile> {
                     InkWell(
                       onTap: () {
                         //TODO: implement logout
+                        ref
+                            .read(currentUserNotifierProvider.notifier)
+                            .removeUser();
                       },
                       child: Align(
                         alignment: Alignment.centerLeft,
