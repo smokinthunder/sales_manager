@@ -1,6 +1,7 @@
 enum UserType {
   areaManager("areaManager", "Area Manager"),
-  executive("executive", "Executive");
+  executive("executive", "Executive"),
+  superAdmin("superAdmin", "Super Admin");
 
   final String typeName;
   final String displayName;

@@ -12,15 +12,32 @@ class HomeScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final user = ref.read(currentUserNotifierProvider);
+    final user = ref.watch(currentUserNotifierProvider);
+
     if (user == null) {
-      context.go(RoutePaths.login);
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        context.go(RoutePaths.login);
+      });
+      return const SizedBox.shrink();
     }
-    switch (user!.type) {
+
+    if (user.type == UserType.superAdmin) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        context.go(RoutePaths.superAdminDashboard);
+      });
+      return const SizedBox.shrink();
+    }
+
+    switch (user.type) {
       case UserType.areaManager:
-        return AreaManagerHome();
+        return const AreaManagerHome();
       case UserType.executive:
-        return ExecutiveHome();
+        return const ExecutiveHome();
+      default:
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          context.go(RoutePaths.login);
+        });
+        return const SizedBox.shrink();
     }
   }
 }

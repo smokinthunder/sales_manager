@@ -5,6 +5,7 @@ import 'package:sales_manager/routing/go_routes.dart';
 import 'package:sales_manager/routing/route_paths.dart';
 import 'package:sales_manager/ui/auth/login_screen.dart';
 import 'package:sales_manager/ui/auth/otp_screen.dart';
+import 'package:sales_manager/ui/super_admin/dashboard.dart';
 import 'package:sales_manager/ui/widgets/scaffold.dart';
 import 'package:sales_manager/ui/loading_screen.dart';
 
@@ -15,6 +16,7 @@ final routerProvider = Provider<GoRouter>((ref) {
   return GoRouter(
     initialLocation: RoutePaths.loading,
     routes: [
+      superAdminDashboard,
       loadinRoute,
       loginRoute,
       otpRoute,
@@ -70,4 +72,9 @@ final otpRoute = GoRoute(
     final phoneNumber = s.extra as String;
     return OtpVerificationScreen(phoneNumber: phoneNumber);
   },
+);
+
+final superAdminDashboard = GoRoute(
+  path: RoutePaths.superAdminDashboard,
+  builder: (c, s) => const SuperAdminDashboard(),
 );

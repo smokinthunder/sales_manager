@@ -22,4 +22,5 @@ abstract class RoutePaths {
   static const chat = '/chat';
   static const pendingRequests = '/pending_requests';
   static const createTarget = '/create_target';
+  static const superAdminDashboard = '/super_admin/dashboard';
 }
