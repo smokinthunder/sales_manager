@@ -188,7 +188,8 @@ class DataLayerClient:
     async def get_shops(
         self, 
         tenant_id: str, 
-        territory_id: Optional[str] = None
+        territory_id: Optional[str] = None,
+        status: Optional[str] = None
     ) -> List[Dict[str, Any]]:
         """
         Get shops for a specific tenant.
@@ -196,6 +197,7 @@ class DataLayerClient:
         Args:
             tenant_id: Tenant identifier
             territory_id: Optional territory filter
+            status: Optional status filter
             
         Returns:
             List of shops
@@ -203,8 +205,63 @@ class DataLayerClient:
         params = {}
         if territory_id:
             params["territory_id"] = territory_id
+        if status:
+            params["status"] = status
         
         return await self._make_request("GET", f"/api/shops/{tenant_id}", params=params)
+    
+    async def get_shop(self, tenant_id: str, shop_id: str) -> Dict[str, Any]:
+        """
+        Get a specific shop by ID.
+        
+        Args:
+            tenant_id: Tenant identifier
+            shop_id: Shop identifier
+            
+        Returns:
+            Shop data
+        """
+        return await self._make_request("GET", f"/api/shops/{tenant_id}/{shop_id}")
+    
+    async def create_shop(self, shop_data: Dict[str, Any], tenant_id: str) -> Dict[str, Any]:
+        """
+        Create a new shop.
+        
+        Args:
+            shop_data: Shop data to create
+            tenant_id: Tenant identifier
+            
+        Returns:
+            Created shop data
+        """
+        return await self._make_request("POST", f"/api/shops/{tenant_id}", json=shop_data)
+    
+    async def update_shop(self, shop_id: str, shop_data: Dict[str, Any], tenant_id: str) -> Dict[str, Any]:
+        """
+        Update an existing shop.
+        
+        Args:
+            shop_id: Shop identifier
+            shop_data: Shop data to update
+            tenant_id: Tenant identifier
+            
+        Returns:
+            Updated shop data
+        """
+        return await self._make_request("PUT", f"/api/shops/{tenant_id}/{shop_id}", json=shop_data)
+    
+    async def delete_shop(self, shop_id: str, tenant_id: str) -> Dict[str, Any]:
+        """
+        Delete a shop.
+        
+        Args:
+            shop_id: Shop identifier
+            tenant_id: Tenant identifier
+            
+        Returns:
+            Deletion confirmation
+        """
+        return await self._make_request("DELETE", f"/api/shops/{tenant_id}/{shop_id}")
     
     async def get_territories(self, tenant_id: str) -> List[Dict[str, Any]]:
         """

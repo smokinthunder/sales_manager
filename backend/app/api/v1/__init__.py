@@ -8,10 +8,12 @@ from .auth import router as auth_router
 from .users import router as users_router
 from .territories import router as territories_router
 from .routes import router as routes_router
+from .shops import router as shops_router
 
 __all__ = [
     "auth_router",
     "users_router",
     "territories_router",
-    "routes_router"
+    "routes_router",
+    "shops_router"
 ]
