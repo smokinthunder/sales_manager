@@ -89,15 +89,13 @@ class ShopBase(BasePydanticModel):
     
     shop_id: str = Field(..., description="Unique shop identifier")
     name: str = Field(..., description="Shop name")
-    code: str = Field(..., description="Unique shop code")
     status: ShopStatus = Field(default=ShopStatus.ACTIVE, description="Shop status")
     address: Optional[str] = Field(None, description="Shop address")
     phone: Optional[str] = Field(None, description="Contact phone number")
     contact_person: Optional[str] = Field(None, description="Contact person name")
     latitude: Optional[float] = Field(None, description="Geographic latitude")
     longitude: Optional[float] = Field(None, description="Geographic longitude")
-    territory_id: Optional[int] = Field(None, description="Territory ID")
-    tenant_id: str = Field(..., description="Tenant identifier")
+    territory_id: Optional[str] = Field(None, description="Territory ID")
 
 
 class ShopCreate(ShopBase):
@@ -108,23 +106,22 @@ class ShopCreate(ShopBase):
 class ShopUpdate(BasePydanticModel):
     """Model for updating existing shops."""
     
-    shop_id: Optional[str] = None
-    name: Optional[str] = None
-    code: Optional[str] = None
-    status: Optional[ShopStatus] = None
-    address: Optional[str] = None
-    phone: Optional[str] = None
-    contact_person: Optional[str] = None
-    latitude: Optional[float] = None
-    longitude: Optional[float] = None
-    territory_id: Optional[int] = None
+    name: Optional[str] = Field(None, description="Shop name")
+    status: Optional[ShopStatus] = Field(None, description="Shop status")
+    address: Optional[str] = Field(None, description="Shop address")
+    phone: Optional[str] = Field(None, description="Contact phone number")
+    contact_person: Optional[str] = Field(None, description="Contact person name")
+    latitude: Optional[float] = Field(None, description="Geographic latitude")
+    longitude: Optional[float] = Field(None, description="Geographic longitude")
+    territory_id: Optional[str] = Field(None, description="Territory ID")
 
 
 class ShopRead(ShopBase):
     """Model for reading shop data."""
     
-    id: int
-    created_at: datetime
-    updated_at: datetime
-    created_by: Optional[int] = None
-    updated_by: Optional[int] = None
+    id: int = Field(..., description="Database ID")
+    tenant_id: str = Field(..., description="Tenant identifier")
+    created_at: datetime = Field(..., description="Creation timestamp")
+    updated_at: datetime = Field(..., description="Last update timestamp")
+    created_by: Optional[int] = Field(None, description="User who created the shop")
+    updated_by: Optional[int] = Field(None, description="User who last updated the shop")

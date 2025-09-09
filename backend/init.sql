@@ -66,20 +66,28 @@ CREATE TABLE IF NOT EXISTS territories (
 -- Create shops table
 CREATE TABLE IF NOT EXISTS shops (
     id INT AUTO_INCREMENT PRIMARY KEY,
-    shop_id VARCHAR(50) NOT NULL,
-    name VARCHAR(255) NOT NULL,
-    address TEXT,
+    shop_id VARCHAR(20) NOT NULL UNIQUE,
+    name VARCHAR(100) NOT NULL,
+    code VARCHAR(20) NOT NULL UNIQUE,
+    status ENUM('active', 'inactive', 'suspended', 'closed') DEFAULT 'active',
+    address VARCHAR(500),
     phone VARCHAR(20),
-    territory_id VARCHAR(20),
+    contact_person VARCHAR(100),
+    latitude DECIMAL(10, 8),
+    longitude DECIMAL(11, 8),
+    territory_id INT,
     tenant_id VARCHAR(50) NOT NULL,
-    status ENUM('active', 'inactive', 'pending_approval') DEFAULT 'pending_approval',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     created_by INT,
     updated_by INT,
     INDEX idx_tenant_shop (tenant_id, shop_id),
+    INDEX idx_shop_code (code),
     INDEX idx_territory (territory_id),
-    INDEX idx_status (status)
+    INDEX idx_status (status),
+    FOREIGN KEY (territory_id) REFERENCES territories(id),
+    FOREIGN KEY (created_by) REFERENCES users(id),
+    FOREIGN KEY (updated_by) REFERENCES users(id)
 );
 
 -- Create routes table
