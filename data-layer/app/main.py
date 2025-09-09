@@ -70,15 +70,49 @@ class UserResponse(BaseModel):
     created_by: Optional[int] = None
     updated_by: Optional[int] = None
 
+class ShopCreate(BaseModel):
+    shop_id: str
+    name: str
+    status: str = "active"
+    address: Optional[str] = None
+    phone: Optional[str] = None
+    contact_person: Optional[str] = None
+    latitude: Optional[float] = None
+    longitude: Optional[float] = None
+    territory_id: Optional[str] = None
+    created_at: str
+    updated_at: str
+    created_by: Optional[int] = None
+    updated_by: Optional[int] = None
+
+class ShopUpdate(BaseModel):
+    name: Optional[str] = None
+    status: Optional[str] = None
+    address: Optional[str] = None
+    phone: Optional[str] = None
+    contact_person: Optional[str] = None
+    latitude: Optional[float] = None
+    longitude: Optional[float] = None
+    territory_id: Optional[str] = None
+    updated_at: str
+    updated_by: Optional[int] = None
+
 class ShopResponse(BaseModel):
     id: int
     shop_id: str
     name: str
-    address: str
-    territory_id: str
+    status: str
+    address: Optional[str] = None
+    phone: Optional[str] = None
+    contact_person: Optional[str] = None
+    latitude: Optional[float] = None
+    longitude: Optional[float] = None
+    territory_id: Optional[str] = None
     tenant_id: str
     created_at: datetime
     updated_at: datetime
+    created_by: Optional[int] = None
+    updated_by: Optional[int] = None
 
 class TerritoryResponse(BaseModel):
     id: int
@@ -527,23 +561,36 @@ async def create_user(tenant_id: str, user_data: UserCreate, db=Depends(get_db))
         raise HTTPException(status_code=500, detail="Internal server error")
 
 @app.get("/api/shops/{tenant_id}", response_model=List[ShopResponse])
-async def get_shops(tenant_id: str, territory_id: Optional[str] = None, db=Depends(get_db)):
-    """Get shops for a specific tenant, optionally filtered by territory"""
+async def get_shops(
+    tenant_id: str, 
+    territory_id: Optional[str] = None, 
+    status: Optional[str] = None,
+    db=Depends(get_db)
+):
+    """Get shops for a specific tenant with optional filtering"""
     try:
+        # Build query with optional filters
+        where_conditions = ["tenant_id = :tenant_id"]
+        params = {"tenant_id": tenant_id}
+        
         if territory_id:
-            query = text("""
-                SELECT id, shop_id, name, address, territory_id, tenant_id, created_at, updated_at
-                FROM shops 
-                WHERE tenant_id = :tenant_id AND territory_id = :territory_id
-            """)
-            params = {"tenant_id": tenant_id, "territory_id": territory_id}
-        else:
-            query = text("""
-                SELECT id, shop_id, name, address, territory_id, tenant_id, created_at, updated_at
-                FROM shops 
-                WHERE tenant_id = :tenant_id
-            """)
-            params = {"tenant_id": tenant_id}
+            where_conditions.append("territory_id = :territory_id")
+            params["territory_id"] = territory_id
+            
+        if status:
+            where_conditions.append("status = :status")
+            params["status"] = status
+        
+        where_clause = " AND ".join(where_conditions)
+        
+        query = text(f"""
+            SELECT id, shop_id, name, status, address, phone, contact_person, 
+                   latitude, longitude, territory_id, tenant_id, created_at, updated_at, 
+                   created_by, updated_by
+            FROM shops 
+            WHERE {where_clause}
+            ORDER BY name
+        """)
         
         result = db.execute(query, params)
         shops = []
@@ -553,11 +600,18 @@ async def get_shops(tenant_id: str, territory_id: Optional[str] = None, db=Depen
                 id=row[0],
                 shop_id=row[1],
                 name=row[2],
-                address=row[3],
-                territory_id=row[4],
-                tenant_id=row[5],
-                created_at=row[6],
-                updated_at=row[7]
+                status=row[3],
+                address=row[4],
+                phone=row[5],
+                contact_person=row[6],
+                latitude=row[7],
+                longitude=row[8],
+                territory_id=row[9],
+                tenant_id=row[10],
+                created_at=row[11],
+                updated_at=row[12],
+                created_by=row[13],
+                updated_by=row[14]
             ))
         
         return shops
@@ -567,6 +621,297 @@ async def get_shops(tenant_id: str, territory_id: Optional[str] = None, db=Depen
     except Exception as e:
         logger.error(f"Unexpected error: {e}")
         raise HTTPException(status_code=500, detail="Internal server error")
+
+
+@app.get("/api/shops/{tenant_id}/{shop_id}", response_model=ShopResponse)
+async def get_shop(tenant_id: str, shop_id: str, db=Depends(get_db)):
+    """Get a specific shop by tenant and shop_id"""
+    try:
+        query = text("""
+            SELECT id, shop_id, name, status, address, phone, contact_person, 
+                   latitude, longitude, territory_id, tenant_id, created_at, updated_at, 
+                   created_by, updated_by
+            FROM shops 
+            WHERE tenant_id = :tenant_id AND shop_id = :shop_id
+        """)
+        
+        result = db.execute(query, {"tenant_id": tenant_id, "shop_id": shop_id})
+        row = result.fetchone()
+        
+        if not row:
+            raise HTTPException(status_code=404, detail="Shop not found")
+        
+        return ShopResponse(
+            id=row[0],
+            shop_id=row[1],
+            name=row[2],
+            status=row[3],
+            address=row[4],
+            phone=row[5],
+            contact_person=row[6],
+            latitude=row[7],
+            longitude=row[8],
+            territory_id=row[9],
+            tenant_id=row[10],
+            created_at=row[11],
+            updated_at=row[12],
+            created_by=row[13],
+            updated_by=row[14]
+        )
+    except HTTPException:
+        raise
+    except SQLAlchemyError as e:
+        logger.error(f"Database error: {e}")
+        raise HTTPException(status_code=500, detail="Database error")
+    except Exception as e:
+        logger.error(f"Unexpected error: {e}")
+        raise HTTPException(status_code=500, detail="Internal server error")
+
+
+@app.post("/api/shops/{tenant_id}", response_model=ShopResponse)
+async def create_shop(tenant_id: str, shop_data: ShopCreate, db=Depends(get_db)):
+    """Create a new shop for a specific tenant"""
+    try:
+        # SECURITY: Always use the URL parameter tenant_id, ignore any tenant_id in request body
+        # This prevents users from creating resources in other tenants
+        
+        # Check if shop with same shop_id already exists
+        check_query = text("""
+            SELECT id FROM shops 
+            WHERE shop_id = :shop_id AND tenant_id = :tenant_id
+        """)
+        
+        existing = db.execute(check_query, {
+            "shop_id": shop_data.shop_id,
+            "tenant_id": tenant_id
+        }).fetchone()
+        
+        if existing:
+            raise HTTPException(status_code=409, detail="Shop with this ID already exists")
+        
+        # Validate territory_id if provided
+        if shop_data.territory_id:
+            territory_check = text("""
+                SELECT id FROM territories WHERE territory_id = :territory_id AND tenant_id = :tenant_id
+            """)
+            territory_exists = db.execute(territory_check, {
+                "territory_id": shop_data.territory_id,
+                "tenant_id": tenant_id
+            }).fetchone()
+            
+            if not territory_exists:
+                raise HTTPException(status_code=400, detail="Invalid territory_id")
+        
+        # Insert new shop
+        insert_query = text("""
+            INSERT INTO shops (shop_id, name, status, address, phone, contact_person, 
+                             latitude, longitude, territory_id, tenant_id, created_at, updated_at, 
+                             created_by, updated_by)
+            VALUES (:shop_id, :name, :status, :address, :phone, :contact_person, 
+                    :latitude, :longitude, :territory_id, :tenant_id, :created_at, :updated_at, 
+                    :created_by, :updated_by)
+        """)
+        
+        db.execute(insert_query, {
+            "shop_id": shop_data.shop_id,
+            "name": shop_data.name,
+            "status": shop_data.status,
+            "address": shop_data.address,
+            "phone": shop_data.phone,
+            "contact_person": shop_data.contact_person,
+            "latitude": shop_data.latitude,
+            "longitude": shop_data.longitude,
+            "territory_id": shop_data.territory_id,
+            "tenant_id": tenant_id,  # Use URL parameter, not request body
+            "created_at": shop_data.created_at,
+            "updated_at": shop_data.updated_at,
+            "created_by": shop_data.created_by,
+            "updated_by": shop_data.updated_by
+        })
+        
+        db.commit()
+        
+        # Return the created shop
+        return await get_shop(tenant_id, shop_data.shop_id, db)
+        
+    except HTTPException:
+        db.rollback()
+        raise
+    except SQLAlchemyError as e:
+        db.rollback()
+        logger.error(f"Database error: {e}")
+        raise HTTPException(status_code=500, detail="Database error")
+    except Exception as e:
+        db.rollback()
+        logger.error(f"Unexpected error: {e}")
+        raise HTTPException(status_code=500, detail="Internal server error")
+
+
+@app.put("/api/shops/{tenant_id}/{shop_id}", response_model=ShopResponse)
+async def update_shop(tenant_id: str, shop_id: str, shop_data: ShopUpdate, db=Depends(get_db)):
+    """Update an existing shop"""
+    try:
+        # Check if shop exists
+        existing_query = text("""
+            SELECT id FROM shops 
+            WHERE tenant_id = :tenant_id AND shop_id = :shop_id
+        """)
+        
+        existing = db.execute(existing_query, {
+            "tenant_id": tenant_id,
+            "shop_id": shop_id
+        }).fetchone()
+        
+        if not existing:
+            raise HTTPException(status_code=404, detail="Shop not found")
+        
+        
+        # Validate territory_id if provided
+        if shop_data.territory_id:
+            territory_check = text("""
+                SELECT id FROM territories WHERE territory_id = :territory_id AND tenant_id = :tenant_id
+            """)
+            territory_exists = db.execute(territory_check, {
+                "territory_id": shop_data.territory_id,
+                "tenant_id": tenant_id
+            }).fetchone()
+            
+            if not territory_exists:
+                raise HTTPException(status_code=400, detail="Invalid territory_id")
+        
+        # Build update query dynamically
+        update_fields = []
+        params = {"tenant_id": tenant_id, "shop_id": shop_id}
+        
+        if shop_data.name is not None:
+            update_fields.append("name = :name")
+            params["name"] = shop_data.name
+        
+        
+        if shop_data.status is not None:
+            update_fields.append("status = :status")
+            params["status"] = shop_data.status
+        
+        if shop_data.address is not None:
+            update_fields.append("address = :address")
+            params["address"] = shop_data.address
+        
+        if shop_data.phone is not None:
+            update_fields.append("phone = :phone")
+            params["phone"] = shop_data.phone
+        
+        if shop_data.contact_person is not None:
+            update_fields.append("contact_person = :contact_person")
+            params["contact_person"] = shop_data.contact_person
+        
+        if shop_data.latitude is not None:
+            update_fields.append("latitude = :latitude")
+            params["latitude"] = shop_data.latitude
+        
+        if shop_data.longitude is not None:
+            update_fields.append("longitude = :longitude")
+            params["longitude"] = shop_data.longitude
+        
+        if shop_data.territory_id is not None:
+            update_fields.append("territory_id = :territory_id")
+            params["territory_id"] = shop_data.territory_id
+        
+        # Always update audit fields
+        update_fields.append("updated_at = :updated_at")
+        update_fields.append("updated_by = :updated_by")
+        params["updated_at"] = shop_data.updated_at
+        params["updated_by"] = shop_data.updated_by
+        
+        if not update_fields:
+            # No fields to update, return existing shop
+            return await get_shop(tenant_id, shop_id, db)
+        
+        update_query = text(f"""
+            UPDATE shops 
+            SET {', '.join(update_fields)}
+            WHERE tenant_id = :tenant_id AND shop_id = :shop_id
+        """)
+        
+        db.execute(update_query, params)
+        db.commit()
+        
+        # Return the updated shop
+        return await get_shop(tenant_id, shop_id, db)
+        
+    except HTTPException:
+        db.rollback()
+        raise
+    except SQLAlchemyError as e:
+        db.rollback()
+        logger.error(f"Database error: {e}")
+        raise HTTPException(status_code=500, detail="Database error")
+    except Exception as e:
+        db.rollback()
+        logger.error(f"Unexpected error: {e}")
+        raise HTTPException(status_code=500, detail="Internal server error")
+
+
+@app.delete("/api/shops/{tenant_id}/{shop_id}")
+async def delete_shop(tenant_id: str, shop_id: str, db=Depends(get_db)):
+    """Delete a shop"""
+    try:
+        # Check if shop exists
+        existing_query = text("""
+            SELECT id FROM shops 
+            WHERE tenant_id = :tenant_id AND shop_id = :shop_id
+        """)
+        
+        existing = db.execute(existing_query, {
+            "tenant_id": tenant_id,
+            "shop_id": shop_id
+        }).fetchone()
+        
+        if not existing:
+            raise HTTPException(status_code=404, detail="Shop not found")
+        
+        # Check for dependencies (visits, orders, payments, outstandings)
+        dependencies_query = text("""
+            SELECT 
+                (SELECT COUNT(*) FROM visits WHERE shop_id = :shop_id AND tenant_id = :tenant_id) as visit_count,
+                (SELECT COUNT(*) FROM orders WHERE shop_id = :shop_id AND tenant_id = :tenant_id) as order_count,
+                (SELECT COUNT(*) FROM payments WHERE shop_id = :shop_id AND tenant_id = :tenant_id) as payment_count,
+                (SELECT COUNT(*) FROM outstandings WHERE shop_id = :shop_id AND tenant_id = :tenant_id) as outstanding_count
+        """)
+        
+        dependencies = db.execute(dependencies_query, {
+            "shop_id": shop_id,
+            "tenant_id": tenant_id
+        }).fetchone()
+        
+        if any(dependencies):
+            raise HTTPException(
+                status_code=400, 
+                detail=f"Cannot delete shop. It has {dependencies[0]} visits, {dependencies[1]} orders, {dependencies[2]} payments, and {dependencies[3]} outstandings associated with it."
+            )
+        
+        # Delete shop
+        delete_query = text("""
+            DELETE FROM shops 
+            WHERE tenant_id = :tenant_id AND shop_id = :shop_id
+        """)
+        
+        db.execute(delete_query, {"tenant_id": tenant_id, "shop_id": shop_id})
+        db.commit()
+        
+        return {"message": "Shop deleted successfully"}
+        
+    except HTTPException:
+        db.rollback()
+        raise
+    except SQLAlchemyError as e:
+        db.rollback()
+        logger.error(f"Database error: {e}")
+        raise HTTPException(status_code=500, detail="Database error")
+    except Exception as e:
+        db.rollback()
+        logger.error(f"Unexpected error: {e}")
+        raise HTTPException(status_code=500, detail="Internal server error")
+
 
 @app.get("/api/territories/{tenant_id}", response_model=List[TerritoryResponse])
 async def get_territories(tenant_id: str, db=Depends(get_db)):
