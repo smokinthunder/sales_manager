@@ -27,7 +27,13 @@ logger = logging.getLogger(__name__)
 router = APIRouter()
 
 
-@router.post("/", response_model=UserRead, status_code=status.HTTP_201_CREATED)
+@router.post(
+    "/", 
+    response_model=UserRead, 
+    status_code=status.HTTP_201_CREATED,
+    summary="Create a new user",
+    tags=["User Management"]
+)
 async def create_user(
     user_data: UserCreate,
     tenant_id: str = Query(..., description="Tenant identifier (required)"),
@@ -37,8 +43,55 @@ async def create_user(
     """
     Create a new user.
     
-    Only client_admin and superadmin users can create new users.
-    tenant_id is mandatory and enforced for tenant isolation.
+    **Business Logic:**
+    - Users are created with ACTIVE status by default (no approval required)
+    - Sales executives and area managers can be assigned to territories
+    - Only client_admin and superadmin users can create new users
+    - tenant_id is mandatory and enforced for tenant isolation
+    
+    **Required Fields:**
+    - phone: User's phone number (unique identifier)
+    - name: User's full name
+    - role: User role (superadmin, client_admin, area_manager, sales_executive)
+    
+    **Optional Fields:**
+    - email: User's email address
+    - territory_id: Territory business identifier (e.g., "KL007", "KL001") for sales_executive and area_manager roles
+    
+    **Security:**
+    - Requires authentication
+    - User must have client_admin or superadmin role
+    - User is automatically assigned to the tenant from URL parameter
+    - tenant_id in request body is ignored for security
+    
+    **Example Request:**
+    ```json
+    {
+        "phone": "9876543210",
+        "name": "John Doe",
+        "email": "john@example.com",
+        "role": "sales_executive",
+        "territory_id": "KL007"
+    }
+    ```
+    
+    **Example Response:**
+    ```json
+    {
+        "id": 123,
+        "phone": "9876543210",
+        "name": "John Doe",
+        "email": "john@example.com",
+        "role": "sales_executive",
+        "status": "active",
+        "territory_id": "KL007",
+        "tenant_id": "test_tenant",
+        "created_at": "2025-09-10T04:30:00Z",
+        "updated_at": "2025-09-10T04:30:00Z",
+        "created_by": 7,
+        "updated_by": 7
+    }
+    ```
     """
     try:
         created_user = await user_service.create_user(user_data, tenant_id, current_user)
@@ -60,7 +113,12 @@ async def create_user(
         )
 
 
-@router.get("/", response_model=List[UserRead])
+@router.get(
+    "/", 
+    response_model=List[UserRead],
+    summary="Get users with filtering",
+    tags=["User Management"]
+)
 async def get_users(
     tenant_id: str = Query(..., description="Tenant identifier (required)"),
     role: Optional[str] = Query(None, description="Filter by user role"),
@@ -72,8 +130,21 @@ async def get_users(
     """
     Get users with optional filtering.
     
-    Only admin roles (client_admin, superadmin, area_manager) can list users.
-    tenant_id is mandatory for all users.
+    **Business Logic:**
+    - Returns all users for the specified tenant
+    - Users include territory_id for sales_executive and area_manager roles
+    - Only admin roles (client_admin, superadmin, area_manager) can list users
+    - tenant_id is mandatory for all users
+    
+    **Query Parameters:**
+    - tenant_id: Tenant identifier (required)
+    - role: Filter by user role (optional)
+    - user_status: Filter by user status (optional)
+    - search: Search by name or phone (optional)
+    
+    **Response:**
+    - Returns list of users with all fields including territory_id
+    - Users are filtered by tenant for security isolation
     """
     try:
         users = await user_service.get_users(
@@ -91,7 +162,12 @@ async def get_users(
         )
 
 
-@router.get("/{user_id}", response_model=UserRead)
+@router.get(
+    "/{user_id}", 
+    response_model=UserRead,
+    summary="Get user by ID",
+    tags=["User Management"]
+)
 async def get_user(
     user_id: int = Path(..., description="User ID"),
     tenant_id: str = Query(..., description="Tenant identifier"),
@@ -118,7 +194,12 @@ async def get_user(
         )
 
 
-@router.put("/{user_id}", response_model=ProfileUpdateResponse)
+@router.put(
+    "/{user_id}", 
+    response_model=ProfileUpdateResponse,
+    summary="Update user profile",
+    tags=["User Management"]
+)
 async def update_user(
     user_id: int = Path(..., description="User ID"),
     user_data: UserUpdate = Body(..., description="User data to update"),
@@ -129,7 +210,23 @@ async def update_user(
     """
     Update user data.
     
-    Users can update their own profile or admin roles can update any user.
+    **Business Logic:**
+    - Users can update their own profile or admin roles can update any user
+    - Supports updating territory_id for sales_executive and area_manager roles
+    - Profile updates by sales_executive and area_manager require approval
+    - Admin roles can update users directly without approval
+    
+    **Updatable Fields:**
+    - name: User's full name
+    - email: User's email address
+    - role: User role (admin only)
+    - status: User status (admin only)
+    - territory_id: Territory assignment for sales_executive and area_manager roles
+    
+    **Security:**
+    - Requires authentication
+    - Users can only update their own profile or must have admin role
+    - Territory assignments are validated for appropriate roles
     """
     try:
         updated_user = await user_service.update_user(
@@ -193,7 +290,12 @@ async def delete_user(
         )
 
 
-@router.get("/profile/me", response_model=UserRead)
+@router.get(
+    "/profile/me", 
+    response_model=UserRead,
+    summary="Get current user profile",
+    tags=["User Profile"]
+)
 async def get_user_profile(
     current_user: Dict[str, Any] = Depends(get_current_user),
     user_service: UserService = Depends(get_user_service)

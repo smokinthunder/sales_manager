@@ -44,11 +44,18 @@ class Route(BaseEntity):
     route_assignments: Mapped[List["RouteAssignment"]] = relationship(
         "RouteAssignment",
         back_populates="route",
+        primaryjoin="Route.route_id == RouteAssignment.route_id",
         lazy="selectin"
     )
     territory: Mapped[Optional["Territory"]] = relationship(
         "Territory",
         back_populates="routes",
+        lazy="selectin"
+    )
+    visits: Mapped[List["Visit"]] = relationship(
+        "Visit",
+        back_populates="route",
+        primaryjoin="Route.route_id == Visit.route_id",
         lazy="selectin"
     )
     creator: Mapped[Optional["User"]] = relationship(
@@ -71,8 +78,8 @@ class RouteAssignment(Base):
     __tablename__ = "route_assignments"
     
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
-    route_id: Mapped[int] = mapped_column(Integer, ForeignKey("routes.id"), nullable=False)
-    shop_id: Mapped[int] = mapped_column(Integer, ForeignKey("shops.id"), nullable=False)
+    route_id: Mapped[str] = mapped_column(String(20), nullable=False)
+    shop_id: Mapped[str] = mapped_column(String(20), nullable=False)
     sales_executive_id: Mapped[int] = mapped_column(Integer, ForeignKey("users.id"), nullable=False)
     planned_date: Mapped[date] = mapped_column(Date, nullable=False)
     planned_time: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
@@ -80,8 +87,16 @@ class RouteAssignment(Base):
     status: Mapped[str] = mapped_column(String(20), default="planned")
     
     # Relationships
-    route: Mapped["Route"] = relationship("Route", back_populates="route_assignments")
-    shop: Mapped["Shop"] = relationship("Shop", back_populates="route_assignments")
+    route: Mapped["Route"] = relationship(
+        "Route", 
+        back_populates="route_assignments",
+        primaryjoin="RouteAssignment.route_id == Route.route_id"
+    )
+    shop: Mapped["Shop"] = relationship(
+        "Shop", 
+        back_populates="route_assignments",
+        primaryjoin="RouteAssignment.shop_id == Shop.shop_id"
+    )
     sales_executive: Mapped["User"] = relationship("User", back_populates="assigned_routes")
     visits: Mapped[List["Visit"]] = relationship("Visit", back_populates="route_assignment")
 
@@ -187,7 +202,7 @@ class RouteRead(BasePydanticModel):
 class RouteAssignmentBase(BasePydanticModel):
     """Base model for route assignments (shops within routes)."""
     
-    shop_id: int = Field(..., description="Shop identifier", examples=[1, 2, 3])
+    shop_id: str = Field(..., description="Shop business identifier", examples=["SH001", "SH002", "SH003"])
     sales_executive_id: int = Field(..., description="Sales executive identifier", examples=[5, 7, 9])
     planned_date: date = Field(..., description="Planned visit date (YYYY-MM-DD)", examples=["2025-08-30", "2025-09-01", "2025-09-02"])
     planned_time: Optional[time] = Field(None, description="Planned visit time (HH:MM:SS)", examples=["09:00:00", "14:30:00", "16:00:00"])
@@ -207,7 +222,7 @@ class RouteAssignmentCreate(RouteAssignmentBase):
 class RouteAssignmentUpdate(BasePydanticModel):
     """Model for updating existing route assignments."""
     
-    shop_id: Optional[int] = Field(None, description="Shop identifier", examples=[1, 2, 3])
+    shop_id: Optional[str] = Field(None, description="Shop business identifier", examples=["SH001", "SH002", "SH003"])
     sales_executive_id: Optional[int] = Field(None, description="Sales executive identifier", examples=[5, 7, 9])
     planned_date: Optional[date] = Field(None, description="Planned visit date (YYYY-MM-DD)", examples=["2025-08-30", "2025-09-01", "2025-09-02"])
     planned_time: Optional[time] = Field(None, description="Planned visit time (HH:MM:SS)", examples=["09:00:00", "14:30:00", "16:00:00"])
@@ -223,8 +238,8 @@ class RouteAssignmentRead(BasePydanticModel):
     """Model for reading route assignment data."""
     
     id: int = Field(..., description="Assignment database primary key")
-    route_id: int = Field(..., description="Route database primary key")
-    shop_id: int = Field(..., description="Shop identifier")
+    route_id: str = Field(..., description="Route business identifier")
+    shop_id: str = Field(..., description="Shop business identifier")
     sales_executive_id: int = Field(..., description="Sales executive identifier")
     planned_date: date = Field(..., description="Planned visit date")
     planned_time: Optional[time] = Field(None, description="Planned visit time")

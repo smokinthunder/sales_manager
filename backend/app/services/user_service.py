@@ -84,17 +84,31 @@ class UserService:
                 message=f"User with phone {user_data.phone} already exists"
             )
         
+        # Validate territory_id for sales_executive and area_manager roles
+        if user_data.role in ["sales_executive", "area_manager"] and user_data.territory_id:
+            # TODO: Add territory validation - check if territory exists and belongs to tenant
+            pass
+        
         # Create user
         try:
             # Enrich user data with metadata
             user_dict = user_data.model_dump() if hasattr(user_data, 'model_dump') else dict(user_data)
+            
+            # Remove tenant_id from user data if present (security measure)
+            user_dict.pop('tenant_id', None)
+            
             enriched_user_data = {
                 **user_dict,
+                "status": "active",  # Default to active status for new users
                 "created_by": current_user.get("id"),
                 "updated_by": current_user.get("id"),
                 "created_at": datetime.utcnow().isoformat(),
                 "updated_at": datetime.utcnow().isoformat()
             }
+            
+            # Include territory_id if provided
+            if user_data.territory_id:
+                enriched_user_data["territory_id"] = user_data.territory_id
             
             # Ensure email is properly set if provided
             if user_data.email:
