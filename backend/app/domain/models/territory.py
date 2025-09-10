@@ -31,6 +31,12 @@ class Territory(BaseEntity):
         foreign_keys="Territory.area_manager_id",
         lazy="selectin"
     )
+    users: Mapped[List["User"]] = relationship(
+        "User",
+        back_populates="territory",
+        primaryjoin="Territory.territory_id == User.territory_id",
+        lazy="selectin"
+    )
     shops: Mapped[List["Shop"]] = relationship(
         "Shop",
         back_populates="territory",

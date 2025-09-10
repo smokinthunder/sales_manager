@@ -12,7 +12,8 @@ CREATE TABLE IF NOT EXISTS users (
     name VARCHAR(255) NOT NULL,
     email VARCHAR(255),
     role ENUM('superadmin', 'client_admin', 'area_manager', 'sales_executive') NOT NULL,
-    status ENUM('active', 'inactive', 'suspended', 'pending_approval') DEFAULT 'pending_approval',
+    status ENUM('active', 'inactive', 'suspended', 'pending_approval') DEFAULT 'active',
+    territory_id VARCHAR(20),
     tenant_id VARCHAR(50) NOT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
@@ -20,6 +21,7 @@ CREATE TABLE IF NOT EXISTS users (
     updated_by INT,
     INDEX idx_tenant_phone (tenant_id, phone),
     INDEX idx_role_status (role, status),
+    INDEX idx_territory (territory_id),
     UNIQUE KEY unique_tenant_id (tenant_id)
 );
 
