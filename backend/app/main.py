@@ -102,7 +102,26 @@ async def lifespan(app: FastAPI):
 app = FastAPI(
     title=settings.app_name,
     version=settings.version,
-    description="Sales Executive Management Platform API - Backend Gateway (Server C)",
+    description="""
+    Sales Executive Management Platform API - Backend Gateway (Server C)
+    
+    ## Features
+    - **Multi-tenant Architecture**: Complete tenant isolation with URL-based tenant identification
+    - **User Management**: Create and manage users with role-based access control
+    - **Territory Management**: Assign users to territories for better organization
+    - **Security**: JWT-based authentication with comprehensive authorization
+    - **Real-time Updates**: Redis-based caching and real-time data synchronization
+    
+    ## Recent Updates
+    - Users are created with ACTIVE status by default (no approval required)
+    - Added territory_id support for sales_executive and area_manager roles
+    - Enhanced security with tenant_id enforcement via URL parameters only
+    - Improved API documentation with comprehensive examples
+    
+    ## Authentication
+    All endpoints require a valid JWT token in the Authorization header.
+    Use the `/api/v1/auth/otp/generate` endpoint to get started.
+    """,
     docs_url="/docs" if settings.debug else None,
     redoc_url="/redoc" if settings.debug else None,
     lifespan=lifespan
