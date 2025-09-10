@@ -40,6 +40,7 @@ class Territory(BaseEntity):
     shops: Mapped[List["Shop"]] = relationship(
         "Shop",
         back_populates="territory",
+        primaryjoin="Territory.territory_id == Shop.territory_id",
         lazy="selectin"
     )
     routes: Mapped[List["Route"]] = relationship(

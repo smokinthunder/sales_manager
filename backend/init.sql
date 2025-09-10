@@ -77,7 +77,7 @@ CREATE TABLE IF NOT EXISTS shops (
     contact_person VARCHAR(100),
     latitude DECIMAL(10, 8),
     longitude DECIMAL(11, 8),
-    territory_id INT,
+    territory_id VARCHAR(20),
     tenant_id VARCHAR(50) NOT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
@@ -87,7 +87,6 @@ CREATE TABLE IF NOT EXISTS shops (
     INDEX idx_shop_code (code),
     INDEX idx_territory (territory_id),
     INDEX idx_status (status),
-    FOREIGN KEY (territory_id) REFERENCES territories(id),
     FOREIGN KEY (created_by) REFERENCES users(id),
     FOREIGN KEY (updated_by) REFERENCES users(id)
 );
@@ -113,8 +112,8 @@ CREATE TABLE IF NOT EXISTS routes (
 -- Create route_assignments table
 CREATE TABLE IF NOT EXISTS route_assignments (
     id INT AUTO_INCREMENT PRIMARY KEY,
-    route_id INT NOT NULL,
-    shop_id INT NOT NULL,
+    route_id VARCHAR(20) NOT NULL,
+    shop_id VARCHAR(20) NOT NULL,
     sales_executive_id INT NOT NULL,
     planned_date DATE NOT NULL,
     planned_time TIME,
@@ -130,8 +129,9 @@ CREATE TABLE IF NOT EXISTS route_assignments (
 CREATE TABLE IF NOT EXISTS visits (
     id INT AUTO_INCREMENT PRIMARY KEY,
     route_assignment_id INT NOT NULL,
-    shop_id INT NOT NULL,
+    shop_id VARCHAR(20) NOT NULL,
     sales_executive_id INT NOT NULL,
+    route_id VARCHAR(20),
     tenant_id VARCHAR(50) NOT NULL,
     checkin_time TIMESTAMP,
     checkout_time TIMESTAMP,
@@ -146,6 +146,7 @@ CREATE TABLE IF NOT EXISTS visits (
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     INDEX idx_tenant_executive (tenant_id, sales_executive_id),
     INDEX idx_shop_date (shop_id, checkin_time),
+    INDEX idx_route (route_id),
     INDEX idx_status (status)
 );
 

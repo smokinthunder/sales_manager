@@ -35,18 +35,20 @@ class Shop(BaseEntity):
     contact_person: Mapped[Optional[str]] = mapped_column(String(100), nullable=True)
     latitude: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
     longitude: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
-    territory_id: Mapped[Optional[int]] = mapped_column(Integer, ForeignKey("territories.id"), nullable=True)
+    territory_id: Mapped[Optional[str]] = mapped_column(String(20), nullable=True)
     tenant_id: Mapped[str] = mapped_column(String(50), nullable=False, index=True)
     
     # Relationships
     territory: Mapped[Optional["Territory"]] = relationship(
         "Territory",
         back_populates="shops",
+        primaryjoin="Shop.territory_id == Territory.territory_id",
         lazy="selectin"
     )
     visits: Mapped[List["Visit"]] = relationship(
         "Visit",
         back_populates="shop",
+        primaryjoin="Shop.shop_id == Visit.shop_id",
         lazy="selectin"
     )
     orders: Mapped[List["Order"]] = relationship(
@@ -64,9 +66,10 @@ class Shop(BaseEntity):
         back_populates="shop",
         lazy="selectin"
     )
-    route_assignments: Mapped[List["RouteShop"]] = relationship(
-        "RouteShop",
+    route_assignments: Mapped[List["RouteAssignment"]] = relationship(
+        "RouteAssignment",
         back_populates="shop",
+        primaryjoin="Shop.shop_id == RouteAssignment.shop_id",
         lazy="selectin"
     )
     creator: Mapped[Optional["User"]] = relationship(

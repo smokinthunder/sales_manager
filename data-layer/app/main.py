@@ -134,6 +134,7 @@ class VisitResponse(BaseModel):
     visit_id: str
     shop_id: str
     executive_id: str
+    route_id: Optional[str] = None
     checkin_time: datetime
     checkout_time: Optional[datetime]
     location_lat: float
@@ -181,8 +182,8 @@ class RouteUpdate(BaseModel):
 
 class RouteAssignmentResponse(BaseModel):
     id: int
-    route_id: int
-    shop_id: int
+    route_id: str
+    shop_id: str
     sales_executive_id: int
     planned_date: date
     planned_time: Optional[datetime] = None
@@ -194,7 +195,7 @@ class RouteAssignmentResponse(BaseModel):
 
 class RouteAssignmentCreate(BaseModel):
     """Model for creating new route assignments."""
-    shop_id: int
+    shop_id: str
     sales_executive_id: int
     planned_date: date
     planned_time: Optional[time] = None
@@ -204,7 +205,7 @@ class RouteAssignmentCreate(BaseModel):
 
 class RouteAssignmentUpdate(BaseModel):
     """Model for updating existing route assignments."""
-    shop_id: Optional[int] = None
+    shop_id: Optional[str] = None
     sales_executive_id: Optional[int] = None
     planned_date: Optional[date] = None
     planned_time: Optional[datetime] = None
