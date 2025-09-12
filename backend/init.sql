@@ -77,6 +77,9 @@ CREATE TABLE IF NOT EXISTS shops (
     longitude DECIMAL(11, 8),
     territory_id INT,
     tenant_id VARCHAR(50) NOT NULL,
+    last_sync_date TIMESTAMP NULL,
+    sync_status VARCHAR(20) DEFAULT 'pending',
+    sync_error VARCHAR(500),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     created_by INT,
@@ -85,6 +88,7 @@ CREATE TABLE IF NOT EXISTS shops (
     INDEX idx_shop_code (code),
     INDEX idx_territory (territory_id),
     INDEX idx_status (status),
+    INDEX idx_sync_status (sync_status),
     FOREIGN KEY (territory_id) REFERENCES territories(id),
     FOREIGN KEY (created_by) REFERENCES users(id),
     FOREIGN KEY (updated_by) REFERENCES users(id)
@@ -147,72 +151,6 @@ CREATE TABLE IF NOT EXISTS visits (
     INDEX idx_status (status)
 );
 
--- Create products table (read-only from client system)
-CREATE TABLE IF NOT EXISTS products (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    sku VARCHAR(100) NOT NULL,
-    name VARCHAR(255) NOT NULL,
-    category VARCHAR(100),
-    mrp DECIMAL(10, 2),
-    tenant_id VARCHAR(50) NOT NULL,
-    last_synced TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    INDEX idx_tenant_sku (tenant_id, sku),
-    INDEX idx_category (category)
-);
-
--- Create orders table (read-only from client system)
-CREATE TABLE IF NOT EXISTS orders (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    order_id VARCHAR(100) NOT NULL,
-    shop_id VARCHAR(100) NOT NULL,
-    order_date DATE NOT NULL,
-    status ENUM('pending', 'confirmed', 'delivered', 'cancelled') NOT NULL,
-    total_amount DECIMAL(12, 2),
-    tenant_id VARCHAR(50) NOT NULL,
-    last_synced TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    INDEX idx_tenant_shop (tenant_id, shop_id),
-    INDEX idx_order_date (order_date),
-    INDEX idx_status (status)
-);
-
--- Create order_lines table
-CREATE TABLE IF NOT EXISTS order_lines (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    order_id INT NOT NULL,
-    sku VARCHAR(100) NOT NULL,
-    quantity INT NOT NULL,
-    rate DECIMAL(10, 2) NOT NULL,
-    amount DECIMAL(12, 2) NOT NULL,
-    tenant_id VARCHAR(50) NOT NULL,
-    INDEX idx_order_sku (order_id, sku)
-);
-
--- Create payments table (read-only from client system)
-CREATE TABLE IF NOT EXISTS payments (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    payment_id VARCHAR(100) NOT NULL,
-    shop_id VARCHAR(100) NOT NULL,
-    amount DECIMAL(12, 2) NOT NULL,
-    payment_date DATE NOT NULL,
-    payment_method VARCHAR(50),
-    tenant_id VARCHAR(50) NOT NULL,
-    last_synced TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    INDEX idx_tenant_shop (tenant_id, shop_id),
-    INDEX idx_payment_date (payment_date)
-);
-
--- Create outstandings table (read-only from client system)
-CREATE TABLE IF NOT EXISTS outstandings (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    shop_id VARCHAR(100) NOT NULL,
-    amount_due DECIMAL(12, 2) NOT NULL,
-    as_of_date DATE NOT NULL,
-    days_overdue INT NOT NULL,
-    tenant_id VARCHAR(50) NOT NULL,
-    last_synced TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    INDEX idx_tenant_shop (tenant_id, shop_id),
-    INDEX idx_days_overdue (days_overdue)
-);
 
 -- Create approvals table
 CREATE TABLE IF NOT EXISTS approvals (
@@ -251,6 +189,169 @@ CREATE TABLE IF NOT EXISTS audit_logs (
     INDEX idx_created_at (created_at)
 );
 
+-- Create synced_shop_data table for client data synchronization
+CREATE TABLE IF NOT EXISTS synced_shop_data (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    shop_id VARCHAR(20) NOT NULL,
+    shop_name VARCHAR(100) NOT NULL,
+    tenant_id VARCHAR(50) NOT NULL,
+    current_payment DECIMAL(12,2) DEFAULT 0.0,
+    upcoming_payment DECIMAL(12,2) DEFAULT 0.0,
+    overdue_payment DECIMAL(12,2) DEFAULT 0.0,
+    sync_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    sync_status ENUM('pending','in_progress','completed','failed','not_synced') DEFAULT 'completed',
+    sync_error VARCHAR(500),
+    raw_client_data JSON,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    created_by INT,
+    updated_by INT,
+    INDEX idx_shop_tenant (shop_id, tenant_id),
+    INDEX idx_sync_status (sync_status)
+);
+
+-- Create synced_orders table for synchronized order data
+CREATE TABLE IF NOT EXISTS synced_orders (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    order_id VARCHAR(50) NOT NULL,
+    order_date DATE NOT NULL,
+    order_amount DECIMAL(12,2) NOT NULL,
+    due_date DATE NOT NULL,
+    payment_status ENUM('current','upcoming','overdue') NOT NULL,
+    days_overdue INT DEFAULT 0,
+    shop_data_id INT NOT NULL,
+    tenant_id VARCHAR(50) NOT NULL,
+    sync_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    raw_order_data JSON,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    created_by INT,
+    updated_by INT,
+    INDEX idx_order_tenant (order_id, tenant_id),
+    INDEX idx_shop_data (shop_data_id),
+    INDEX idx_payment_status (payment_status),
+    FOREIGN KEY (shop_data_id) REFERENCES synced_shop_data(id) ON DELETE CASCADE
+);
+
+-- Create synced_products table for synchronized product data
+CREATE TABLE IF NOT EXISTS synced_products (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    product_name VARCHAR(100) NOT NULL,
+    product_amount DECIMAL(12,2) NOT NULL,
+    sku VARCHAR(50),
+    category VARCHAR(50),
+    shop_data_id INT NOT NULL,
+    order_id INT,
+    tenant_id VARCHAR(50) NOT NULL,
+    sync_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    raw_product_data JSON,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    created_by INT,
+    updated_by INT,
+    INDEX idx_shop_data (shop_data_id),
+    INDEX idx_order (order_id),
+    INDEX idx_sku (sku),
+    FOREIGN KEY (shop_data_id) REFERENCES synced_shop_data(id) ON DELETE CASCADE,
+    FOREIGN KEY (order_id) REFERENCES synced_orders(id) ON DELETE CASCADE
+);
+
+-- Create sales_performance table for executive analytics
+CREATE TABLE IF NOT EXISTS sales_performance (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT NOT NULL,
+    tenant_id VARCHAR(50) NOT NULL,
+    period_start DATE NOT NULL,
+    period_end DATE NOT NULL,
+    total_orders INT DEFAULT 0,
+    total_order_value DECIMAL(12,2) DEFAULT 0.0,
+    average_order_value DECIMAL(12,2) DEFAULT 0.0,
+    current_payments DECIMAL(12,2) DEFAULT 0.0,
+    upcoming_payments DECIMAL(12,2) DEFAULT 0.0,
+    overdue_payments DECIMAL(12,2) DEFAULT 0.0,
+    payment_collection_rate DECIMAL(5,2) DEFAULT 0.0,
+    performance_level ENUM('excellent','good','average','poor','critical') NOT NULL,
+    payment_trend ENUM('improving','stable','declining','critical') NOT NULL,
+    shops_managed INT DEFAULT 0,
+    active_shops INT DEFAULT 0,
+    total_visits INT DEFAULT 0,
+    completed_visits INT DEFAULT 0,
+    visit_completion_rate DECIMAL(5,2) DEFAULT 0.0,
+    additional_metrics JSON,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    created_by INT,
+    updated_by INT,
+    INDEX idx_user_tenant (user_id, tenant_id),
+    INDEX idx_period (period_start, period_end),
+    INDEX idx_performance (performance_level),
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+);
+
+-- Create shop_analytics table for shop-specific analytics
+CREATE TABLE IF NOT EXISTS shop_analytics (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    shop_id INT NOT NULL,
+    tenant_id VARCHAR(50) NOT NULL,
+    period_start DATE NOT NULL,
+    period_end DATE NOT NULL,
+    total_orders INT DEFAULT 0,
+    total_order_value DECIMAL(12,2) DEFAULT 0.0,
+    average_order_value DECIMAL(12,2) DEFAULT 0.0,
+    order_frequency DECIMAL(8,2) DEFAULT 0.0,
+    current_payment DECIMAL(12,2) DEFAULT 0.0,
+    upcoming_payment DECIMAL(12,2) DEFAULT 0.0,
+    overdue_payment DECIMAL(12,2) DEFAULT 0.0,
+    payment_collection_rate DECIMAL(5,2) DEFAULT 0.0,
+    average_payment_delay INT DEFAULT 0,
+    total_visits INT DEFAULT 0,
+    completed_visits INT DEFAULT 0,
+    visit_frequency DECIMAL(8,2) DEFAULT 0.0,
+    performance_level ENUM('excellent','good','average','poor','critical') NOT NULL,
+    payment_trend ENUM('improving','stable','declining','critical') NOT NULL,
+    top_products JSON,
+    product_diversity INT DEFAULT 0,
+    additional_analytics JSON,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    created_by INT,
+    updated_by INT,
+    INDEX idx_shop_tenant (shop_id, tenant_id),
+    INDEX idx_period (period_start, period_end),
+    INDEX idx_performance (performance_level),
+    FOREIGN KEY (shop_id) REFERENCES shops(id) ON DELETE CASCADE
+);
+
+-- Create payment_analytics table for payment analytics
+CREATE TABLE IF NOT EXISTS payment_analytics (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    tenant_id VARCHAR(50) NOT NULL,
+    period_start DATE NOT NULL,
+    period_end DATE NOT NULL,
+    total_current_payments DECIMAL(12,2) DEFAULT 0.0,
+    total_upcoming_payments DECIMAL(12,2) DEFAULT 0.0,
+    total_overdue_payments DECIMAL(12,2) DEFAULT 0.0,
+    total_payments DECIMAL(12,2) DEFAULT 0.0,
+    average_payment_amount DECIMAL(12,2) DEFAULT 0.0,
+    payment_collection_rate DECIMAL(5,2) DEFAULT 0.0,
+    overdue_rate DECIMAL(5,2) DEFAULT 0.0,
+    orders_within_30_days INT DEFAULT 0,
+    orders_overdue INT DEFAULT 0,
+    compliance_rate DECIMAL(5,2) DEFAULT 0.0,
+    payment_trend ENUM('improving','stable','declining','critical') NOT NULL,
+    days_to_payment_improvement INT,
+    total_shops INT DEFAULT 0,
+    shops_with_overdue INT DEFAULT 0,
+    shops_with_upcoming INT DEFAULT 0,
+    additional_payment_metrics JSON,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    created_by INT,
+    updated_by INT,
+    INDEX idx_tenant_period (tenant_id, period_start, period_end),
+    INDEX idx_payment_trend (payment_trend)
+);
+
 -- Insert default superadmin tenant
 INSERT INTO tenants (name, code, status, max_users, created_by) 
 VALUES ('Platform Owner', 'PLATFORM', 'active', 1000, 1)
@@ -267,7 +368,3 @@ CREATE INDEX idx_territories_tenant ON territories(tenant_id);
 CREATE INDEX idx_shops_tenant_territory ON shops(tenant_id, territory_id);
 CREATE INDEX idx_routes_tenant_week ON routes(tenant_id, week_start_date);
 CREATE INDEX idx_visits_tenant_date ON visits(tenant_id, DATE(checkin_time));
-CREATE INDEX idx_products_tenant_category ON products(tenant_id, category);
-CREATE INDEX idx_orders_tenant_date ON orders(tenant_id, order_date);
-CREATE INDEX idx_payments_tenant_date ON payments(tenant_id, payment_date);
-CREATE INDEX idx_outstandings_tenant_overdue ON outstandings(tenant_id, days_overdue);

@@ -21,6 +21,7 @@ import os
 from app.core.config import settings
 from app.core.logging import setup_logging, get_logger
 from app.core.redis_client import get_redis_client, close_redis_client
+from app.core.scheduler import start_scheduler, stop_scheduler, get_scheduler
 from app.core.errors import (
     BaseError,
     AuthenticationError,
@@ -78,6 +79,16 @@ async def lifespan(app: FastAPI):
     except Exception as e:
         logger.warning("Could not verify Data Layer service", error=str(e))
     
+    try:
+        # Initialize task scheduler
+        if settings.sync_enabled or settings.analytics_enabled:
+            await start_scheduler()
+            logger.info("Task scheduler started successfully")
+        else:
+            logger.info("Task scheduler disabled in configuration")
+    except Exception as e:
+        logger.warning("Could not start task scheduler", error=str(e))
+    
     yield
     
     # Shutdown
@@ -89,6 +100,13 @@ async def lifespan(app: FastAPI):
         logger.info("Data Layer client closed")
     except Exception as e:
         logger.error("Error closing Data Layer client", error=str(e))
+    
+    try:
+        # Stop task scheduler
+        await stop_scheduler()
+        logger.info("Task scheduler stopped")
+    except Exception as e:
+        logger.error("Error stopping task scheduler", error=str(e))
     
     try:
         # Close Redis client
@@ -334,26 +352,62 @@ async def health_check():
     except Exception as e:
         logger.warning("Data Layer health check failed", error=str(e))
     
+    # Check scheduler status
+    scheduler_healthy = False
+    scheduler_status = {}
+    try:
+        scheduler = await get_scheduler()
+        scheduler_status = scheduler.get_job_status()
+        scheduler_healthy = scheduler_status.get("scheduler_running", False)
+    except Exception as e:
+        logger.warning("Scheduler health check failed", error=str(e))
+    
     return {
-        "status": "healthy" if data_layer_healthy else "degraded",
+        "status": "healthy" if data_layer_healthy and scheduler_healthy else "degraded",
         "timestamp": time.time(),
         "version": settings.version,
         "service": "backend-gateway",
         "data_layer": {
             "status": "healthy" if data_layer_healthy else "unhealthy",
             "url": DATA_LAYER_URL
+        },
+        "scheduler": {
+            "status": "healthy" if scheduler_healthy else "unhealthy",
+            "running": scheduler_healthy,
+            "jobs": scheduler_status.get("total_jobs", 0)
         }
     }
 
 
+@app.get("/scheduler/status")
+async def scheduler_status():
+    """
+    Scheduler status endpoint.
+    
+    Returns:
+        dict: Scheduler status and job information
+    """
+    try:
+        scheduler = await get_scheduler()
+        return scheduler.get_job_status()
+    except Exception as e:
+        logger.error("Failed to get scheduler status", error=str(e))
+        return {
+            "error": "Failed to get scheduler status",
+            "details": str(e)
+        }
+
+
 # Import and include API routers
-from app.api.v1 import users_router, auth_router, territories_router, routes_router, shops_router
+from app.api.v1 import users_router, auth_router, territories_router, routes_router, shops_router, sync_router, analytics_router
 
 app.include_router(auth_router, prefix="/api/v1/auth", tags=["authentication"])
 app.include_router(users_router, prefix="/api/v1/users", tags=["users"])
 app.include_router(territories_router, prefix="/api/v1/territories", tags=["territories"])
 app.include_router(routes_router, prefix="/api/v1/routes", tags=["routes"])
 app.include_router(shops_router, prefix="/api/v1/shops", tags=["shops"])
+app.include_router(sync_router, prefix="/api/v1", tags=["sync"])
+app.include_router(analytics_router, prefix="/api/v1", tags=["analytics"])
 
 
 if __name__ == "__main__":

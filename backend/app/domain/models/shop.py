@@ -7,7 +7,7 @@ Represents retail locations within territories.
 from datetime import datetime
 from typing import Optional, List
 from enum import Enum
-from sqlalchemy import String, Integer, ForeignKey, Float, Enum as SQLEnum
+from sqlalchemy import String, Integer, ForeignKey, Float, DateTime, Enum as SQLEnum
 from sqlalchemy.orm import relationship, Mapped, mapped_column
 from pydantic import Field
 from .base import Base, BaseEntity, BasePydanticModel
@@ -38,6 +38,11 @@ class Shop(BaseEntity):
     territory_id: Mapped[Optional[int]] = mapped_column(Integer, ForeignKey("territories.id"), nullable=True)
     tenant_id: Mapped[str] = mapped_column(String(50), nullable=False, index=True)
     
+    # Sync fields for client data synchronization
+    last_sync_date: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
+    sync_status: Mapped[Optional[str]] = mapped_column(String(20), nullable=True, default="pending")
+    sync_error: Mapped[Optional[str]] = mapped_column(String(500), nullable=True)
+    
     # Relationships
     territory: Mapped[Optional["Territory"]] = relationship(
         "Territory",
@@ -46,21 +51,6 @@ class Shop(BaseEntity):
     )
     visits: Mapped[List["Visit"]] = relationship(
         "Visit",
-        back_populates="shop",
-        lazy="selectin"
-    )
-    orders: Mapped[List["Order"]] = relationship(
-        "Order",
-        back_populates="shop",
-        lazy="selectin"
-    )
-    payments: Mapped[List["Payment"]] = relationship(
-        "Payment",
-        back_populates="shop",
-        lazy="selectin"
-    )
-    outstandings: Mapped[List["Outstanding"]] = relationship(
-        "Outstanding",
         back_populates="shop",
         lazy="selectin"
     )
