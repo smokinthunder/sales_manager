@@ -42,15 +42,16 @@ class Visit(BaseEntity):
     remarks: Mapped[Optional[str]] = mapped_column(String(500), nullable=True)
     next_visit_date: Mapped[Optional[date]] = mapped_column(Date, nullable=True)
     photos: Mapped[Optional[str]] = mapped_column(String(1000), nullable=True)  # JSON string of photo URLs
-    shop_id: Mapped[int] = mapped_column(Integer, ForeignKey("shops.id"), nullable=False)
+    shop_id: Mapped[str] = mapped_column(String(20), nullable=False)
     sales_executive_id: Mapped[int] = mapped_column(Integer, ForeignKey("users.id"), nullable=False)
-    route_id: Mapped[Optional[int]] = mapped_column(Integer, ForeignKey("routes.id"), nullable=True)
+    route_id: Mapped[Optional[str]] = mapped_column(String(20), nullable=True)
     tenant_id: Mapped[str] = mapped_column(String(50), nullable=False, index=True)
     
     # Relationships
     shop: Mapped["Shop"] = relationship(
         "Shop",
         back_populates="visits",
+        primaryjoin="Visit.shop_id == Shop.shop_id",
         lazy="selectin"
     )
     sales_executive: Mapped["User"] = relationship(
@@ -62,6 +63,7 @@ class Visit(BaseEntity):
     route: Mapped[Optional["Route"]] = relationship(
         "Route",
         back_populates="visits",
+        primaryjoin="Visit.route_id == Route.route_id",
         lazy="selectin"
     )
     creator: Mapped[Optional["User"]] = relationship(
@@ -97,9 +99,9 @@ class VisitBase(BasePydanticModel):
     remarks: Optional[str] = Field(None, description="Visit remarks")
     next_visit_date: Optional[date] = Field(None, description="Next planned visit date")
     photos: Optional[str] = Field(None, description="Photo URLs (JSON string)")
-    shop_id: int = Field(..., description="Shop ID")
+    shop_id: str = Field(..., description="Shop business identifier")
     sales_executive_id: int = Field(..., description="Sales executive ID")
-    route_id: Optional[int] = Field(None, description="Route ID")
+    route_id: Optional[str] = Field(None, description="Route business identifier")
     tenant_id: str = Field(..., description="Tenant identifier")
 
 

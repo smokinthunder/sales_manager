@@ -39,7 +39,8 @@ class User(BaseEntity):
     name: Mapped[str] = mapped_column(String(100), nullable=False)
     email: Mapped[Optional[str]] = mapped_column(String(100), nullable=True)
     role: Mapped[UserRole] = mapped_column(SQLEnum(UserRole), nullable=False)
-    status: Mapped[UserStatus] = mapped_column(SQLEnum(UserStatus), default=UserStatus.PENDING_APPROVAL)
+    status: Mapped[UserStatus] = mapped_column(SQLEnum(UserStatus), default=UserStatus.ACTIVE)
+    territory_id: Mapped[Optional[str]] = mapped_column(String(20), nullable=True)
     tenant_id: Mapped[str] = mapped_column(String(50), nullable=False, index=True)
     
     # Relationships
@@ -69,6 +70,11 @@ class User(BaseEntity):
     )
     
     # Territory management
+    territory: Mapped[Optional["Territory"]] = relationship(
+        "Territory",
+        primaryjoin="User.territory_id == Territory.territory_id",
+        lazy="selectin"
+    )
     managed_territories: Mapped[List["Territory"]] = relationship(
         "Territory",
         back_populates="area_manager",
@@ -177,7 +183,8 @@ class UserBase(BasePydanticModel):
     name: str = Field(..., description="Full name of the user")
     email: Optional[str] = Field(None, description="Email address")
     role: UserRole = Field(..., description="User role in the system")
-    status: UserStatus = Field(default=UserStatus.PENDING_APPROVAL, description="Account status")
+    status: UserStatus = Field(default=UserStatus.ACTIVE, description="Account status")
+    territory_id: Optional[str] = Field(None, description="Territory business identifier for sales_executive and area_manager roles")
     tenant_id: str = Field(..., description="Tenant identifier for multi-tenancy")
     
     @field_validator("phone")
@@ -196,8 +203,9 @@ class UserCreate(BasePydanticModel):
     name: str = Field(..., description="Full name of the user")
     email: Optional[str] = Field(None, description="Email address")
     role: UserRole = Field(..., description="User role in the system")
-    status: UserStatus = Field(default=UserStatus.PENDING_APPROVAL, description="Account status")
+    territory_id: Optional[str] = Field(None, description="Territory business identifier for sales_executive and area_manager roles")
     # SECURITY: tenant_id is NOT allowed in request body - it's enforced via URL parameter
+    # SECURITY: status defaults to ACTIVE for new users - no approval required
 
 
 class UserUpdate(BasePydanticModel):
@@ -207,6 +215,7 @@ class UserUpdate(BasePydanticModel):
     email: Optional[str] = None
     role: Optional[UserRole] = None
     status: Optional[UserStatus] = None
+    territory_id: Optional[int] = None
 
 
 class UserRead(UserBase):

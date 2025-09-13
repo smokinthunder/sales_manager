@@ -55,6 +55,7 @@ class UserUpdate(BaseModel):
     email: Optional[str] = None
     role: Optional[str] = None
     status: Optional[str] = None
+    territory_id: Optional[str] = None
     updated_by: Optional[int] = None
 
 class UserResponse(BaseModel):
@@ -65,6 +66,7 @@ class UserResponse(BaseModel):
     role: str
     status: str
     tenant_id: str
+    territory_id: Optional[str] = None
     created_at: datetime
     updated_at: datetime
     created_by: Optional[int] = None
@@ -132,6 +134,7 @@ class VisitResponse(BaseModel):
     visit_id: str
     shop_id: str
     executive_id: str
+    route_id: Optional[str] = None
     checkin_time: datetime
     checkout_time: Optional[datetime]
     location_lat: float
@@ -179,8 +182,8 @@ class RouteUpdate(BaseModel):
 
 class RouteAssignmentResponse(BaseModel):
     id: int
-    route_id: int
-    shop_id: int
+    route_id: str
+    shop_id: str
     sales_executive_id: int
     planned_date: date
     planned_time: Optional[datetime] = None
@@ -192,7 +195,7 @@ class RouteAssignmentResponse(BaseModel):
 
 class RouteAssignmentCreate(BaseModel):
     """Model for creating new route assignments."""
-    shop_id: int
+    shop_id: str
     sales_executive_id: int
     planned_date: date
     planned_time: Optional[time] = None
@@ -202,7 +205,7 @@ class RouteAssignmentCreate(BaseModel):
 
 class RouteAssignmentUpdate(BaseModel):
     """Model for updating existing route assignments."""
-    shop_id: Optional[int] = None
+    shop_id: Optional[str] = None
     sales_executive_id: Optional[int] = None
     planned_date: Optional[date] = None
     planned_time: Optional[datetime] = None
@@ -248,7 +251,7 @@ async def get_users(tenant_id: str, db=Depends(get_db)):
     """Get users for a specific tenant"""
     try:
         query = text("""
-            SELECT id, phone, name, email, role, status, tenant_id, created_at, updated_at, created_by, updated_by
+            SELECT id, phone, name, email, role, status, tenant_id, territory_id, created_at, updated_at, created_by, updated_by
             FROM users 
             WHERE tenant_id = :tenant_id
         """)
@@ -265,10 +268,11 @@ async def get_users(tenant_id: str, db=Depends(get_db)):
                 role=row[4],
                 status=row[5],
                 tenant_id=row[6],
-                created_at=row[7],
-                updated_at=row[8],
-                created_by=row[9],
-                updated_by=row[10]
+                territory_id=row[7],
+                created_at=row[8],
+                updated_at=row[9],
+                created_by=row[10],
+                updated_by=row[11]
             ))
         
         return users
@@ -388,6 +392,10 @@ async def update_user(tenant_id: str, user_id: str, user_data: UserUpdate, db=De
             update_fields.append("status = :status")
             params["status"] = user_data.status
         
+        if user_data.territory_id is not None:
+            update_fields.append("territory_id = :territory_id")
+            params["territory_id"] = user_data.territory_id
+        
         if not update_fields:
             raise HTTPException(status_code=400, detail="No fields to update")
         
@@ -427,10 +435,11 @@ async def update_user(tenant_id: str, user_id: str, user_data: UserUpdate, db=De
             role=user_row[4],
             status=user_row[5],
             tenant_id=user_row[6],
-            created_at=user_row[7],
-            updated_at=user_row[8],
-            created_by=user_row[9],
-            updated_by=user_row[10]
+            territory_id=user_row[7],
+            created_at=user_row[8],
+            updated_at=user_row[9],
+            created_by=user_row[10],
+            updated_by=user_row[11]
         )
         
     except HTTPException:
@@ -469,8 +478,8 @@ class UserCreate(BaseModel):
     name: str
     email: Optional[str] = None
     role: str
-    tenant_id: str
-    status: str = "pending_approval"
+    status: str = "active"
+    territory_id: Optional[str] = None
     created_by: Optional[int] = None
     updated_by: Optional[int] = None
 
@@ -492,23 +501,12 @@ async def create_user(tenant_id: str, user_data: UserCreate, db=Depends(get_db))
         if existing_user_by_phone:
             raise HTTPException(status_code=400, detail="User with this phone number already exists")
         
-        # Check if tenant_id already exists (only one user per tenant)
-        check_tenant_query = text("""
-            SELECT id FROM users 
-            WHERE tenant_id = :tenant_id
-        """)
-        
-        existing_user_by_tenant = db.execute(check_tenant_query, {
-            "tenant_id": tenant_id
-        }).fetchone()
-        
-        if existing_user_by_tenant:
-            raise HTTPException(status_code=400, detail="A user with this tenant ID already exists. Each tenant can only have one user.")
+        # Note: Multiple users per tenant are allowed in multi-tenant system
         
         # Create new user
         insert_query = text("""
-            INSERT INTO users (phone, name, email, role, tenant_id, status, created_at, updated_at, created_by, updated_by)
-            VALUES (:phone, :name, :email, :role, :tenant_id, :status, NOW(), NOW(), :created_by, :updated_by)
+            INSERT INTO users (phone, name, email, role, tenant_id, status, territory_id, created_at, updated_at, created_by, updated_by)
+            VALUES (:phone, :name, :email, :role, :tenant_id, :status, :territory_id, NOW(), NOW(), :created_by, :updated_by)
         """)
         
         result = db.execute(insert_query, {
@@ -518,6 +516,7 @@ async def create_user(tenant_id: str, user_data: UserCreate, db=Depends(get_db))
             "role": user_data.role,
             "tenant_id": tenant_id,
             "status": user_data.status,
+            "territory_id": getattr(user_data, 'territory_id', None),
             "created_by": getattr(user_data, 'created_by', None),
             "updated_by": getattr(user_data, 'created_by', None)
         })
@@ -527,7 +526,7 @@ async def create_user(tenant_id: str, user_data: UserCreate, db=Depends(get_db))
         # Get the created user
         user_id = result.lastrowid
         select_query = text("""
-            SELECT id, phone, name, email, role, status, tenant_id, created_at, updated_at, created_by, updated_by
+            SELECT id, phone, name, email, role, status, tenant_id, territory_id, created_at, updated_at, created_by, updated_by
             FROM users 
             WHERE id = :user_id
         """)
@@ -543,10 +542,11 @@ async def create_user(tenant_id: str, user_data: UserCreate, db=Depends(get_db))
             role=user_row[4],
             status=user_row[5],
             tenant_id=user_row[6],
-            created_at=user_row[7],
-            updated_at=user_row[8],
-            created_by=user_row[9],
-            updated_by=user_row[10]
+            territory_id=user_row[7],
+            created_at=user_row[8],
+            updated_at=user_row[9],
+            created_by=user_row[10],
+            updated_by=user_row[11]
         )
         
     except HTTPException:

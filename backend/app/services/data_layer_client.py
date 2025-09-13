@@ -125,12 +125,13 @@ class DataLayerClient:
                 return user
         return None
     
-    async def create_user(self, user_data: Dict[str, Any]) -> Dict[str, Any]:
+    async def create_user(self, user_data: Dict[str, Any], tenant_id: str) -> Dict[str, Any]:
         """
         Create a new user.
         
         Args:
             user_data: User data to create (can be Pydantic model or dict)
+            tenant_id: Tenant identifier for security isolation
             
         Returns:
             Created user data
@@ -142,8 +143,11 @@ class DataLayerClient:
             user_dict = user_data.dict()
         else:
             user_dict = dict(user_data)
+        
+        # SECURITY: Always use the provided tenant_id, ignore any tenant_id in user_data
+        user_dict['tenant_id'] = tenant_id
             
-        return await self._make_request("POST", f"/api/users/{user_dict['tenant_id']}", json=user_dict)
+        return await self._make_request("POST", f"/api/users/{tenant_id}", json=user_dict)
 
     async def update_user(self, user_id: str, user_data: Any, tenant_id: str, updated_by: Optional[str] = None) -> Dict[str, Any]:
         """
