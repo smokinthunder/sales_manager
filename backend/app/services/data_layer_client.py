@@ -546,6 +546,132 @@ class DataLayerClient:
         """
         return await self._make_request("DELETE", f"/api/routes/{tenant_id}/{route_id}")
 
+    # ------------------ Synced Data Methods ------------------
+
+    async def get_shop_synced_data(self, shop_id: str, tenant_id: str) -> Dict[str, Any]:
+        """
+        Get synced financial data for a specific shop.
+        
+        Args:
+            shop_id: Business shop identifier
+            tenant_id: Tenant identifier
+            
+        Returns:
+            Synced shop data dictionary
+        """
+        return await self._make_request("GET", f"/api/shops/{tenant_id}/{shop_id}/synced-data")
+
+    async def get_shop_payment_status(self, shop_id: str, tenant_id: str) -> Dict[str, Any]:
+        """
+        Get payment status summary for a specific shop.
+        
+        Args:
+            shop_id: Business shop identifier
+            tenant_id: Tenant identifier
+            
+        Returns:
+            Payment status summary dictionary
+        """
+        return await self._make_request("GET", f"/api/shops/{tenant_id}/{shop_id}/payment-status")
+
+    async def get_shop_orders(self, shop_id: str, tenant_id: str, limit: int = 50, offset: int = 0) -> Dict[str, Any]:
+        """
+        Get orders for a specific shop from synced data.
+        
+        Args:
+            shop_id: Business shop identifier
+            tenant_id: Tenant identifier
+            limit: Maximum number of orders to return
+            offset: Number of orders to skip
+            
+        Returns:
+            Orders data with pagination info
+        """
+        params = {"limit": limit, "offset": offset}
+        return await self._make_request("GET", f"/api/shops/{tenant_id}/{shop_id}/orders", params=params)
+
+    async def get_shop_analytics(self, shop_id: str, tenant_id: str, period_days: int = 30) -> Dict[str, Any]:
+        """
+        Get analytics for a specific shop.
+        
+        Args:
+            shop_id: Business shop identifier
+            tenant_id: Tenant identifier
+            period_days: Analytics period in days
+            
+        Returns:
+            Shop analytics dictionary
+        """
+        params = {"period_days": period_days}
+        return await self._make_request("GET", f"/api/shops/{tenant_id}/{shop_id}/analytics", params=params)
+
+    # ------------------ Analytics Methods ------------------
+
+    async def get_executive_performance(self, user_id: str, tenant_id: str, period_start: Optional[str] = None, period_end: Optional[str] = None) -> Dict[str, Any]:
+        """
+        Get executive performance analytics.
+        
+        Args:
+            user_id: User ID
+            tenant_id: Tenant identifier
+            period_start: Start date for analytics period
+            period_end: End date for analytics period
+            
+        Returns:
+            Executive performance data
+        """
+        params = {}
+        if period_start:
+            params["period_start"] = period_start
+        if period_end:
+            params["period_end"] = period_end
+        return await self._make_request("GET", f"/api/analytics/executive/{user_id}/performance", params=params)
+
+    async def get_payment_analytics(self, tenant_id: str, period_start: Optional[str] = None, period_end: Optional[str] = None) -> Dict[str, Any]:
+        """
+        Get payment analytics for a tenant.
+        
+        Args:
+            tenant_id: Tenant identifier
+            period_start: Start date for analytics period
+            period_end: End date for analytics period
+            
+        Returns:
+            Payment analytics data
+        """
+        params = {}
+        if period_start:
+            params["period_start"] = period_start
+        if period_end:
+            params["period_end"] = period_end
+        return await self._make_request("GET", f"/api/analytics/payments/analytics", params=params)
+
+    async def get_overdue_analysis(self, tenant_id: str) -> Dict[str, Any]:
+        """
+        Get overdue payments analysis.
+        
+        Args:
+            tenant_id: Tenant identifier
+            
+        Returns:
+            Overdue analysis data
+        """
+        return await self._make_request("GET", f"/api/analytics/payments/overdue", params={"tenant_id": tenant_id})
+
+    async def get_best_selling_products(self, tenant_id: str, limit: int = 10) -> Dict[str, Any]:
+        """
+        Get best selling products analysis.
+        
+        Args:
+            tenant_id: Tenant identifier
+            limit: Maximum number of products to return
+            
+        Returns:
+            Best selling products data
+        """
+        params = {"tenant_id": tenant_id, "limit": limit}
+        return await self._make_request("GET", f"/api/analytics/products/best-selling", params=params)
+
 
 # Global instance
 data_layer_client: Optional[DataLayerClient] = None

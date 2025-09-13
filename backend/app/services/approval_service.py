@@ -284,3 +284,5 @@ approval_service = ApprovalService()
 async def get_approval_service() -> ApprovalService:
     """Get the global approval service instance."""
     return approval_service
+
+

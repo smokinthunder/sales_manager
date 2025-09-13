@@ -112,3 +112,5 @@ class ApprovalRead(ApprovalBase):
     updated_at: datetime
     created_by: Optional[int] = None
     updated_by: Optional[int] = None
+
+

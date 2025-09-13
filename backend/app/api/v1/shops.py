@@ -1,8 +1,9 @@
 """
 Shops API endpoints.
 
-Provides CRUD operations for shops with proper authentication,
-authorization, and tenant isolation.
+Provides shop management with synced data viewing, payment status,
+and analytics integration. CRUD operations removed in favor of
+data synchronization approach.
 """
 
 from typing import List, Optional, Dict, Any
@@ -15,7 +16,9 @@ from app.core.errors import (
     InsufficientPermissionsError
 )
 from app.services.shop_service import get_shop_service, ShopService
+from app.services.analytics_service import AnalyticsService
 from app.domain.models.shop import ShopCreate, ShopUpdate, ShopRead, ShopStatus
+from app.domain.models.sync_data import SyncedShopDataRead
 import logging
 
 logger = logging.getLogger(__name__)
@@ -179,29 +182,138 @@ async def update_shop(
         )
 
 
-@router.delete("/{shop_id}", status_code=204)
-async def delete_shop(
+@router.get("/{shop_id}/synced-data", response_model=SyncedShopDataRead)
+async def get_shop_synced_data(
     shop_id: str = Path(..., description="Business-friendly shop identifier (e.g., SH001)"),
     tenant_id: str = Query(..., description="Tenant identifier (required)"),
     current_user: Dict[str, Any] = Depends(get_current_user),
     shop_service: ShopService = Depends(get_shop_service)
 ):
     """
-    Delete a shop (hard delete - completely removes from database).
+    Get synced financial data for a specific shop.
     
-    **Delete Behavior:**
-    - Shop is completely removed from the database
-    - All associated visits, orders, payments, and outstandings are also deleted
-    - This action cannot be undone
+    **Returns:**
+    - Current payment amount
+    - Upcoming payment amount  
+    - Overdue payment amount
+    - Sync status and last sync date
+    - Raw client data (JSON)
     
     **Security:**
     - Requires authentication
-    - Only client_admin and superadmin can delete shops
-    - Users can only delete shops from their assigned tenant
+    - Users can only see shops from their assigned tenant
+    - Superadmin can see shops from all tenants
     """
     try:
-        await shop_service.delete_shop_by_shop_id(shop_id, tenant_id, current_user)
-        return None
+        return await shop_service.get_shop_synced_data(shop_id, tenant_id, current_user)
+    except ShopNotFoundError as e:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=e.message
+        )
+    except InsufficientPermissionsError as e:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail=e.message
+        )
+
+
+@router.get("/{shop_id}/payment-status")
+async def get_shop_payment_status(
+    shop_id: str = Path(..., description="Business-friendly shop identifier (e.g., SH001)"),
+    tenant_id: str = Query(..., description="Tenant identifier (required)"),
+    current_user: Dict[str, Any] = Depends(get_current_user),
+    shop_service: ShopService = Depends(get_shop_service)
+):
+    """
+    Get payment status summary for a specific shop.
+    
+    **Returns:**
+    - Payment status breakdown (current, upcoming, overdue)
+    - 30-day policy compliance
+    - Days overdue for overdue payments
+    - Payment collection rate
+    
+    **Security:**
+    - Requires authentication
+    - Users can only see shops from their assigned tenant
+    - Superadmin can see shops from all tenants
+    """
+    try:
+        return await shop_service.get_shop_payment_status(shop_id, tenant_id, current_user)
+    except ShopNotFoundError as e:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=e.message
+        )
+    except InsufficientPermissionsError as e:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail=e.message
+        )
+
+
+@router.get("/{shop_id}/orders")
+async def get_shop_orders(
+    shop_id: str = Path(..., description="Business-friendly shop identifier (e.g., SH001)"),
+    tenant_id: str = Query(..., description="Tenant identifier (required)"),
+    limit: int = Query(50, description="Maximum number of orders to return", ge=1, le=100),
+    offset: int = Query(0, description="Number of orders to skip", ge=0),
+    current_user: Dict[str, Any] = Depends(get_current_user),
+    shop_service: ShopService = Depends(get_shop_service)
+):
+    """
+    Get orders for a specific shop from synced data.
+    
+    **Returns:**
+    - List of orders with payment status
+    - Order amounts and due dates
+    - 30-day policy compliance status
+    - Pagination support
+    
+    **Security:**
+    - Requires authentication
+    - Users can only see shops from their assigned tenant
+    - Superadmin can see shops from all tenants
+    """
+    try:
+        return await shop_service.get_shop_orders(shop_id, tenant_id, current_user, limit, offset)
+    except ShopNotFoundError as e:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=e.message
+        )
+    except InsufficientPermissionsError as e:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail=e.message
+        )
+
+
+@router.get("/{shop_id}/analytics")
+async def get_shop_analytics(
+    shop_id: str = Path(..., description="Business-friendly shop identifier (e.g., SH001)"),
+    tenant_id: str = Query(..., description="Tenant identifier (required)"),
+    period_days: int = Query(30, description="Analytics period in days", ge=1, le=365),
+    current_user: Dict[str, Any] = Depends(get_current_user),
+    shop_service: ShopService = Depends(get_shop_service)
+):
+    """
+    Get analytics for a specific shop.
+    
+    **Returns:**
+    - Performance metrics and trends
+    - Order patterns and frequency
+    - Payment behavior analysis
+    - Product diversity metrics
+    
+    **Security:**
+    - Requires authentication
+    - Users can only see shops from their assigned tenant
+    - Superadmin can see shops from all tenants
+    """
+    try:
+        return await shop_service.get_shop_analytics(shop_id, tenant_id, current_user, period_days)
     except ShopNotFoundError as e:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
