@@ -147,54 +147,6 @@ class User(BaseEntity):
         foreign_keys="Visit.updated_by",
         lazy="selectin"
     )
-    created_products: Mapped[List["Product"]] = relationship(
-        "Product",
-        back_populates="creator",
-        foreign_keys="Product.created_by",
-        lazy="selectin"
-    )
-    updated_products: Mapped[List["Product"]] = relationship(
-        "Product",
-        back_populates="updater",
-        foreign_keys="Product.updated_by",
-        lazy="selectin"
-    )
-    created_orders: Mapped[List["Order"]] = relationship(
-        "Order",
-        back_populates="creator",
-        foreign_keys="Order.created_by",
-        lazy="selectin"
-    )
-    updated_orders: Mapped[List["Order"]] = relationship(
-        "Order",
-        back_populates="updater",
-        foreign_keys="Order.updated_by",
-        lazy="selectin"
-    )
-    created_payments: Mapped[List["Payment"]] = relationship(
-        "Payment",
-        back_populates="creator",
-        foreign_keys="Payment.created_by",
-        lazy="selectin"
-    )
-    updated_payments: Mapped[List["Payment"]] = relationship(
-        "Payment",
-        back_populates="updater",
-        foreign_keys="Payment.updated_by",
-        lazy="selectin"
-    )
-    created_outstandings: Mapped[List["Outstanding"]] = relationship(
-        "Outstanding",
-        back_populates="creator",
-        foreign_keys="Outstanding.created_by",
-        lazy="selectin"
-    )
-    updated_outstandings: Mapped[List["Outstanding"]] = relationship(
-        "Outstanding",
-        back_populates="updater",
-        foreign_keys="Outstanding.updated_by",
-        lazy="selectin"
-    )
     
     # Approval workflows
     approval_requests: Mapped[List["Approval"]] = relationship(

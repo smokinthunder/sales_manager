@@ -1,119 +1,153 @@
 """
 Mock Client Finance API for Development.
 
-This is a mock implementation of the client's Tally-like
-finance system API for development and testing purposes.
+This is a mock implementation of the client's finance system API
+that matches the expected format from AQUASTAR_BACKEND_UPDATION_PLAN.md
 """
 
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Query
 from pydantic import BaseModel
-from typing import List, Optional
-from datetime import date, datetime
+from typing import List, Optional, Dict, Any
+from datetime import date, datetime, timedelta
 import random
 
 app = FastAPI(
     title="Mock Client Finance API",
-    description="Mock API simulating client's finance system",
+    description="Mock API simulating client's finance system with 30-day payment policy",
     version="1.0.0"
 )
 
-# Mock data models
+# Response models matching the expected format
 class Product(BaseModel):
-    sku: str
-    name: str
-    category: str
-    mrp: float
-
-class Shop(BaseModel):
-    shop_id: str
-    name: str
-    territory_id: str
-
-class OrderLine(BaseModel):
-    sku: str
-    qty: int
-    rate: float
+    product_name: str
+    product_amount: float
 
 class Order(BaseModel):
-    order_id: str
-    shop_id: str
-    order_date: date
-    status: str
-    lines: List[OrderLine]
-
-class Payment(BaseModel):
-    payment_id: str
-    shop_id: str
-    amount: float
-    date: date
-
-class Outstanding(BaseModel):
-    shop_id: str
-    amount_due: float
-    as_of: date
-    days_overdue: int
-
-class SyncResponse(BaseModel):
-    tenant_id: str
-    sync_date: date
+    order_id: int
+    order_date: str  # YYYY-MM-DD format
+    order_amount: float
     products: List[Product]
-    shops: List[Shop]
+
+class PaymentStatus(BaseModel):
+    current: float
+    upcoming: float
+    overdue: float
+
+class Shop(BaseModel):
+    shop_id: int
+    shop_name: str
     orders: List[Order]
-    payments: List[Payment]
-    outstandings: List[Outstanding]
+    payment_status: PaymentStatus
 
-# Mock data
-MOCK_PRODUCTS = [
-    Product(sku="P-001", name="Item A", category="Beverage", mrp=120.0),
-    Product(sku="P-002", name="Item B", category="Snacks", mrp=85.0),
-    Product(sku="P-003", name="Item C", category="Beverage", mrp=95.0),
-    Product(sku="P-004", name="Item D", category="Snacks", mrp=150.0),
-    Product(sku="P-005", name="Item E", category="Beverage", mrp=200.0),
+class ClientDataResponse(BaseModel):
+    status: str
+    message: str
+    shops: List[Shop]
+
+# Mock data - Product names and categories
+PRODUCT_NAMES = [
+    "Coca Cola 500ml", "Pepsi 500ml", "Sprite 500ml", "Fanta 500ml", "Thums Up 500ml",
+    "Lays Classic", "Lays Masala", "Kurkure", "Cheetos", "Doritos",
+    "Biscuits Pack", "Cookies Pack", "Cake Mix", "Bread Loaf", "Milk 1L",
+    "Yogurt 500g", "Cheese 200g", "Butter 100g", "Jam 500g", "Honey 250g",
+    "Rice 1kg", "Wheat Flour 1kg", "Sugar 1kg", "Salt 500g", "Oil 1L",
+    "Tea Leaves 250g", "Coffee 200g", "Noodles Pack", "Pasta 500g", "Cereal 500g"
 ]
 
-MOCK_SHOPS = [
-    Shop(shop_id="S-901", name="Lucky Stores", territory_id="TR-22"),
-    Shop(shop_id="S-902", name="City Mart", territory_id="TR-22"),
-    Shop(shop_id="S-903", name="Quick Shop", territory_id="TR-23"),
-    Shop(shop_id="S-904", name="Super Market", territory_id="TR-23"),
-    Shop(shop_id="S-905", name="Corner Store", territory_id="TR-24"),
+PRODUCT_CATEGORIES = ["Beverages", "Snacks", "Dairy", "Bakery", "Pantry", "Breakfast"]
+
+# Shop names and locations
+SHOP_NAMES = [
+    "Lucky Stores", "City Mart", "Quick Shop", "Super Market", "Corner Store",
+    "Family Store", "Daily Needs", "Fresh Mart", "Value Store", "Prime Shop",
+    "Neighborhood Store", "Community Shop", "Local Mart", "Express Store", "Best Buy",
+    "Quality Store", "Reliable Shop", "Trust Mart", "Good Store", "Top Shop",
+    "Elite Store", "Premium Shop", "Gold Store", "Silver Mart", "Bronze Shop"
 ]
 
-MOCK_ORDERS = [
-    Order(
-        order_id="O-7788",
-        shop_id="S-901",
-        order_date=date(2025, 1, 20),
-        status="DELIVERED",
-        lines=[OrderLine(sku="P-001", qty=10, rate=100.0)]
-    ),
-    Order(
-        order_id="O-7789",
-        shop_id="S-902",
-        order_date=date(2025, 1, 21),
-        status="CONFIRMED",
-        lines=[OrderLine(sku="P-002", qty=5, rate=80.0)]
-    ),
-    Order(
-        order_id="O-7790",
-        shop_id="S-903",
-        order_date=date(2025, 1, 22),
-        status="PENDING",
-        lines=[OrderLine(sku="P-003", qty=8, rate=90.0)]
-    ),
-]
+# Generate realistic mock data
+def generate_products(count: int = 3) -> List[Product]:
+    """Generate random products for an order."""
+    products = []
+    for _ in range(count):
+        product_name = random.choice(PRODUCT_NAMES)
+        product_amount = round(random.uniform(25.0, 200.0), 2)
+        products.append(Product(
+            product_name=product_name,
+            product_amount=product_amount
+        ))
+    return products
 
-MOCK_PAYMENTS = [
-    Payment(payment_id="PM-55", shop_id="S-901", amount=500.0, date=date(2025, 1, 21)),
-    Payment(payment_id="PM-56", shop_id="S-902", amount=400.0, date=date(2025, 1, 22)),
-    Payment(payment_id="PM-57", shop_id="S-903", amount=300.0, date=date(2025, 1, 23)),
-]
+def generate_orders(shop_id: int, count: int = 3) -> List[Order]:
+    """Generate random orders for a shop."""
+    orders = []
+    for i in range(count):
+        # Generate order date within last 60 days
+        days_ago = random.randint(1, 60)
+        order_date = (datetime.now() - timedelta(days=days_ago)).strftime("%Y-%m-%d")
+        
+        # Generate products for this order
+        products = generate_products(random.randint(1, 4))
+        order_amount = sum(p.product_amount for p in products)
+        
+        orders.append(Order(
+            order_id=random.randint(1000, 9999),
+            order_date=order_date,
+            order_amount=round(order_amount, 2),
+            products=products
+        ))
+    return orders
 
-MOCK_OUTSTANDINGS = [
-    Outstanding(shop_id="S-901", amount_due=700.0, as_of=date(2025, 1, 22), days_overdue=35),
-    Outstanding(shop_id="S-902", amount_due=450.0, as_of=date(2025, 1, 22), days_overdue=15),
-    Outstanding(shop_id="S-903", amount_due=1200.0, as_of=date(2025, 1, 22), days_overdue=45),
-]
+def calculate_payment_status(orders: List[Order]) -> PaymentStatus:
+    """Calculate payment status based on 30-day policy."""
+    current = 0.0
+    upcoming = 0.0
+    overdue = 0.0
+    
+    today = datetime.now().date()
+    
+    for order in orders:
+        order_date = datetime.strptime(order.order_date, "%Y-%m-%d").date()
+        due_date = order_date + timedelta(days=30)
+        
+        if today > due_date:
+            # Overdue
+            overdue += order.order_amount
+        elif today <= due_date and (due_date - today).days <= 7:
+            # Upcoming (due within 7 days)
+            upcoming += order.order_amount
+        else:
+            # Current
+            current += order.order_amount
+    
+    return PaymentStatus(
+        current=round(current, 2),
+        upcoming=round(upcoming, 2),
+        overdue=round(overdue, 2)
+    )
+
+def generate_shops(count: int = 15) -> List[Shop]:
+    """Generate mock shops with orders and payment status."""
+    shops = []
+    
+    for i in range(count):
+        shop_id = random.randint(100, 999)
+        shop_name = random.choice(SHOP_NAMES)
+        
+        # Generate orders for this shop
+        orders = generate_orders(shop_id, random.randint(2, 6))
+        
+        # Calculate payment status
+        payment_status = calculate_payment_status(orders)
+        
+        shops.append(Shop(
+            shop_id=shop_id,
+            shop_name=shop_name,
+            orders=orders,
+            payment_status=payment_status
+        ))
+    
+    return shops
 
 
 @app.get("/")
@@ -122,7 +156,8 @@ async def root():
     return {
         "message": "Mock Client Finance API",
         "version": "1.0.0",
-        "status": "running"
+        "status": "running",
+        "format": "Matches AQUASTAR_BACKEND_UPDATION_PLAN.md specification"
     }
 
 
@@ -132,155 +167,53 @@ async def health():
     return {"status": "healthy", "timestamp": datetime.now().isoformat()}
 
 
-@app.post("/api/sync")
-async def sync_data(tenant_id: str):
+@app.get("/api/client-data")
+async def get_client_data(tenant_id: str = Query(..., description="Tenant identifier")):
     """
-    Mock data synchronization endpoint.
+    Get client data in the format expected by AquaStar backend.
+    
+    This endpoint matches the exact format specified in AQUASTAR_BACKEND_UPDATION_PLAN.md:
+    - GET /api/client-data?tenant_id={tenant_id}
+    - Returns shops with embedded orders, products, and payment_status
+    - Implements 30-day payment policy calculation
     
     Args:
-        tenant_id: Tenant identifier
+        tenant_id: Tenant identifier (required query parameter)
         
     Returns:
-        SyncResponse: Mock finance data
+        ClientDataResponse: Client data in expected format
+        
+    Raises:
+        HTTPException: If tenant_id is missing
     """
     if not tenant_id:
         raise HTTPException(status_code=400, detail="tenant_id is required")
     
-    # Simulate some randomness in the data
-    random_products = random.sample(MOCK_PRODUCTS, random.randint(3, 5))
-    random_shops = random.sample(MOCK_SHOPS, random.randint(3, 5))
-    random_orders = random.sample(MOCK_ORDERS, random.randint(2, 3))
-    random_payments = random.sample(MOCK_PAYMENTS, random.randint(2, 3))
-    random_outstandings = random.sample(MOCK_OUTSTANDINGS, random.randint(2, 3))
+    # Generate realistic mock data
+    shops = generate_shops(random.randint(10, 20))  # 10-20 shops per tenant
     
-    return SyncResponse(
-        tenant_id=tenant_id,
-        sync_date=date.today(),
-        products=random_products,
-        shops=random_shops,
-        orders=random_orders,
-        payments=random_payments,
-        outstandings=random_outstandings
+    return ClientDataResponse(
+        status="success",
+        message="Data fetched successfully",
+        shops=shops
     )
 
 
-@app.get("/api/products")
-async def get_products(tenant_id: str, category: Optional[str] = None):
+@app.get("/api/client-data/sample")
+async def get_sample_data():
     """
-    Get products for a tenant.
+    Get a small sample of client data for testing.
     
-    Args:
-        tenant_id: Tenant identifier
-        category: Optional product category filter
-        
     Returns:
-        List[Product]: List of products
+        ClientDataResponse: Sample client data with 3 shops
     """
-    if not tenant_id:
-        raise HTTPException(status_code=400, detail="tenant_id is required")
+    shops = generate_shops(3)
     
-    products = MOCK_PRODUCTS
-    if category:
-        products = [p for p in products if p.category.lower() == category.lower()]
-    
-    return products
-
-
-@app.get("/api/shops")
-async def get_shops(tenant_id: str, territory_id: Optional[str] = None):
-    """
-    Get shops for a tenant.
-    
-    Args:
-        tenant_id: Tenant identifier
-        territory_id: Optional territory filter
-        
-    Returns:
-        List[Shop]: List of shops
-    """
-    if not tenant_id:
-        raise HTTPException(status_code=400, detail="tenant_id is required")
-    
-    shops = MOCK_SHOPS
-    if territory_id:
-        shops = [s for s in shops if s.territory_id == territory_id]
-    
-    return shops
-
-
-@app.get("/api/orders")
-async def get_orders(tenant_id: str, shop_id: Optional[str] = None, status: Optional[str] = None):
-    """
-    Get orders for a tenant.
-    
-    Args:
-        tenant_id: Tenant identifier
-        shop_id: Optional shop filter
-        status: Optional status filter
-        
-    Returns:
-        List[Order]: List of orders
-    """
-    if not tenant_id:
-        raise HTTPException(status_code=400, detail="tenant_id is required")
-    
-    orders = MOCK_ORDERS
-    if shop_id:
-        orders = [o for o in orders if o.shop_id == shop_id]
-    if status:
-        orders = [o for o in orders if o.status.upper() == status.upper()]
-    
-    return orders
-
-
-@app.get("/api/payments")
-async def get_payments(tenant_id: str, shop_id: Optional[str] = None, date_from: Optional[date] = None):
-    """
-    Get payments for a tenant.
-    
-    Args:
-        tenant_id: Tenant identifier
-        shop_id: Optional shop filter
-        date_from: Optional date filter
-        
-    Returns:
-        List[Payment]: List of payments
-    """
-    if not tenant_id:
-        raise HTTPException(status_code=400, detail="tenant_id is required")
-    
-    payments = MOCK_PAYMENTS
-    if shop_id:
-        payments = [p for p in payments if p.shop_id == shop_id]
-    if date_from:
-        payments = [p for p in payments if p.date >= date_from]
-    
-    return payments
-
-
-@app.get("/api/outstandings")
-async def get_outstandings(tenant_id: str, shop_id: Optional[str] = None, days_overdue: Optional[int] = None):
-    """
-    Get outstanding amounts for a tenant.
-    
-    Args:
-        tenant_id: Tenant identifier
-        shop_id: Optional shop filter
-        days_overdue: Optional overdue days filter
-        
-    Returns:
-        List[Outstanding]: List of outstanding amounts
-    """
-    if not tenant_id:
-        raise HTTPException(status_code=400, detail="tenant_id is required")
-    
-    outstandings = MOCK_OUTSTANDINGS
-    if shop_id:
-        outstandings = [o for o in outstandings if o.shop_id == shop_id]
-    if days_overdue:
-        outstandings = [o for o in outstandings if o.days_overdue >= days_overdue]
-    
-    return outstandings
+    return ClientDataResponse(
+        status="success",
+        message="Sample data fetched successfully",
+        shops=shops
+    )
 
 
 if __name__ == "__main__":

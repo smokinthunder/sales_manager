@@ -31,6 +31,30 @@ class Settings:
         self.enable_file_uploads = os.getenv("ENABLE_FILE_UPLOADS", "true").lower() == "true"
         self.enable_sync = os.getenv("ENABLE_SYNC", "true").lower() == "true"
         
+        # Sync configuration
+        self.sync_enabled = os.getenv("SYNC_ENABLED", "true").lower() == "true"
+        self.sync_interval_hours = int(os.getenv("SYNC_INTERVAL_HOURS", "24"))
+        self.sync_retry_attempts = int(os.getenv("SYNC_RETRY_ATTEMPTS", "3"))
+        self.sync_retry_delay_minutes = int(os.getenv("SYNC_RETRY_DELAY_MINUTES", "5"))
+        self.sync_timeout_seconds = int(os.getenv("SYNC_TIMEOUT_SECONDS", "300"))
+        self.sync_batch_size = int(os.getenv("SYNC_BATCH_SIZE", "100"))
+        
+        # Client API configuration
+        self.client_api_url = os.getenv("CLIENT_API_URL", "http://mock-client-api:8000")
+        self.client_api_timeout = int(os.getenv("CLIENT_API_TIMEOUT", "30"))
+        self.client_api_retry_attempts = int(os.getenv("CLIENT_API_RETRY_ATTEMPTS", "3"))
+        
+        # Analytics configuration
+        self.analytics_enabled = os.getenv("ANALYTICS_ENABLED", "true").lower() == "true"
+        self.analytics_retention_days = int(os.getenv("ANALYTICS_RETENTION_DAYS", "365"))
+        self.analytics_cache_ttl_hours = int(os.getenv("ANALYTICS_CACHE_TTL_HOURS", "1"))
+        self.analytics_batch_size = int(os.getenv("ANALYTICS_BATCH_SIZE", "50"))
+        
+        # 30-day payment policy configuration
+        self.payment_policy_days = int(os.getenv("PAYMENT_POLICY_DAYS", "30"))
+        self.payment_overdue_threshold_days = int(os.getenv("PAYMENT_OVERDUE_THRESHOLD_DAYS", "7"))
+        self.payment_upcoming_threshold_days = int(os.getenv("PAYMENT_UPCOMING_THRESHOLD_DAYS", "7"))
+        
         # Database settings
         self.db_host = os.getenv("DB_HOST", "localhost")
         self.db_port = int(os.getenv("DB_PORT", "3306"))

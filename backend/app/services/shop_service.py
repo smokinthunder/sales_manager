@@ -10,6 +10,7 @@ from datetime import datetime
 from fastapi import HTTPException, status
 from app.services.data_layer_client import get_data_layer_client
 from app.domain.models.shop import ShopCreate, ShopUpdate, ShopRead, ShopStatus
+from app.domain.models.sync_data import SyncedShopDataRead
 from app.core.errors import (
     ShopNotFoundError,
     ShopAlreadyExistsError,
@@ -224,6 +225,146 @@ class ShopService:
         try:
             await client.delete_shop(shop_id, tenant_id)
             return True
+        except HTTPException as e:
+            if e.status_code == 404:
+                raise ShopNotFoundError(shop_id)
+            raise
+
+    # ------------------ Synced Data Methods ------------------
+
+    async def get_shop_synced_data(
+        self,
+        shop_id: str,
+        tenant_id: str,
+        current_user: Dict[str, Any]
+    ) -> SyncedShopDataRead:
+        """
+        Get synced financial data for a specific shop.
+        
+        Args:
+            shop_id: Business shop identifier
+            tenant_id: Tenant identifier
+            current_user: Current authenticated user
+            
+        Returns:
+            SyncedShopDataRead: Synced shop data
+            
+        Raises:
+            ShopNotFoundError: If shop not found
+            InsufficientPermissionsError: If user lacks access permissions
+        """
+        self._check_tenant_access(tenant_id, current_user)
+        
+        # Get data layer client
+        client = self.client or await get_data_layer_client()
+        
+        try:
+            return await client.get_shop_synced_data(shop_id, tenant_id)
+        except HTTPException as e:
+            if e.status_code == 404:
+                raise ShopNotFoundError(shop_id)
+            raise
+
+    async def get_shop_payment_status(
+        self,
+        shop_id: str,
+        tenant_id: str,
+        current_user: Dict[str, Any]
+    ) -> Dict[str, Any]:
+        """
+        Get payment status summary for a specific shop.
+        
+        Args:
+            shop_id: Business shop identifier
+            tenant_id: Tenant identifier
+            current_user: Current authenticated user
+            
+        Returns:
+            Dict containing payment status summary
+            
+        Raises:
+            ShopNotFoundError: If shop not found
+            InsufficientPermissionsError: If user lacks access permissions
+        """
+        self._check_tenant_access(tenant_id, current_user)
+        
+        # Get data layer client
+        client = self.client or await get_data_layer_client()
+        
+        try:
+            return await client.get_shop_payment_status(shop_id, tenant_id)
+        except HTTPException as e:
+            if e.status_code == 404:
+                raise ShopNotFoundError(shop_id)
+            raise
+
+    async def get_shop_orders(
+        self,
+        shop_id: str,
+        tenant_id: str,
+        current_user: Dict[str, Any],
+        limit: int = 50,
+        offset: int = 0
+    ) -> Dict[str, Any]:
+        """
+        Get orders for a specific shop from synced data.
+        
+        Args:
+            shop_id: Business shop identifier
+            tenant_id: Tenant identifier
+            current_user: Current authenticated user
+            limit: Maximum number of orders to return
+            offset: Number of orders to skip
+            
+        Returns:
+            Dict containing orders and pagination info
+            
+        Raises:
+            ShopNotFoundError: If shop not found
+            InsufficientPermissionsError: If user lacks access permissions
+        """
+        self._check_tenant_access(tenant_id, current_user)
+        
+        # Get data layer client
+        client = self.client or await get_data_layer_client()
+        
+        try:
+            return await client.get_shop_orders(shop_id, tenant_id, limit, offset)
+        except HTTPException as e:
+            if e.status_code == 404:
+                raise ShopNotFoundError(shop_id)
+            raise
+
+    async def get_shop_analytics(
+        self,
+        shop_id: str,
+        tenant_id: str,
+        current_user: Dict[str, Any],
+        period_days: int = 30
+    ) -> Dict[str, Any]:
+        """
+        Get analytics for a specific shop.
+        
+        Args:
+            shop_id: Business shop identifier
+            tenant_id: Tenant identifier
+            current_user: Current authenticated user
+            period_days: Analytics period in days
+            
+        Returns:
+            Dict containing shop analytics
+            
+        Raises:
+            ShopNotFoundError: If shop not found
+            InsufficientPermissionsError: If user lacks access permissions
+        """
+        self._check_tenant_access(tenant_id, current_user)
+        
+        # Get data layer client
+        client = self.client or await get_data_layer_client()
+        
+        try:
+            return await client.get_shop_analytics(shop_id, tenant_id, period_days)
         except HTTPException as e:
             if e.status_code == 404:
                 raise ShopNotFoundError(shop_id)
