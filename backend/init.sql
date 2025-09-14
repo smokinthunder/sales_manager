@@ -22,7 +22,7 @@ CREATE TABLE IF NOT EXISTS users (
     INDEX idx_tenant_phone (tenant_id, phone),
     INDEX idx_role_status (role, status),
     INDEX idx_territory (territory_id),
-    UNIQUE KEY unique_tenant_id (tenant_id)
+    UNIQUE KEY unique_tenant_id (tenant_id,phone)
 );
 
 -- Create tenants table
@@ -91,7 +91,7 @@ CREATE TABLE IF NOT EXISTS shops (
     INDEX idx_territory (territory_id),
     INDEX idx_status (status),
     INDEX idx_sync_status (sync_status),
-    FOREIGN KEY (territory_id) REFERENCES territories(id),
+    FOREIGN KEY (territory_id) REFERENCES territories(territory_id),
     FOREIGN KEY (created_by) REFERENCES users(id),
     FOREIGN KEY (updated_by) REFERENCES users(id)
 );
@@ -371,4 +371,4 @@ CREATE INDEX idx_users_tenant_role ON users(tenant_id, role);
 CREATE INDEX idx_territories_tenant ON territories(tenant_id);
 CREATE INDEX idx_shops_tenant_territory ON shops(tenant_id, territory_id);
 CREATE INDEX idx_routes_tenant_week ON routes(tenant_id, week_start_date);
-CREATE INDEX idx_visits_tenant_date ON visits(tenant_id, DATE(checkin_time));
+CREATE INDEX idx_visits_tenant_date ON visits(tenant_id, checkin_time);
