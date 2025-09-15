@@ -8,7 +8,7 @@ import 'package:sales_manager/utils/result.dart';
 class RemoteShopService {
   late final Dio dio;
   final LocalAuthService localAuth = LocalAuthService();
-  final tenantId = dotenv.env['TENANT_ID'] ?? "super_tenant";
+  final tenantId = dotenv.env['TENANT_ID'] ?? "default";
 
   RemoteShopService() {
     dio = Dio();

@@ -70,3 +70,21 @@ ON DUPLICATE KEY UPDATE
     territory_id = VALUES(territory_id),
     tenant_id = VALUES(tenant_id),
     created_by = VALUES(created_by);
+
+/*
+
+
+For Opening MySQL shell inside the Docker container
+docker exec -it sales_manager_mysql mysql -u root -prootpassword sales_manager
+
+For running the script
+docker exec -i sales_manager_mysql mysql -u root -prootpassword sales_manager < insert.sql
+
+For seeing the inserted data
+SELECT phone, name, email, role, tenant_id FROM users;
+SELECT territory_id, name, code, area_manager_id FROM territories;
+SELECT shop_id, name, code, territory_id FROM shops;
+
+
+
+*/
