@@ -1,14 +1,16 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:sales_manager/domain/models/shops/shop.dart';
 import 'package:sales_manager/routing/route_paths.dart';
+import 'package:sales_manager/ui/home/home_screens/viewmodel/home_screen_viewmodel.dart';
 
 ///Provide sorted list for this widget
-class TopCustomersScreen extends StatelessWidget {
+class TopCustomersScreen extends ConsumerWidget {
   const TopCustomersScreen({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     return Scaffold(
       appBar: AppBar(
         title: Text("Top Customers"),
@@ -22,7 +24,36 @@ class TopCustomersScreen extends StatelessWidget {
       ),
       body: Padding(
         padding: const EdgeInsets.all(18.0),
-        child: PaginatedList(items: testShops + testShops + testShops),
+        child: ref
+            .watch(getAllShopsProvider)
+            .when(
+              error: (error, stackTrace) =>
+                  Center(child: Text('Error: $error')),
+              loading: () => const Center(child: CircularProgressIndicator()),
+              data: (data) {
+                List<Shop> items = data
+                    .map(
+                      (e) => Shop(
+                        id: e['shop_id'],
+                        name: e['name'],
+                        location: e['territory_id'],
+                        phoneNumber: e['phone'],
+                        logoUrl: 'https://example.com/logos/supermart.png',
+                        points: 120,
+                        needsVisiting: true,
+                        isNewShop: true,
+                        lastVisted: DateTime.now().subtract(Duration(days: 2)),
+                      ),
+                    )
+                    .toList();
+                if (data.isEmpty) {
+                  return const Center(child: Text("No customers found"));
+                } else {
+                  return PaginatedList(items: items);
+                }
+              },
+            ),
+        // child: PaginatedList(items: testShops + testShops + testShops),
       ),
     );
   }

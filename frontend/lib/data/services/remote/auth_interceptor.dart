@@ -99,6 +99,7 @@ class AuthInterceptor extends Interceptor {
     } else {
       // Token is valid — attach access token
       final accessToken = await _localAuth.getAccessToken();
+      print('Access Token: $accessToken');
       if (accessToken != null) {
         options.headers['Authorization'] = 'Bearer $accessToken';
       }

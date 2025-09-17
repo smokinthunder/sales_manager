@@ -6,7 +6,7 @@ import 'package:sales_manager/data/services/remote/auth_interceptor.dart';
 import 'package:sales_manager/utils/result.dart';
 
 class RemoteShopService {
-  late final Dio dio;
+  late Dio dio;
   final LocalAuthService localAuth = LocalAuthService();
   final tenantId = dotenv.env['TENANT_ID'] ?? "default";
 
@@ -50,22 +50,40 @@ class RemoteShopService {
     }
   }
 
-  Future<Result<Response<List<Map<String, dynamic>>>>> getShops({
+  Future<Result<List<Map<String, dynamic>>>> getShops({
     String? status,
     String? territoryId,
   }) async {
+    print("Fetching shops from ${ApiEndpoints.shops} with tenant_id $tenantId");
     final queryParameters = {
       "tenant_id": tenantId,
       if (status != null) "status": status,
       if (territoryId != null) "territory_id": territoryId,
     };
     try {
-      final Response<List<Map<String, dynamic>>> response = await dio.get(
+      print("get request");
+      final Response response = await dio.get(
         ApiEndpoints.shops,
         queryParameters: queryParameters,
       );
-      return Result.ok(response);
+      // Safely cast the response data
+      final rawData = response.data;
+      if (rawData is! List) {
+        throw Exception("Expected a list, got ${rawData.runtimeType}");
+      }
+
+      final List<Map<String, dynamic>> shops = rawData
+          .map((item) => item as Map<String, dynamic>)
+          .toList();
+
+      print("Fetched shops: $shops");
+      return Result.ok(shops);
     } on DioException catch (e) {
+      print("DioException Type: ${e.type}");
+      print("Full Error: $e");
+      print("Response Data: ${e.response?.data}");
+      print("Response Status Code: ${e.response?.statusCode}");
+      print("Error fetching shops: ${e.message}");
       return Result.error(Exception(e.response?.data['detail'] ?? e.message));
     }
   }

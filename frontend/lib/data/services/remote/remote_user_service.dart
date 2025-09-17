@@ -11,6 +11,7 @@ class RemoteUserService {
   final tenantId = dotenv.env['TENANT_ID'] ?? "default";
 
   RemoteUserService() {
+    
     dio = Dio();
     dio.interceptors.add(AuthInterceptor(localAuth));
   }

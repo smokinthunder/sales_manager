@@ -6,7 +6,7 @@ import 'package:sales_manager/utils/result.dart';
 
 part 'shop_remote_repository.g.dart';
 
-@Riverpod(keepAlive: true)
+@riverpod
 ShopRemoteRepository shopRemoteRepository(Ref<ShopRemoteRepository> ref) {
   return ShopRemoteRepository();
 }
@@ -36,7 +36,7 @@ class ShopRemoteRepository {
     territoryId: territoryId,
   );
 
-  Future<Result<Response<List<Map<String, dynamic>>>>> getShops({
+  Future<Result<List<Map<String, dynamic>>>> getShops({
     String? status,
     String? territoryId,
   }) async => await remoteShopService.getShops(

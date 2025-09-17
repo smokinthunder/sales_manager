@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:sales_manager/config/providers/login_message_provider.dart';
 import 'package:sales_manager/domain/models/shops/shop.dart';
+import 'package:sales_manager/ui/home/home_screens/viewmodel/home_screen_viewmodel.dart';
 import 'package:sales_manager/utils/show_snackbar.dart';
 import 'package:go_router/go_router.dart';
 import 'package:sales_manager/routing/route_paths.dart';
@@ -38,11 +39,12 @@ class _ExecutiveHomeState extends ConsumerState<ExecutiveHome> {
   Widget build(BuildContext context) {
     var theme = Theme.of(context);
     var textTheme = theme.textTheme;
+
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
+        children: <Widget>[
           // Total Customers
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -165,40 +167,34 @@ class _ExecutiveHomeState extends ConsumerState<ExecutiveHome> {
           Text("Top Customers", style: Theme.of(context).textTheme.bodyLarge),
           const SizedBox(height: 12),
 
-          GridView.count(
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            crossAxisCount: 2,
-            crossAxisSpacing: 12,
-            childAspectRatio: 1.2,
-            mainAxisSpacing: 12,
-            children: const [
-              _CustomerCard(
-                name: "S K Steels",
-                location: "Kochi",
-                phone: "+91 8432518902",
-                value: "2500",
+          ref
+              .watch(getTopFourShopsProvider)
+              .when(
+                data: (shops) {
+                  if (shops.isEmpty) {
+                    return const Text("No top customers available.");
+                  }
+                  return GridView.count(
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    crossAxisCount: 2,
+                    crossAxisSpacing: 12,
+                    childAspectRatio: 1.2,
+                    mainAxisSpacing: 12,
+                    children: shops.map((shop) {
+                      return _CustomerCard(
+                        name: shop['name'] ?? "Unknown",
+                        location: shop['territory_id'] ?? "Unknown",
+                        phone: shop['phone'] ?? "Unknown",
+                        value: "2100",
+                      );
+                    }).toList(),
+                  );
+                },
+                loading: () => const Center(child: CircularProgressIndicator()),
+                error: (error, stack) => Center(child: Text('Error: $error')),
               ),
-              _CustomerCard(
-                name: "M K Enterprises",
-                location: "Ernakulam",
-                phone: "+91 8432518902",
-                value: "2400",
-              ),
-              _CustomerCard(
-                name: "Athira Metals",
-                location: "Aluva",
-                phone: "+91 8432518902",
-                value: "2300",
-              ),
-              _CustomerCard(
-                name: "SAM Traders",
-                location: "Vyttila",
-                phone: "+91 8432518902",
-                value: "1200",
-              ),
-            ],
-          ),
+
           const SizedBox(height: 10),
           InkWell(
             onTap: () {
@@ -291,7 +287,8 @@ class _CustomerCard extends StatelessWidget {
               Text(location, style: Theme.of(context).textTheme.bodySmall),
               SizedBox(height: 4),
               Text(phone, style: Theme.of(context).textTheme.bodySmall),
-              const SizedBox(height: 30),
+              // const SizedBox(height: 30),
+              Spacer(),
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
