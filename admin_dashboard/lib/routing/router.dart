@@ -1,7 +1,10 @@
 import 'package:admin_dashboard/routing/routes.dart';
 import 'package:admin_dashboard/ui/analytics.dart';
 import 'package:admin_dashboard/ui/area_manager.dart';
-import 'package:admin_dashboard/ui/customer.dart';
+import 'package:admin_dashboard/ui/customer/active_customers.dart';
+import 'package:admin_dashboard/ui/customer/add_new_customer.dart';
+import 'package:admin_dashboard/ui/customer/customer.dart';
+import 'package:admin_dashboard/ui/customer/inactive_customers.dart';
 import 'package:admin_dashboard/ui/dashboard/analyze_collections.dart';
 import 'package:admin_dashboard/ui/dashboard/analyze_daily_sales.dart';
 import 'package:admin_dashboard/ui/dashboard/analyze_new_customers.dart';
@@ -65,6 +68,18 @@ final router = Provider<GoRouter>((ref) {
           GoRoute(
             path: Routes.analyzeSales,
             builder: (context, state) => const AnalyzeDailySales(),
+          ),
+          GoRoute(
+            path: Routes.addNewCusomter,
+            builder: (context, state) => const AddNewCustomer(),
+          ),
+          GoRoute(
+            path: Routes.activeCustomers,
+            builder: (context, state) => const ActiveCustomers(),
+          ),
+          GoRoute(
+            path: Routes.inactiveCustomers,
+            builder: (context, state) => const InactiveCustomers(),
           ),
         ],
       ),
