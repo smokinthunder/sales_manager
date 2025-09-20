@@ -1,9 +1,12 @@
 import 'package:admin_dashboard/routing/routes.dart';
-import 'package:admin_dashboard/ui/analytics.dart';
+import 'package:admin_dashboard/ui/analytics/analytics.dart';
+import 'package:admin_dashboard/ui/analytics/point_system.dart';
+import 'package:admin_dashboard/ui/analytics/shop_analytics.dart';
 import 'package:admin_dashboard/ui/area_manager.dart';
 import 'package:admin_dashboard/ui/customer/active_customers.dart';
 import 'package:admin_dashboard/ui/customer/add_new_customer.dart';
 import 'package:admin_dashboard/ui/customer/customer.dart';
+import 'package:admin_dashboard/ui/customer/customer_details.dart';
 import 'package:admin_dashboard/ui/customer/inactive_customers.dart';
 import 'package:admin_dashboard/ui/dashboard/analyze_collections.dart';
 import 'package:admin_dashboard/ui/dashboard/analyze_daily_sales.dart';
@@ -19,6 +22,7 @@ import 'package:go_router/go_router.dart';
 
 final router = Provider<GoRouter>((ref) {
   return GoRouter(
+    initialLocation: Routes.login,
     routes: [
       GoRoute(
         path: Routes.login,
@@ -80,6 +84,18 @@ final router = Provider<GoRouter>((ref) {
           GoRoute(
             path: Routes.inactiveCustomers,
             builder: (context, state) => const InactiveCustomers(),
+          ),
+          GoRoute(
+            path: Routes.pointSystem,
+            builder: (context, state) => const PointSystem(),
+          ),
+          GoRoute(
+            path: Routes.customerDetails,
+            builder: (context, state) => const CustomerDetails(),
+          ),
+          GoRoute(
+            path: Routes.shopAnalytics,
+            builder: (context, state) => const ShopAnalytics(),
           ),
         ],
       ),

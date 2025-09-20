@@ -1,7 +1,6 @@
 import 'package:admin_dashboard/ui/customer/customer.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:go_router/go_router.dart';
 
 class Notifications extends StatelessWidget {
   const Notifications({super.key});
@@ -39,14 +38,14 @@ class Notifications extends StatelessWidget {
             shopName: "Western Electricals",
             executiveName: "Gokul GS",
             onDismiss: () {
-              //TODO: you make need to write a mapping function, but I don't know how data is going to come here, so I didn't write one.
+              //TODO: you may need to write a mapping function, but I don't know how data is going to come here, so I didn't write one.
             },
           ),
           NotPlacingOrNotVistedCard(
             shopName: "Western Electricals",
             executiveName: "Gokul GS",
             onDismiss: () {
-              //TODO: you make need to write a mapping function, but I don't know how data is going to come here, so I didn't write one.
+              //TODO: you may need to write a mapping function, but I don't know how data is going to come here, so I didn't write one.
             },
           ),
           ProfileEditingRequest(

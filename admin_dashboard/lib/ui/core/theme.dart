@@ -155,8 +155,8 @@ final dropDownMenuTheme = DropdownMenuThemeData(
 
 final inputDecorationTheme = InputDecorationTheme(
   border: OutlineInputBorder(
-    borderRadius: BorderRadius.circular(4),
-    borderSide: BorderSide(color: AppColors.gray, width: 1),
+    borderRadius: BorderRadius.circular(8),
+    borderSide: BorderSide(color: AppColors.gray.withAlpha(38), width: 1),
   ),
   fillColor: AppColors.white,
   contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),

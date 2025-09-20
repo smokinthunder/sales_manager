@@ -1,4 +1,5 @@
 import 'package:admin_dashboard/routing/routes.dart';
+import 'package:admin_dashboard/ui/analytics/analytics.dart';
 import 'package:admin_dashboard/ui/widgets/dropdownmenu.dart';
 import 'package:admin_dashboard/ui/widgets/title_and_value_container.dart';
 import 'package:flutter/material.dart';
@@ -83,26 +84,23 @@ class Customer extends StatelessWidget {
               ),
             ],
           ),
-          Wrap(
+          SafePaginatedCardGrid(
             spacing: 16,
-            runSpacing: 16,
-            children: [
-              for (final _ in Iterable.generate(12))
+            cardWidth: 300,
+            cardHeight: 136,
+            cards: [
+              for (final _ in Iterable.generate(15489))
                 ShopCard(
                   imageUrl: "",
                   title: "shop Name",
                   location: "location",
                   onClick: () {
                     //TODO:
+
+                    context.go(Routes.customerDetails);
                   },
                 ),
             ],
-          ),
-          BlueBorderButtons(
-            title: "Load More",
-            onClick: () {
-              //TODO:
-            },
           ),
         ],
       ),
@@ -160,9 +158,7 @@ class ShopCard extends StatelessWidget {
           ),
           BlueBorderButtons(
             title: "View details",
-            onClick: () {
-              //TODO
-            },
+            onClick: onClick,
             invert: true,
           ),
         ],
