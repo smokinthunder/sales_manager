@@ -194,6 +194,7 @@ class AddPointsWidget extends StatelessWidget {
 
   void showSuccessDialog(BuildContext context) {
     showDialog(
+      barrierDismissible: false,
       context: context,
       builder: (dialogContext) {
         return Dialog(
