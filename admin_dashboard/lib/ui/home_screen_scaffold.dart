@@ -162,7 +162,9 @@ class HomeScreen extends StatelessWidget {
                       Padding(
                         padding: const EdgeInsets.symmetric(vertical: 12),
                         child: Text(
-                          "Dashboard",
+                          (location == Routes.notifications)
+                              ? "Notification"
+                              : "Dashboard",
                           style: theme.textTheme.headlineLarge,
                         ),
                       ),
