@@ -39,7 +39,7 @@ class ShopAnalytics extends StatelessWidget {
               Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  _buildProductAnalytics(theme, constraints),
+                  PointAnalyticsPieAndBar(constraints: constraints),
                   CreditAnalytics(
                     creditPercentage: 70,
                     constraints: constraints,
@@ -76,42 +76,6 @@ class ShopAnalytics extends StatelessWidget {
             ],
           );
         },
-      ),
-    );
-  }
-
-  Container _buildProductAnalytics(
-    ThemeData theme,
-    BoxConstraints constraints,
-  ) {
-    return Container(
-      decoration: BoxDecoration(
-        border: Border(right: BorderSide(color: theme.colorScheme.tertiary)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          OurPieChart(
-            productList: [
-              ProductSaleMap("productName", 60, Colors.blue),
-              ProductSaleMap("productName", 30, Colors.amber),
-              ProductSaleMap("productName", 10, Colors.green),
-            ],
-            width: constraints.maxWidth,
-          ),
-          Container(
-            width: (constraints.maxWidth / 2) - 20,
-            height: 1,
-            color: theme.colorScheme.tertiary,
-          ),
-          Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: Text(
-              "Point system analytics",
-              style: theme.textTheme.bodyLarge,
-            ),
-          ),
-        ],
       ),
     );
   }
@@ -282,6 +246,108 @@ class ShopAnalytics extends StatelessWidget {
     } else {
       throw 'Could not launch $url';
     }
+  }
+}
+
+class PointAnalyticsPieAndBar extends StatelessWidget {
+  const PointAnalyticsPieAndBar({super.key, required this.constraints});
+
+  final BoxConstraints constraints;
+
+  @override
+  Widget build(BuildContext context) {
+    final width = (constraints.maxWidth / 2) - 20;
+    final theme = Theme.of(context);
+    return Container(
+      decoration: BoxDecoration(
+        border: Border(right: BorderSide(color: theme.colorScheme.tertiary)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          OurPieChart(
+            productList: [
+              ProductSaleMap("productName", 60, Colors.blue),
+              ProductSaleMap("productName", 30, Colors.amber),
+              ProductSaleMap("productName", 10, Colors.green),
+            ],
+            width: constraints.maxWidth,
+          ),
+          Container(width: width, height: 1, color: theme.colorScheme.tertiary),
+          Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Text(
+              "Point system analytics",
+              style: theme.textTheme.bodyLarge,
+            ),
+          ),
+          Container(
+            width: width - 24,
+            margin: EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              border: Border(
+                left: BorderSide(color: theme.colorScheme.tertiary),
+                bottom: BorderSide(color: theme.colorScheme.tertiary),
+              ),
+            ),
+            child: Column(
+              spacing: 12,
+              children: [
+                _buildBar(theme, "Corrugated series", width, 100, Colors.amber),
+                _buildBar(theme, "T-Square series", width, 34, Colors.green),
+                _buildBar(theme, "Accessories", width, 10, Colors.blue),
+              ],
+            ),
+          ),
+          Container(
+            width: width - 24,
+            margin: EdgeInsets.symmetric(horizontal: 12),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                for (var i = 0; i <= 100; i += 10)
+                  Text(i.toString(), style: theme.textTheme.bodySmall),
+                Text("  "),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Column _buildBar(
+    ThemeData theme,
+    String title,
+    double maxWidth,
+    double salePercentage,
+    Color color,
+  ) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.only(left: 4.0),
+          child: Text(title, style: theme.textTheme.bodySmall),
+        ),
+        Row(
+          children: [
+            Container(
+              height: 20,
+              width: (maxWidth - 72) * (salePercentage / 100),
+              color: color,
+            ),
+            Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: Text(
+                "$salePercentage%",
+                style: theme.textTheme.bodySmall?.copyWith(color: color),
+              ),
+            ),
+          ],
+        ),
+      ],
+    );
   }
 }
 
