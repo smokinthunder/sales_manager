@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:sales_manager/config/providers/login_message_provider.dart';
 import 'package:sales_manager/routing/route_paths.dart';
+import 'package:sales_manager/ui/home/home_screens/viewmodel/home_screen_viewmodel.dart';
 import 'package:sales_manager/ui/widgets/drop_down_menu.dart';
 import 'package:sales_manager/utils/show_snackbar.dart';
 
@@ -437,14 +439,25 @@ class HeaderTexts extends StatelessWidget {
   }
 }
 
-class CreateRouteCard extends StatelessWidget {
+class CreateRouteCard extends ConsumerStatefulWidget {
   const CreateRouteCard({super.key});
+
+  @override
+  ConsumerState<CreateRouteCard> createState() => _CreateRouteCardState();
+}
+
+class _CreateRouteCardState extends ConsumerState<CreateRouteCard> {
+  String? selectedRoute;
+  String? selectedExecutive;
+  String? selectedShop;
+  final TextEditingController _dateController = TextEditingController();
 
   @override
   Widget build(BuildContext context) {
     final ThemeData theme = Theme.of(context);
-    final TextTheme textTheme = theme.textTheme;
-    final ColorScheme colorScheme = theme.colorScheme;
+    final isLoading = ref.watch(
+      routeCardViewModelProvider.select((val) => val?.isLoading == true),
+    );
     return Card(
       color: theme.colorScheme.onPrimary,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -457,46 +470,64 @@ class CreateRouteCard extends StatelessWidget {
               spacing: 10,
               children: [
                 Flexible(
-                  child: CustomDropDownMenu(
-                    hintText: "Select Location",
-                    tinyTitle: true,
-                    dropdownMenuEntries: [
-                      DropdownMenuEntry(
-                        value: 'ABC Plumbing',
-                        label: 'ABC Plumbing',
+                  child: ref
+                      .watch(getAllRoutesProvider)
+                      .when(
+                        loading: () => const CustomDropDownMenu(
+                          tinyTitle: true,
+                          hintText: "...Loading Routes",
+                          dropdownMenuEntries: [],
+                          title: "Routes",
+                        ),
+                        error: (error, stackTrace) =>
+                            Center(child: Text('Error: $error')),
+                        data: (routes) => CustomDropDownMenu(
+                          hintText: "Select Routes",
+                          tinyTitle: true,
+                          onSelected: (value) => setState(() {
+                            selectedRoute = value;
+                          }),
+                          dropdownMenuEntries: [
+                            ...routes.map(
+                              (route) => DropdownMenuEntry(
+                                value: route['route_id'],
+                                label: route['name'],
+                              ),
+                            ),
+                          ],
+                          title: "Routes",
+                        ),
                       ),
-                      DropdownMenuEntry(
-                        value: 'XYZ Hardware',
-                        label: 'XYZ Hardware',
-                      ),
-                      DropdownMenuEntry(
-                        value: 'LMN Electricals',
-                        label: 'LMN Electricals',
-                      ),
-                    ],
-                    title: "Location",
-                  ),
                 ),
                 Flexible(
-                  child: CustomDropDownMenu(
-                    tinyTitle: true,
-                    hintText: "Select Area",
-                    dropdownMenuEntries: [
-                      DropdownMenuEntry(
-                        value: 'ABC Plumbing',
-                        label: 'ABC Plumbing',
+                  child: ref
+                      .watch(getAllSalesExecutivesProvider)
+                      .when(
+                        loading: () => const CustomDropDownMenu(
+                          tinyTitle: true,
+                          hintText: "...Loading Executives",
+                          dropdownMenuEntries: [],
+                          title: "Executives",
+                        ),
+                        error: (error, stackTrace) =>
+                            Center(child: Text('Error: $error')),
+                        data: (executives) => CustomDropDownMenu(
+                          hintText: "Select Executive",
+                          tinyTitle: true,
+                          onSelected: (value) => setState(() {
+                            selectedExecutive = value;
+                          }),
+                          dropdownMenuEntries: [
+                            ...executives.map(
+                              (executive) => DropdownMenuEntry(
+                                value: executive['id'].toString(),
+                                label: executive['name'],
+                              ),
+                            ),
+                          ],
+                          title: "Executives",
+                        ),
                       ),
-                      DropdownMenuEntry(
-                        value: 'XYZ Hardware',
-                        label: 'XYZ Hardware',
-                      ),
-                      DropdownMenuEntry(
-                        value: 'LMN Electricals',
-                        label: 'LMN Electricals',
-                      ),
-                    ],
-                    title: "Area",
-                  ),
                 ),
               ],
             ),
@@ -504,40 +535,38 @@ class CreateRouteCard extends StatelessWidget {
               spacing: 10,
               children: [
                 Flexible(
-                  child: CustomDropDownMenu(
-                    tinyTitle: true,
-                    hintText: "Select Executive",
-                    dropdownMenuEntries: [],
-                    title: "Location",
-                  ),
-                ),
-                Flexible(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 4.0),
-                        child: Text("Date", style: textTheme.bodySmall),
-                      ),
-                      TextField(
-                        decoration: InputDecoration(
-                          contentPadding: EdgeInsets.symmetric(
-                            horizontal: 8,
-                            vertical: 12,
-                          ),
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(8),
-                            borderSide: BorderSide(color: colorScheme.tertiary),
-                          ),
-                          hint: Text('mm/dd/yyyy', style: textTheme.labelLarge),
-                          suffixIcon: Icon(
-                            Icons.calendar_month,
-                            color: colorScheme.tertiary,
-                          ),
+                  child: ref
+                      .watch(getAllShopsProvider)
+                      .when(
+                        loading: () => const CustomDropDownMenu(
+                          tinyTitle: true,
+                          hintText: "...Loading Shops",
+                          dropdownMenuEntries: [],
+                          title: "Shops",
+                        ),
+                        error: (error, stackTrace) =>
+                            Center(child: Text('Error: $error')),
+                        data: (shops) => CustomDropDownMenu(
+                          hintText: "Select Shop",
+                          tinyTitle: true,
+                          onSelected: (value) => setState(() {
+                            selectedShop = value;
+                          }),
+                          dropdownMenuEntries: [
+                            ...shops.map(
+                              (executive) => DropdownMenuEntry(
+                                value: executive['shop_id'],
+                                label: executive['name'],
+                              ),
+                            ),
+                          ],
+                          title: "Shops",
                         ),
                       ),
-                    ],
-                  ),
+                ),
+                DateInputField(
+                  controller: _dateController,
+                  label: "Planned Date",
                 ),
               ],
             ),
@@ -546,9 +575,28 @@ class CreateRouteCard extends StatelessWidget {
               children: [
                 ElevatedButton(
                   onPressed: () {
-                    //TODO:
+                    print("selectedRoute: $selectedRoute");
+                    print("selectedExecutive: $selectedExecutive");
+                    print("selectedShop: $selectedShop");
+                    print("Planned Date: ${_dateController.text}");
+                    if (selectedRoute != null &&
+                        selectedRoute!.isNotEmpty &&
+                        selectedExecutive != null &&
+                        selectedExecutive!.isNotEmpty &&
+                        selectedShop != null &&
+                        selectedShop!.isNotEmpty &&
+                        _dateController.text.isNotEmpty) {
+                      ref
+                          .read(routeCardViewModelProvider.notifier)
+                          .assignRoutes(
+                            routeId: selectedRoute ?? "",
+                            shopId: selectedShop ?? "",
+                            salesExecutiveId: selectedExecutive ?? "",
+                            plannedDate: _dateController.text,
+                          );
+                    }
                   },
-                  child: Text("Submit"),
+                  child: isLoading ? Text("Submiting") : Text("Submit"),
                 ),
                 TextButton(
                   onPressed: () {
@@ -636,6 +684,106 @@ class TrackExecutiveCard extends StatelessWidget {
           ],
         ),
       ),
+    );
+  }
+}
+
+/// Custom Date Input field
+class DateInputField extends StatefulWidget {
+  final TextEditingController controller;
+  final String label;
+
+  const DateInputField({
+    super.key,
+    required this.controller,
+    this.label = "Date",
+  });
+
+  @override
+  _DateInputFieldState createState() => _DateInputFieldState();
+}
+
+class _DateInputFieldState extends State<DateInputField> {
+  final DateFormat _dateFormat = DateFormat('yyyy-MM-dd');
+
+  void _selectDate() async {
+    final DateTime today = DateTime.now();
+    final DateTime? picked = await showDatePicker(
+      context: context,
+      initialDate: today,
+      firstDate: today,
+      lastDate: DateTime(2100),
+    );
+    if (picked != null) {
+      widget.controller.text = _dateFormat.format(picked);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final textTheme = Theme.of(context).textTheme;
+    final colorScheme = Theme.of(context).colorScheme;
+
+    return Flexible(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 4.0),
+            child: Text(widget.label, style: textTheme.bodySmall),
+          ),
+          TextField(
+            controller: widget.controller,
+            keyboardType: TextInputType.number,
+            style: textTheme.bodyLarge?.copyWith(color: colorScheme.tertiary),
+            inputFormatters: [
+              LengthLimitingTextInputFormatter(10),
+              DateInputFormatter(), // custom formatter defined below
+            ],
+            decoration: InputDecoration(
+              contentPadding: const EdgeInsets.symmetric(
+                horizontal: 8,
+                vertical: 12,
+              ),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(8),
+                borderSide: BorderSide(color: colorScheme.tertiary),
+              ),
+              hintText: 'yyyy-mm-dd',
+              hintStyle: textTheme.labelLarge,
+              suffixIcon: IconButton(
+                icon: Icon(Icons.calendar_month, color: colorScheme.tertiary),
+                onPressed: _selectDate,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Custom formatter to automatically insert dashes for yyyy-mm-dd
+class DateInputFormatter extends TextInputFormatter {
+  @override
+  TextEditingValue formatEditUpdate(
+    TextEditingValue oldValue,
+    TextEditingValue newValue,
+  ) {
+    var text = newValue.text.replaceAll(RegExp(r'[^0-9]'), '');
+
+    final buffer = StringBuffer();
+    for (int i = 0; i < text.length; i++) {
+      buffer.write(text[i]);
+      if ((i == 3 || i == 5) && i != text.length - 1) {
+        buffer.write('-');
+      }
+    }
+
+    final String formatted = buffer.toString();
+    return TextEditingValue(
+      text: formatted,
+      selection: TextSelection.collapsed(offset: formatted.length),
     );
   }
 }

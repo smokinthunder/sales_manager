@@ -71,6 +71,40 @@ ON DUPLICATE KEY UPDATE
     tenant_id = VALUES(tenant_id),
     created_by = VALUES(created_by);
 
+INSERT INTO routes (route_id, name, territory_id, week_start_date, status, tenant_id, created_by)
+VALUES 
+    -- Thiruvananthapuram Central Routes
+    ('RT-001', 'Thiruvananthapuram Morning Route', 'KL-TRV-001', '2025-06-02', 'planned', 'default', 1),
+    ('RT-002', 'Thiruvananthapuram Afternoon Route', 'KL-TRV-001', '2025-06-02', 'planned', 'default', 1),
+    ('RT-003', 'Thiruvananthapuram Weekend Route', 'KL-TRV-001', '2025-06-07', 'planned', 'default', 1),
+
+    -- Kochi Metro Routes
+    ('RT-004', 'Kochi Metro Morning Route', 'KL-KOC-001', '2025-06-02', 'planned', 'default', 1),
+    ('RT-005', 'Kochi Metro Afternoon Route', 'KL-KOC-001', '2025-06-02', 'planned', 'default', 1),
+    ('RT-006', 'Kochi Weekend Mall Route', 'KL-KOC-001', '2025-06-07', 'planned', 'default', 1),
+
+    -- Kozhikode North Routes
+    ('RT-007', 'Kozhikode North Morning Route', 'KL-CAL-001', '2025-06-02', 'planned', 'default', 1),
+    ('RT-008', 'Kozhikode North Evening Route', 'KL-CAL-001', '2025-06-02', 'planned', 'default', 1),
+    ('RT-009', 'Kozhikode Weekend Route', 'KL-CAL-001', '2025-06-07', 'planned', 'default', 1),
+
+    -- Thrissur Central Routes
+    ('RT-010', 'Thrissur Central Morning Route', 'KL-TSR-001', '2025-06-02', 'planned', 'default', 1),
+    ('RT-011', 'Thrissur Central Afternoon Route', 'KL-TSR-001', '2025-06-02', 'planned', 'default', 1),
+    ('RT-012', 'Thrissur Weekend Silks Route', 'KL-TSR-001', '2025-06-07', 'planned', 'default', 1),
+
+    -- Kannur Coastal Routes
+    ('RT-013', 'Kannur Coastal Morning Route', 'KL-KAN-001', '2025-06-02', 'planned', 'default', 1),
+    ('RT-014', 'Kannur Coastal Evening Route', 'KL-KAN-001', '2025-06-02', 'planned', 'default', 1),
+    ('RT-015', 'Kannur Weekend Coastal Route', 'KL-KAN-001', '2025-06-07', 'planned', 'default', 1)
+ON DUPLICATE KEY UPDATE 
+    name = VALUES(name),
+    territory_id = VALUES(territory_id),
+    week_start_date = VALUES(week_start_date),
+    status = VALUES(status),
+    tenant_id = VALUES(tenant_id),
+    created_by = VALUES(created_by);
+
 /*
 
 

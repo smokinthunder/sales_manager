@@ -27,7 +27,7 @@ class RouteRemoteRepository {
         routeId: routeId,
         status: status);
 
-  Future<Result<Response<List<dynamic>>>> getRoutes({
+  Future<Result<List<Map<String, dynamic>>>> getRoutes({
     int? executiveId,
     String? weekStart,
     String? routeStatus,
@@ -57,9 +57,9 @@ class RouteRemoteRepository {
   Future<Result<Response<void>>> deleteRoute(String routeId) async =>
       await remoteRouteService.deleteRoute(routeId);
 
-  Future<Result<Response<Map<String, dynamic>>>> addShopToRoute({
+  Future<Result<Map<String, dynamic>>> addShopToRoute({
     required String routeId,
-    required int shopId,
+    required String shopId,
     required int salesExecutiveId,
     required String plannedDate,
     String? plannedTime,

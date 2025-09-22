@@ -41,5 +41,61 @@ final getAllShopsProvider = FutureProvider<List<Map<String, dynamic>>>.internal(
 @Deprecated('Will be removed in 3.0. Use Ref instead')
 // ignore: unused_element
 typedef GetAllShopsRef = FutureProviderRef<List<Map<String, dynamic>>>;
+String _$getAllRoutesHash() => r'7c39b661122f9b5cf314d98134e8d4f457caa946';
+
+/// See also [getAllRoutes].
+@ProviderFor(getAllRoutes)
+final getAllRoutesProvider =
+    AutoDisposeFutureProvider<List<Map<String, dynamic>>>.internal(
+      getAllRoutes,
+      name: r'getAllRoutesProvider',
+      debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
+          ? null
+          : _$getAllRoutesHash,
+      dependencies: null,
+      allTransitiveDependencies: null,
+    );
+
+@Deprecated('Will be removed in 3.0. Use Ref instead')
+// ignore: unused_element
+typedef GetAllRoutesRef =
+    AutoDisposeFutureProviderRef<List<Map<String, dynamic>>>;
+String _$getAllSalesExecutivesHash() =>
+    r'28ab1310011802a6579cc2ecfcd99f00afbc6d03';
+
+/// See also [getAllSalesExecutives].
+@ProviderFor(getAllSalesExecutives)
+final getAllSalesExecutivesProvider =
+    AutoDisposeFutureProvider<List<Map<String, dynamic>>>.internal(
+      getAllSalesExecutives,
+      name: r'getAllSalesExecutivesProvider',
+      debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
+          ? null
+          : _$getAllSalesExecutivesHash,
+      dependencies: null,
+      allTransitiveDependencies: null,
+    );
+
+@Deprecated('Will be removed in 3.0. Use Ref instead')
+// ignore: unused_element
+typedef GetAllSalesExecutivesRef =
+    AutoDisposeFutureProviderRef<List<Map<String, dynamic>>>;
+String _$routeCardViewModelHash() =>
+    r'98b0fd4a702d2e567b44b30c690f9d8f6e54cb03';
+
+/// See also [RouteCardViewModel].
+@ProviderFor(RouteCardViewModel)
+final routeCardViewModelProvider =
+    AutoDisposeNotifierProvider<RouteCardViewModel, AsyncValue?>.internal(
+      RouteCardViewModel.new,
+      name: r'routeCardViewModelProvider',
+      debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
+          ? null
+          : _$routeCardViewModelHash,
+      dependencies: null,
+      allTransitiveDependencies: null,
+    );
+
+typedef _$RouteCardViewModel = AutoDisposeNotifier<AsyncValue?>;
 // ignore_for_file: type=lint
 // ignore_for_file: subtype_of_sealed_class, invalid_use_of_internal_member, invalid_use_of_visible_for_testing_member, deprecated_member_use_from_same_package

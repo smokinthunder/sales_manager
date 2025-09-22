@@ -42,7 +42,7 @@ class RemoteRouteService {
     }
   }
 
-  Future<Result<Response<List<dynamic>>>> getRoutes({
+  Future<Result<List<Map<String, dynamic>>>> getRoutes({
     int? executiveId,
     String? weekStart,
     String? routeStatus,
@@ -58,7 +58,16 @@ class RemoteRouteService {
         ApiEndpoints.routes,
         queryParameters: queryParameters,
       );
-      return Result.ok(response);
+      final rawData = response.data;
+      if (rawData == null) {
+        return Result.error(Exception("No data received"));
+      }
+
+      final List<Map<String, dynamic>> routes = rawData
+          .map((item) => item as Map<String, dynamic>)
+          .toList();
+
+      return Result.ok(routes);
     } on DioException catch (e) {
       return Result.error(Exception(e.response?.data['detail'] ?? e.message));
     }
@@ -120,9 +129,9 @@ class RemoteRouteService {
     }
   }
 
-  Future<Result<Response<Map<String, dynamic>>>> addShopToRoute({
+  Future<Result<Map<String, dynamic>>> addShopToRoute({
     required String routeId,
-    required int shopId,
+    required String shopId,
     required int salesExecutiveId,
     required String plannedDate,
     String? plannedTime,
@@ -139,12 +148,19 @@ class RemoteRouteService {
       "status": status,
     };
     try {
-      final Response<Map<String, dynamic>> response = await dio.post(
+      final Response<Map> response = await dio.post(
         '${ApiEndpoints.routes}$routeId/assignments',
         queryParameters: queryParameters,
         data: data,
       );
-      return Result.ok(response);
+      final rawData = response.data;
+      if (rawData == null || rawData.isEmpty) {
+        return Result.error(Exception("No data received"));
+      }
+
+      final result = rawData as Map<String, dynamic>;
+
+      return Result.ok(result);
     } on DioException catch (e) {
       return Result.error(Exception(e.response?.data['detail'] ?? e.message));
     }

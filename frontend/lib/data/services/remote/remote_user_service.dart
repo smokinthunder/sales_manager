@@ -43,7 +43,7 @@ class RemoteUserService {
     }
   }
 
-  Future<Result<Response<List<Map<String, dynamic>>>>> getUsers({
+  Future<Result<List<Map<String, dynamic>>>> getUsers({
     String? role,
     String? status,
     String? search,
@@ -55,11 +55,18 @@ class RemoteUserService {
       if (search != null) "search": search,
     };
     try {
-      Response<List<Map<String, dynamic>>> response = await dio.get(
+      Response<List<dynamic>> response = await dio.get(
         ApiEndpoints.user,
         queryParameters: queryParameters,
       );
-      return Result.ok(response);
+      final rawData = response.data;
+      if (rawData == null) {
+        return Result.error(Exception("No data received"));
+      }
+      final List<Map<String, dynamic>> users = rawData
+          .map((item) => item as Map<String, dynamic>)
+          .toList();
+      return Result.ok(users);
     } on DioException catch (e) {
       return Result.error(Exception(e.response?.data['detail'] ?? e.message));
     }

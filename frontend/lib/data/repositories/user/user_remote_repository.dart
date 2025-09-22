@@ -28,7 +28,7 @@ class UserRemoteRepository {
     status: status,
   );
 
-  Future<Result<Response<List<Map<String, dynamic>>>>> getUsers({
+  Future<Result<List<Map<String, dynamic>>>> getUsers({
     String? role,
     String? status,
     String? search,
