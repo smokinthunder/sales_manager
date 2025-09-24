@@ -366,6 +366,41 @@ INSERT INTO users (phone, name, email, role, status, tenant_id, created_by)
 VALUES ('+1234567890', 'System Administrator', 'admin@platform.com', 'superadmin', 'active', 'PLATFORM', 1)
 ON DUPLICATE KEY UPDATE name = VALUES(name);
 
+-- Create due_data table for outstanding payments
+CREATE TABLE IF NOT EXISTS due_data (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    shop_id VARCHAR(20) NOT NULL,
+    shop_name VARCHAR(100) NOT NULL,
+    amount DECIMAL(12,2) NOT NULL,
+    due_date DATE NOT NULL,
+    status ENUM('current','upcoming','overdue') NOT NULL,
+    sales_executive_id INT,
+    territory_id VARCHAR(20),
+    tenant_id VARCHAR(50) NOT NULL,
+    original_amount DECIMAL(12,2),
+    days_overdue INT,
+    last_payment_date DATE,
+    notes TEXT,
+    last_sync_date TIMESTAMP NULL,
+    sync_status VARCHAR(20) DEFAULT 'pending',
+    sync_error VARCHAR(500),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    created_by INT,
+    updated_by INT,
+    INDEX idx_shop_id (shop_id),
+    INDEX idx_due_date (due_date),
+    INDEX idx_status (status),
+    INDEX idx_tenant_shop (tenant_id, shop_id),
+    INDEX idx_tenant_executive (tenant_id, sales_executive_id),
+    INDEX idx_tenant_status (tenant_id, status),
+    INDEX idx_tenant_due_date (tenant_id, due_date),
+    INDEX idx_tenant_territory (tenant_id, territory_id),
+    FOREIGN KEY (sales_executive_id) REFERENCES users(id) ON DELETE SET NULL,
+    FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE SET NULL,
+    FOREIGN KEY (updated_by) REFERENCES users(id) ON DELETE SET NULL
+);
+
 -- Create indexes for performance
 CREATE INDEX idx_users_tenant_role ON users(tenant_id, role);
 CREATE INDEX idx_territories_tenant ON territories(tenant_id);

@@ -28,6 +28,10 @@ from .visit import (
 from .approval import (
     Approval, ApprovalCreate, ApprovalUpdate, ApprovalRead, ApprovalStatus
 )
+from .outstanding import (
+    DueData, DueDataCreate, DueDataUpdate, DueDataRead, OutstandingSummary, OutstandingFilters,
+    OutstandingStatus
+)
 from .sync_data import (
     SyncedShopData, SyncedShopDataCreate, SyncedShopDataUpdate, SyncedShopDataRead,
     SyncedOrder, SyncedOrderCreate, SyncedOrderUpdate, SyncedOrderRead,
@@ -66,6 +70,10 @@ __all__ = [
     
     # Approval workflows
     "Approval", "ApprovalCreate", "ApprovalUpdate", "ApprovalRead", "ApprovalStatus",
+    
+    # Outstanding management
+    "DueData", "DueDataCreate", "DueDataUpdate", "DueDataRead", "OutstandingSummary", "OutstandingFilters",
+    "OutstandingStatus",
     
     # Sync data management
     "SyncedShopData", "SyncedShopDataCreate", "SyncedShopDataUpdate", "SyncedShopDataRead",

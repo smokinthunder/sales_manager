@@ -233,6 +233,22 @@ class DataLayerResponseError(ExternalServiceError):
     pass
 
 
+# Outstanding Management Errors
+class OutstandingNotFoundError(NotFoundError):
+    """Raised when an outstanding payment record is not found."""
+    pass
+
+
+class OutstandingAlreadyExistsError(ConflictError):
+    """Raised when trying to create an outstanding record that already exists."""
+    pass
+
+
+class InvalidOutstandingDataError(ValidationError):
+    """Raised when outstanding data is invalid."""
+    pass
+
+
 # Redis Errors
 class RedisConnectionError(ExternalServiceError):
     """Raised when Redis connection fails."""

@@ -9,6 +9,7 @@ from .users import router as users_router
 from .territories import router as territories_router
 from .routes import router as routes_router
 from .shops import router as shops_router
+from .outstanding import router as outstanding_router
 from .sync import router as sync_router
 from .analytics import router as analytics_router
 
@@ -18,6 +19,7 @@ __all__ = [
     "territories_router",
     "routes_router",
     "shops_router",
+    "outstanding_router",
     "sync_router",
     "analytics_router"
 ]
