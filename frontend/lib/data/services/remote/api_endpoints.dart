@@ -33,5 +33,8 @@ class ApiEndpoints {
 
   // Shops Apis
   static final String shops = "${_apiUrl}shops/";
+
+  // Outstanding Payment Apis
+  static final String outstandingPayments = "${_apiUrl}outstanding/";
   
 }

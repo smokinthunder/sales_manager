@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:sales_manager/config/providers/current_user_notifier.dart';
 import 'package:sales_manager/domain/models/user/user_role.dart';
+import 'package:sales_manager/ui/outstanding/outstanding_viewmodel.dart';
 import 'package:sales_manager/ui/widgets/drop_down_menu.dart';
 
 class ExecutiveOutStanding extends ConsumerStatefulWidget {
@@ -170,7 +171,28 @@ class _ExecutiveOutStandingState extends ConsumerState<ExecutiveOutStanding> {
             itemBuilder: (context, index) {
               return Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 18.0),
-                child: OutstandingTable(color: CreditType.values[index].color),
+                child: ref
+                    .watch(
+                      index == 0
+                          ? getCurrentOutstandingPaymentsProvider
+                          : index == 1
+                          ? getUpcomingOutstandingPaymentsProvider
+                          : getOverdueOutstandingPaymentsProvider,
+                    )
+                    .when(
+                      data: (data) => OutstandingTable(
+                        color: CreditType.values[index].color,
+                        rows: data,
+                      ),
+                      error: (error, stackTrace) => OutstandingTable(
+                        color: CreditType.values[index].color,
+                        rows: [["error", error.toString(), ""]],
+                      ),
+                      loading: () => OutstandingTable(
+                        color: CreditType.values[index].color,
+                        rows: [["Loading...", "", ""]],
+                      ),
+                    ),
               );
             },
           ),
@@ -193,29 +215,13 @@ enum CreditType {
 
 class OutstandingTable extends StatelessWidget {
   final Color color;
-  const OutstandingTable({super.key, required this.color});
+  final List<List<String>> rows;
+  const OutstandingTable({super.key, required this.color, required this.rows});
 
   @override
   Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
     final colorScheme = Theme.of(context).colorScheme;
-    final rows = [
-      ["21-06-2025", "Aqua Star (160MM) Joint", "14990"],
-      ["21-06-2025", "Aqua Star Delta - Runner Drop", "17990"],
-      ["21-06-2025", "Aqua Star Delta (160MM) Elbow Plain", "42899"],
-      ["21-06-2025", "Aqua Star (160MM) Stop End", "21230"],
-      ["21-06-2025", "Aqua Star 45 Elbow", "216789"],
-      ["21-06-2025", "Aqua Star (160MM) Joint", "14990"],
-      ["21-06-2025", "Aqua Star Delta - Runner Drop", "17990"],
-      ["21-06-2025", "Aqua Star Delta (160MM) Elbow Plain", "42899"],
-      ["21-06-2025", "Aqua Star (160MM) Stop End", "21230"],
-      ["21-06-2025", "Aqua Star 45 Elbow", "216789"],
-      ["21-06-2025", "Aqua Star (160MM) Joint", "14990"],
-      ["21-06-2025", "Aqua Star Delta - Runner Drop", "17990"],
-      ["21-06-2025", "Aqua Star Delta (160MM) Elbow Plain", "42899"],
-      ["21-06-2025", "Aqua Star (160MM) Stop End", "21230"],
-      ["21-06-2025", "Aqua Star 45 Elbow", "216789"],
-    ];
     return Container(
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(16),
@@ -225,7 +231,7 @@ class OutstandingTable extends StatelessWidget {
       child: SingleChildScrollView(
         child: Table(
           columnWidths: const {
-            0: FlexColumnWidth(2),
+            0: FlexColumnWidth(2.5),
             1: FlexColumnWidth(4),
             2: FlexColumnWidth(2),
           },
