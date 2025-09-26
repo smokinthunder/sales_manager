@@ -60,7 +60,7 @@ async def generate_otp(
         return result
         
     except OTPExpiredError as e:
-        logger.warning("OTP generation failed", phone=request.phone, tenant_id=request.tenant_id, error=str(e))
+        logger.warning("OTP generation failed", phone=phone, tenant_id=tenant_id, error=str(e))
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=e.message
@@ -103,19 +103,19 @@ async def verify_otp(
         return result
         
     except OTPExpiredError as e:
-        logger.warning("OTP verification failed", phone=request.phone, tenant_id=request.tenant_id, error=str(e))
+        logger.warning("OTP verification failed", phone=phone, tenant_id=tenant_id, error=str(e))
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=e.message
         )
     except AuthenticationError as e:
-        logger.warning("Authentication failed", phone=request.phone, tenant_id=request.tenant_id, error=str(e))
+        logger.warning("Authentication failed", phone=phone, tenant_id=tenant_id, error=str(e))
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail=str(e.message)
         )
     except NotFoundError as e:
-        logger.warning("User not found", phone=request.phone, tenant_id=request.tenant_id, error=str(e))
+        logger.warning("User not found", phone=phone, tenant_id=tenant_id, error=str(e))
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=str(e.message)

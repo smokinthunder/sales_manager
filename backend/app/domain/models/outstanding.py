@@ -100,9 +100,21 @@ class DueDataBase(BasePydanticModel):
     notes: Optional[str] = Field(None, description="Additional notes")
 
 
-class DueDataCreate(DueDataBase):
+class DueDataCreate(BasePydanticModel):
     """Model for creating new due data."""
-    pass
+    
+    shop_id: str = Field(..., description="Shop identifier")
+    shop_name: str = Field(..., description="Shop name")
+    amount: float = Field(..., description="Outstanding amount")
+    due_date: date = Field(..., description="Due date for payment")
+    status: OutstandingStatus = Field(..., description="Outstanding status")
+    sales_executive_id: Optional[int] = Field(None, description="Sales executive ID")
+    territory_id: Optional[str] = Field(None, description="Territory identifier")
+    original_amount: Optional[float] = Field(None, description="Original amount before any adjustments")
+    days_overdue: Optional[int] = Field(None, description="Number of days overdue")
+    last_payment_date: Optional[date] = Field(None, description="Last payment date")
+    notes: Optional[str] = Field(None, description="Additional notes")
+    # Note: tenant_id is not included here as it's taken from the URL path parameter
 
 
 class DueDataUpdate(BasePydanticModel):

@@ -7,6 +7,7 @@ and the Data Layer (Server B). The backend never directly accesses the database.
 
 import httpx
 import logging
+import json
 from typing import List, Optional, Dict, Any
 from datetime import date, datetime
 from fastapi import HTTPException
@@ -38,6 +39,24 @@ class DataLayerClient:
         """Close the HTTP client."""
         await self.client.aclose()
     
+    def _serialize_json(self, data: Dict[str, Any]) -> str:
+        """
+        Custom JSON serializer that handles date/datetime objects.
+        
+        Args:
+            data: Data to serialize
+            
+        Returns:
+            JSON string
+        """
+        def json_serializer(obj):
+            """JSON serializer for objects not serializable by default json code"""
+            if isinstance(obj, (date, datetime)):
+                return obj.isoformat()
+            raise TypeError(f"Object {obj} of type {type(obj)} is not JSON serializable")
+        
+        return json.dumps(data, default=json_serializer)
+    
     async def _make_request(self, method: str, endpoint: str, **kwargs) -> Any:
         """
         Make a request to the Data Layer service.
@@ -54,6 +73,13 @@ class DataLayerClient:
             HTTPException: If the request fails
         """
         url = f"{self.base_url}{endpoint}"
+        
+        # Handle custom JSON serialization for date/datetime objects
+        if 'json' in kwargs:
+            json_data = kwargs.pop('json')
+            kwargs['content'] = self._serialize_json(json_data)
+            kwargs['headers'] = kwargs.get('headers', {})
+            kwargs['headers']['Content-Type'] = 'application/json'
         
         try:
             logger.debug(f"Making {method} request to Data Layer: {url}")
@@ -671,6 +697,97 @@ class DataLayerClient:
         """
         params = {"tenant_id": tenant_id, "limit": limit}
         return await self._make_request("GET", f"/api/analytics/products/best-selling", params=params)
+
+    # ------------------ Outstanding/Due Data Methods ------------------
+
+    async def create_outstanding(self, outstanding_data: Dict[str, Any]) -> Dict[str, Any]:
+        """
+        Create a new outstanding payment record.
+        
+        Args:
+            outstanding_data: Outstanding payment data to create
+            
+        Returns:
+            Created outstanding record
+        """
+        tenant_id = outstanding_data.get("tenant_id")
+        # Remove tenant_id from the body data since it's passed as URL parameter
+        body_data = {k: v for k, v in outstanding_data.items() if k != "tenant_id"}
+        
+
+            
+        return await self._make_request("POST", f"/api/due-data/{tenant_id}", json=body_data)
+
+    async def get_outstanding(self, tenant_id: str, filters: Dict[str, Any] = None) -> List[Dict[str, Any]]:
+        """
+        Get outstanding payment records with optional filtering.
+        
+        Args:
+            tenant_id: Tenant identifier
+            filters: Optional filters for the query
+            
+        Returns:
+            List of outstanding payment records
+        """
+        params = filters or {}
+        return await self._make_request("GET", f"/api/due-data/{tenant_id}", params=params)
+
+    async def get_outstanding_by_id(self, outstanding_id: int, tenant_id: str) -> Optional[Dict[str, Any]]:
+        """
+        Get a specific outstanding payment record by ID.
+        
+        Args:
+            outstanding_id: Outstanding record ID
+            tenant_id: Tenant identifier
+            
+        Returns:
+            Outstanding record or None if not found
+        """
+        try:
+            return await self._make_request("GET", f"/api/due-data/{tenant_id}/{outstanding_id}")
+        except HTTPException as e:
+            if e.status_code == 404:
+                return None
+            raise
+
+    async def update_outstanding(self, outstanding_id: int, update_data: Dict[str, Any], tenant_id: str) -> Dict[str, Any]:
+        """
+        Update an outstanding payment record.
+        
+        Args:
+            outstanding_id: Outstanding record ID
+            update_data: Data to update
+            tenant_id: Tenant identifier
+            
+        Returns:
+            Updated outstanding record
+        """
+        return await self._make_request("PUT", f"/api/due-data/{tenant_id}/{outstanding_id}", json=update_data)
+
+    async def delete_outstanding(self, outstanding_id: int, tenant_id: str) -> Dict[str, Any]:
+        """
+        Delete an outstanding payment record.
+        
+        Args:
+            outstanding_id: Outstanding record ID
+            tenant_id: Tenant identifier
+            
+        Returns:
+            Deletion result
+        """
+        return await self._make_request("DELETE", f"/api/due-data/{tenant_id}/{outstanding_id}")
+
+    async def get_outstanding_summary(self, tenant_id: str) -> Dict[str, Any]:
+        """
+        Get outstanding payment summary statistics.
+        
+        Args:
+            tenant_id: Tenant identifier
+            
+        Returns:
+            Summary statistics
+        """
+        return await self._make_request("GET", f"/api/due-data/{tenant_id}/summary")
 
 
 # Global instance

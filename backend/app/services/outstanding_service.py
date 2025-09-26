@@ -145,10 +145,10 @@ class OutstandingService:
         calculated_status = self._calculate_outstanding_status(outstanding_data.due_date, current_date)
         days_overdue = self._calculate_days_overdue(outstanding_data.due_date, current_date)
         
-        # Prepare data for creation
-        create_data = outstanding_data.model_dump()
+        # Prepare data for creation using JSON-compatible serialization
+        create_data = outstanding_data.model_dump(mode='json')
         create_data.update({
-            "status": calculated_status,
+            "status": calculated_status.value,
             "days_overdue": days_overdue if calculated_status == OutstandingStatus.OVERDUE else None,
             "tenant_id": tenant_id,
             "created_by": current_user.get("id"),
@@ -388,7 +388,7 @@ class OutstandingService:
         
         try:
             # Get summary statistics via Data Layer
-            summary = await data_layer.get_outstanding_summary(tenant_id, current_user)
+            summary = await data_layer.get_outstanding_summary(tenant_id)
             logger.info(f"Retrieved outstanding summary for tenant {tenant_id}")
             return summary
         except Exception as e:

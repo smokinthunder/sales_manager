@@ -105,6 +105,25 @@ ON DUPLICATE KEY UPDATE
     tenant_id = VALUES(tenant_id),
     created_by = VALUES(created_by);
 
+-- Insert Outstanding Due Data (sample seed)
+INSERT INTO due_data (
+    shop_id, shop_name, amount, due_date, status, territory_id, tenant_id, notes, sales_executive_id
+) VALUES 
+    ('SHOP-TRV-001', 'Lulu Mall Thiruvananthapuram', 15000.00, '2025-10-05', 'upcoming', 'KL-TRV-001', 'default', 'Q4 payment', 5),
+    ('SHOP-KOC-001', 'Lulu Mall Kochi', 23000.00, '2025-09-15', 'current', 'KL-KOC-001', 'default', 'September due', 5),
+    ('SHOP-CAL-001', 'Focus Mall Kozhikode', 12500.00, '2025-08-20', 'overdue', 'KL-CAL-001', 'default', 'August overdue', 5),
+    ('SHOP-TSR-001', 'Sobha City Mall', 8400.00, '2025-10-01', 'upcoming', 'KL-TSR-001', 'default', 'Planned before festival', 5),
+    ('SHOP-KAN-001', 'Pothys Kannur', 5600.00, '2025-09-25', 'current', 'KL-KAN-001', 'default', 'Due today', 5),
+    ('SHOP-KOC-004', 'Gold Souk Grande', 9900.00, '2025-07-30', 'overdue', 'KL-KOC-001', 'default', 'Past due', 5),
+    ('SHOP-TRV-003', 'Pothys Thiruvananthapuram', 7300.00, '2025-09-10', 'overdue', 'KL-TRV-001', 'default', 'Missed reminder', 5),
+    ('SHOP-CAL-003', 'Pothys Kozhikode', 11200.00, '2025-10-12', 'upcoming', 'KL-CAL-001', 'default', 'Festival season', 5),
+    ('SHOP-KOC-002', 'Oberon Mall', 10000.00, '2025-10-10', 'upcoming', 'KL-KOC-001', 'default', 'October due', 5),
+    ('SHOP-KOC-003', 'Centre Square Mall', 13000.00, '2025-09-20', 'current', 'KL-KOC-001', 'default', 'September due', 5),
+    ('SHOP-KOC-004', 'Gold Souk Grande', 9900.00, '2025-07-30', 'overdue', 'KL-KOC-001', 'default', 'Past due', 5),
+    ('SHOP-KOC-005', 'Pothys Kochi', 12000.00, '2025-09-15', 'current', 'KL-KOC-001', 'default', 'September due', 5),
+    ('SHOP-KOC-006', 'HiLITE Mall', 11000.00, '2025-08-25', 'overdue', 'KL-KOC-001', 'default', 'August overdue', 5),
+    ('SHOP-KOC-007', 'Lulu Mall Kochi', 14000.00, '2025-10-05', 'upcoming', 'KL-KOC-001', 'default', 'Q4 payment', 5);
+
 /*
 
 
@@ -118,6 +137,9 @@ For seeing the inserted data
 SELECT phone, name, email, role, tenant_id FROM users;
 SELECT territory_id, name, code, area_manager_id FROM territories;
 SELECT shop_id, name, code, territory_id FROM shops;
+SELECT route_id, name, territory_id, week_start_date, status FROM routes;
+SELECT shop_id, shop_name, amount, due_date, status, territory_id, tenant_id, notes, sales_executive_id FROM due_data;
+
 
 
 

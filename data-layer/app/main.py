@@ -1810,6 +1810,473 @@ async def sync_client_data(tenant_id: str, sync_data: Dict[str, Any], db=Depends
         logger.error(f"Sync error: {e}")
         raise HTTPException(status_code=500, detail="Sync failed")
 
+
+# Due Data / Outstanding Management Endpoints
+
+class DueDataCreate(BaseModel):
+    """Model for creating due data records."""
+    shop_id: str
+    shop_name: str
+    amount: float
+    due_date: date
+    status: str
+    sales_executive_id: Optional[int] = None
+    territory_id: Optional[str] = None
+    original_amount: Optional[float] = None
+    days_overdue: Optional[int] = None
+    last_payment_date: Optional[date] = None
+    notes: Optional[str] = None
+    created_by: Optional[int] = None
+    updated_by: Optional[int] = None
+
+
+class DueDataUpdate(BaseModel):
+    """Model for updating due data records."""
+    shop_name: Optional[str] = None
+    amount: Optional[float] = None
+    due_date: Optional[date] = None
+    status: Optional[str] = None
+    sales_executive_id: Optional[int] = None
+    territory_id: Optional[str] = None
+    original_amount: Optional[float] = None
+    days_overdue: Optional[int] = None
+    last_payment_date: Optional[date] = None
+    notes: Optional[str] = None
+    updated_by: Optional[int] = None
+
+
+@app.post("/api/due-data/{tenant_id}")
+async def create_due_data(tenant_id: str, data: DueDataCreate, db=Depends(get_db)):
+    """Create a new due data record."""
+    try:
+        # Insert due data record
+        query = text("""
+            INSERT INTO due_data (
+                shop_id, shop_name, amount, due_date, status, sales_executive_id, 
+                territory_id, tenant_id, original_amount, days_overdue, 
+                last_payment_date, notes, created_by, updated_by,
+                created_at, updated_at
+            ) VALUES (
+                :shop_id, :shop_name, :amount, :due_date, :status, :sales_executive_id,
+                :territory_id, :tenant_id, :original_amount, :days_overdue,
+                :last_payment_date, :notes, :created_by, :updated_by,
+                NOW(), NOW()
+            )
+        """)
+        
+        result = db.execute(query, {
+            "shop_id": data.shop_id,
+            "shop_name": data.shop_name,
+            "amount": data.amount,
+            "due_date": data.due_date,
+            "status": data.status,
+            "sales_executive_id": data.sales_executive_id,
+            "territory_id": data.territory_id,
+            "tenant_id": tenant_id,  # From URL parameter
+            "original_amount": data.original_amount,
+            "days_overdue": data.days_overdue,
+            "last_payment_date": data.last_payment_date,
+            "notes": data.notes,
+            "created_by": data.created_by,
+            "updated_by": data.updated_by
+        })
+        
+        db.commit()
+        
+        # Get the created record with specific column order
+        created_id = result.lastrowid
+        created_record = db.execute(
+            text("""
+                SELECT id, shop_id, shop_name, amount, due_date, status, 
+                       sales_executive_id, territory_id, tenant_id, original_amount, 
+                       days_overdue, last_payment_date, notes, 
+                       created_at, updated_at, created_by, updated_by
+                FROM due_data 
+                WHERE id = :id AND tenant_id = :tenant_id
+            """),
+            {"id": created_id, "tenant_id": tenant_id}
+        ).fetchone()
+        
+        if not created_record:
+            raise HTTPException(status_code=404, detail="Created record not found")
+        
+        return {
+            "id": created_record[0],
+            "shop_id": created_record[1],
+            "shop_name": created_record[2],
+            "amount": float(created_record[3]),
+            "due_date": created_record[4],
+            "status": created_record[5],
+            "sales_executive_id": created_record[6],
+            "territory_id": created_record[7],
+            "tenant_id": created_record[8],
+            "original_amount": float(created_record[9]) if created_record[9] else None,
+            "days_overdue": created_record[10],
+            "last_payment_date": created_record[11],
+            "notes": created_record[12],
+            "created_at": created_record[13],
+            "updated_at": created_record[14],
+            "created_by": created_record[15],
+            "updated_by": created_record[16]
+        }
+        
+    except Exception as e:
+        db.rollback()
+        logger.error(f"Error creating due data: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to create due data: {str(e)}")
+
+
+@app.get("/api/due-data/{tenant_id}")
+async def get_due_data(
+    tenant_id: str,
+    sales_executive_id: Optional[int] = None,
+    territory_id: Optional[str] = None,
+    status: Optional[str] = None,
+    start_date: Optional[date] = None,
+    end_date: Optional[date] = None,
+    shop_search: Optional[str] = None,
+    min_amount: Optional[float] = None,
+    max_amount: Optional[float] = None,
+    db=Depends(get_db)
+):
+    """Get due data records with filtering."""
+    try:
+        # Build the query with filters
+        where_conditions = ["d.tenant_id = :tenant_id"]
+        params = {"tenant_id": tenant_id}
+        
+        if sales_executive_id:
+            where_conditions.append("sales_executive_id = :sales_executive_id")
+            params["sales_executive_id"] = sales_executive_id
+        
+        if territory_id:
+            where_conditions.append("territory_id = :territory_id")
+            params["territory_id"] = territory_id
+        
+        if status:
+            where_conditions.append("status = :status")
+            params["status"] = status
+        
+        if start_date:
+            where_conditions.append("due_date >= :start_date")
+            params["start_date"] = start_date
+        
+        if end_date:
+            where_conditions.append("due_date <= :end_date")
+            params["end_date"] = end_date
+        
+        if shop_search:
+            where_conditions.append("shop_name LIKE :shop_search")
+            params["shop_search"] = f"%{shop_search}%"
+        
+        if min_amount:
+            where_conditions.append("amount >= :min_amount")
+            params["min_amount"] = min_amount
+        
+        if max_amount:
+            where_conditions.append("amount <= :max_amount")
+            params["max_amount"] = max_amount
+        
+        where_clause = " AND ".join(where_conditions)
+        
+        # Working query with proper JOIN and column handling
+        query = text(f"""
+            SELECT 
+                d.id,
+                d.shop_id, 
+                d.shop_name, 
+                d.amount, 
+                d.due_date, 
+                d.status,
+                d.sales_executive_id, 
+                d.territory_id, 
+                d.tenant_id, 
+                d.original_amount,
+                DATEDIFF(CURDATE(), d.due_date) as days_overdue, 
+                d.last_payment_date, 
+                d.notes, 
+                d.last_sync_date,
+                d.sync_status, 
+                d.created_at, 
+                d.updated_at, 
+                d.created_by, 
+                d.updated_by,
+                COALESCE(NULLIF(u.name, ''), 'Unknown') as sales_executive_name,
+                COALESCE(t.name, '') as territory_name
+            FROM due_data d
+            LEFT JOIN users u ON d.sales_executive_id = u.id AND d.tenant_id = u.tenant_id
+            LEFT JOIN territories t ON d.territory_id = t.territory_id AND d.tenant_id = t.tenant_id
+            WHERE {where_clause}
+            ORDER BY d.due_date, d.created_at DESC
+        """)
+        
+        result = db.execute(query, params).fetchall()
+        
+        records = []
+        for row in result:
+            # Use explicit column name access for reliability
+            records.append({
+                "id": row.id,
+                "shop_id": row.shop_id,
+                "shop_name": row.shop_name,
+                "amount": float(row.amount),
+                "due_date": row.due_date,
+                "status": row.status,
+                "sales_executive_id": row.sales_executive_id,
+                "territory_id": row.territory_id,
+                "tenant_id": row.tenant_id,
+                "original_amount": float(row.original_amount) if row.original_amount else None,
+                "days_overdue": row.days_overdue,
+                "last_payment_date": row.last_payment_date,
+                "notes": row.notes,
+                "last_sync_date": row.last_sync_date,
+                "sync_status": row.sync_status,
+                "created_at": row.created_at,
+                "updated_at": row.updated_at,
+                "created_by": row.created_by,
+                "updated_by": row.updated_by,
+                "sales_executive_name": row.sales_executive_name,
+                "territory_name": row.territory_name
+            })
+        
+        return records
+        
+    except Exception as e:
+        logger.error(f"Error getting due data: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to get due data: {str(e)}")
+
+
+@app.get("/api/due-data/{tenant_id}/summary")
+async def get_due_data_summary(tenant_id: str, db=Depends(get_db)):
+    """Get due data summary statistics."""
+    try:
+        query = text("""
+            SELECT 
+                COUNT(*) as total_records,
+                SUM(amount) as total_outstanding,
+                SUM(CASE WHEN status = 'current' THEN amount ELSE 0 END) as current_payments,
+                SUM(CASE WHEN status = 'upcoming' THEN amount ELSE 0 END) as upcoming_payments,
+                SUM(CASE WHEN status = 'overdue' THEN amount ELSE 0 END) as overdue_payments,
+                COUNT(CASE WHEN status = 'current' THEN 1 END) as current_count,
+                COUNT(CASE WHEN status = 'upcoming' THEN 1 END) as upcoming_count,
+                COUNT(CASE WHEN status = 'overdue' THEN 1 END) as overdue_count,
+                AVG(amount) as average_amount,
+                MAX(CASE WHEN status = 'overdue' THEN days_overdue ELSE 0 END) as oldest_overdue_days
+            FROM due_data 
+            WHERE tenant_id = :tenant_id
+        """)
+        
+        result = db.execute(query, {"tenant_id": tenant_id}).fetchone()
+        
+        return {
+            "total_records": result[0] or 0,
+            "total_outstanding": float(result[1]) if result[1] else 0.0,
+            "current_payments": float(result[2]) if result[2] else 0.0,
+            "upcoming_payments": float(result[3]) if result[3] else 0.0,
+            "overdue_payments": float(result[4]) if result[4] else 0.0,
+            "current_count": result[5] or 0,
+            "upcoming_count": result[6] or 0,
+            "overdue_count": result[7] or 0,
+            "average_amount": float(result[8]) if result[8] else 0.0,
+            "oldest_overdue_days": result[9] or 0
+        }
+        
+    except Exception as e:
+        logger.error(f"Error getting due data summary: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to get due data summary: {str(e)}")
+
+
+@app.get("/api/due-data/{tenant_id}/{due_data_id}")
+async def get_due_data_by_id(tenant_id: str, due_data_id: int, db=Depends(get_db)):
+    """Get a specific due data record by ID."""
+    try:
+        query = text("""
+            SELECT d.*, u.name as sales_executive_name, t.name as territory_name
+            FROM due_data d
+            LEFT JOIN users u ON d.sales_executive_id = u.id AND d.tenant_id = u.tenant_id
+            LEFT JOIN territories t ON d.territory_id = t.territory_id AND d.tenant_id = t.tenant_id
+            WHERE d.id = :id AND d.tenant_id = :tenant_id
+        """)
+        
+        result = db.execute(query, {"id": due_data_id, "tenant_id": tenant_id}).fetchone()
+        
+        if not result:
+            raise HTTPException(status_code=404, detail="Due data record not found")
+        
+        return {
+            "id": result[0],
+            "shop_id": result[1],
+            "shop_name": result[2],
+            "amount": float(result[3]),
+            "due_date": result[4],
+            "status": result[5],
+            "sales_executive_id": result[6],
+            "territory_id": result[7],
+            "tenant_id": result[8],
+            "original_amount": float(result[9]) if result[9] else None,
+            "days_overdue": result[10],
+            "last_payment_date": result[11],
+            "notes": result[12],
+            "last_sync_date": result[13],
+            "sync_status": result[14],
+            "created_at": result[15],
+            "updated_at": result[16],
+            "created_by": result[17],
+            "updated_by": result[18],
+            "sales_executive_name": result[19],
+            "territory_name": result[20]
+        }
+        
+    except Exception as e:
+        logger.error(f"Error getting due data by ID: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to get due data: {str(e)}")
+
+
+@app.put("/api/due-data/{tenant_id}/{due_data_id}")
+async def update_due_data(tenant_id: str, due_data_id: int, data: DueDataUpdate, db=Depends(get_db)):
+    """Update a due data record."""
+    try:
+        # Check if record exists
+        existing = db.execute(
+            text("SELECT id FROM due_data WHERE id = :id AND tenant_id = :tenant_id"),
+            {"id": due_data_id, "tenant_id": tenant_id}
+        ).fetchone()
+        
+        if not existing:
+            raise HTTPException(status_code=404, detail="Due data record not found")
+        
+        # Build update query with only provided fields
+        update_fields = []
+        params = {"id": due_data_id, "tenant_id": tenant_id}
+        
+        if data.shop_name is not None:
+            update_fields.append("shop_name = :shop_name")
+            params["shop_name"] = data.shop_name
+        
+        if data.amount is not None:
+            update_fields.append("amount = :amount")
+            params["amount"] = data.amount
+        
+        if data.due_date is not None:
+            update_fields.append("due_date = :due_date")
+            params["due_date"] = data.due_date
+        
+        if data.status is not None:
+            update_fields.append("status = :status")
+            params["status"] = data.status
+        
+        if data.sales_executive_id is not None:
+            update_fields.append("sales_executive_id = :sales_executive_id")
+            params["sales_executive_id"] = data.sales_executive_id
+        
+        if data.territory_id is not None:
+            update_fields.append("territory_id = :territory_id")
+            params["territory_id"] = data.territory_id
+        
+        if data.original_amount is not None:
+            update_fields.append("original_amount = :original_amount")
+            params["original_amount"] = data.original_amount
+        
+        if data.days_overdue is not None:
+            update_fields.append("days_overdue = :days_overdue")
+            params["days_overdue"] = data.days_overdue
+        
+        if data.last_payment_date is not None:
+            update_fields.append("last_payment_date = :last_payment_date")
+            params["last_payment_date"] = data.last_payment_date
+        
+        if data.notes is not None:
+            update_fields.append("notes = :notes")
+            params["notes"] = data.notes
+        
+        if data.updated_by is not None:
+            update_fields.append("updated_by = :updated_by")
+            params["updated_by"] = data.updated_by
+        
+        if not update_fields:
+            raise HTTPException(status_code=400, detail="No fields to update")
+        
+        update_fields.append("updated_at = NOW()")
+        
+        query = text(f"""
+            UPDATE due_data 
+            SET {', '.join(update_fields)}
+            WHERE id = :id AND tenant_id = :tenant_id
+        """)
+        
+        db.execute(query, params)
+        db.commit()
+        
+        # Return updated record
+        updated_record = db.execute(
+            text("""
+                SELECT d.*, u.name as sales_executive_name, t.name as territory_name
+                FROM due_data d
+                LEFT JOIN users u ON d.sales_executive_id = u.id AND d.tenant_id = u.tenant_id
+                LEFT JOIN territories t ON d.territory_id = t.territory_id AND d.tenant_id = t.tenant_id
+                WHERE d.id = :id AND d.tenant_id = :tenant_id
+            """),
+            {"id": due_data_id, "tenant_id": tenant_id}
+        ).fetchone()
+        
+        return {
+            "id": updated_record[0],
+            "shop_id": updated_record[1],
+            "shop_name": updated_record[2],
+            "amount": float(updated_record[3]),
+            "due_date": updated_record[4],
+            "status": updated_record[5],
+            "sales_executive_id": updated_record[6],
+            "territory_id": updated_record[7],
+            "tenant_id": updated_record[8],
+            "original_amount": float(updated_record[9]) if updated_record[9] else None,
+            "days_overdue": updated_record[10],
+            "last_payment_date": updated_record[11],
+            "notes": updated_record[12],
+            "last_sync_date": updated_record[13],
+            "sync_status": updated_record[14],
+            "created_at": updated_record[15],
+            "updated_at": updated_record[16],
+            "created_by": updated_record[17],
+            "updated_by": updated_record[18],
+            "sales_executive_name": updated_record[19],
+            "territory_name": updated_record[20]
+        }
+        
+    except Exception as e:
+        db.rollback()
+        logger.error(f"Error updating due data: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to update due data: {str(e)}")
+
+
+@app.delete("/api/due-data/{tenant_id}/{due_data_id}")
+async def delete_due_data(tenant_id: str, due_data_id: int, db=Depends(get_db)):
+    """Delete a due data record."""
+    try:
+        # Check if record exists
+        existing = db.execute(
+            text("SELECT id FROM due_data WHERE id = :id AND tenant_id = :tenant_id"),
+            {"id": due_data_id, "tenant_id": tenant_id}
+        ).fetchone()
+        
+        if not existing:
+            raise HTTPException(status_code=404, detail="Due data record not found")
+        
+        # Delete the record
+        db.execute(
+            text("DELETE FROM due_data WHERE id = :id AND tenant_id = :tenant_id"),
+            {"id": due_data_id, "tenant_id": tenant_id}
+        )
+        db.commit()
+        
+        return {"message": "Due data record deleted successfully"}
+        
+    except Exception as e:
+        db.rollback()
+        logger.error(f"Error deleting due data: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to delete due data: {str(e)}")
+
+
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run(app, host="0.0.0.0", port=8000)
