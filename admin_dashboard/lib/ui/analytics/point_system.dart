@@ -24,13 +24,13 @@ class PointSystem extends StatelessWidget {
           Divider(color: theme.colorScheme.tertiary.withAlpha(128)),
           _buildNavigation(context, theme),
           AddPointsWidget(
-            top5Customers: {
-              "AliceAliceAlice": 120,
-              "BobAlice": 110,
-              "CharlieAlice": 105,
-              "DavidAlice": 100,
-              "EveAlice": 95,
-            },
+            // top5Customers: {
+            //   "AliceAliceAlice": 120,
+            //   "BobAlice": 110,
+            //   "CharlieAlice": 105,
+            //   "DavidAlice": 100,
+            //   "EveAlice": 95,
+            // },
           ),
         ],
       ),
@@ -92,8 +92,11 @@ class PointSystem extends StatelessWidget {
 }
 
 class AddPointsWidget extends StatelessWidget {
-  const AddPointsWidget({super.key, required this.top5Customers});
-  final Map<String, int> top5Customers;
+  const AddPointsWidget({
+    super.key,
+    // required this.top5Customers
+  });
+  // final Map<String, int> top5Customers;
 
   @override
   Widget build(BuildContext context) {
@@ -157,36 +160,37 @@ class AddPointsWidget extends StatelessWidget {
               ],
             ),
           ),
-          SizedBox(height: 20),
-          Container(
-            padding: EdgeInsets.symmetric(vertical: 24, horizontal: 16),
-            decoration: BoxDecoration(
-              border: Border.all(color: theme.colorScheme.tertiary),
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: Column(
-              spacing: 12,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  "Top 5 Customers by Points",
-                  style: theme.textTheme.bodyLarge,
-                ),
-                ...top5Customers.entries.map((entry) {
-                  return Row(
-                    children: [
-                      Text(entry.key),
-                      Spacer(),
-                      Text(
-                        entry.value.toString(),
-                        style: theme.textTheme.headlineMedium,
-                      ),
-                    ],
-                  );
-                }),
-              ],
-            ),
-          ),
+          // SizedBox(height: 20),
+          //   Container(
+          //     padding: EdgeInsets.symmetric(vertical: 24, horizontal: 16),
+          //     decoration: BoxDecoration(
+          //       border: Border.all(color: theme.colorScheme.tertiary),
+          //       borderRadius: BorderRadius.circular(8),
+          //     ),
+          //     child: Column(
+          //       spacing: 12,
+          //       crossAxisAlignment: CrossAxisAlignment.start,
+          //       children: [
+          //         Text(
+          //           "Top 5 Customers by Points",
+          //           style: theme.textTheme.bodyLarge,
+          //         ),
+          //         ...top5Customers.entries.map((entry) {
+          //           return Row(
+          //             children: [
+          //               Text(entry.key),
+          //               Spacer(),
+          //               Text(
+          //                 entry.value.toString(),
+          //                 style: theme.textTheme.headlineMedium,
+          //               ),
+          //             ],
+          //           );
+          //         }),
+          //       ],
+          //     ),
+          //   ),
+          // ],
         ],
       ),
     );

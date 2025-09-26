@@ -5,17 +5,19 @@ class TitleAndValueContainer extends StatelessWidget {
     super.key,
     required this.title,
     required this.count,
+    this.width = 160,
   });
 
   final String title;
   final String count;
+  final double width;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return Container(
       padding: const EdgeInsets.all(12),
-      width: 160,
+      width: width,
       height: 80,
       decoration: BoxDecoration(
         color: theme.colorScheme.onPrimary,

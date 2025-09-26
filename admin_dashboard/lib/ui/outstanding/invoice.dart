@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
-class AreaManager extends StatelessWidget {
-  const AreaManager({super.key});
+class Invoice extends StatelessWidget {
+  const Invoice({super.key});
 
   @override
   Widget build(BuildContext context) {

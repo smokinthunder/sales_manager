@@ -1,11 +1,11 @@
 import 'package:admin_dashboard/routing/routes.dart';
+import 'package:admin_dashboard/ui/customer/add_new_customer.dart';
 import 'package:admin_dashboard/ui/customer/customer.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
-class AddNewCustomer extends StatelessWidget {
-  const AddNewCustomer({super.key});
-
+class AddAreaManager extends StatelessWidget {
+  const AddAreaManager({super.key});
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -24,32 +24,51 @@ class AddNewCustomer extends StatelessWidget {
             children: [
               TextButton(
                 onPressed: () {
-                  context.go(Routes.customer);
+                  context.go(Routes.areaManager);
                 },
                 child: Text(
-                  "All customer list",
+                  "Area Manger",
                   style: TextStyle(color: theme.colorScheme.onSurface),
                 ),
               ),
               Icon(Icons.chevron_right),
-              Text("Add New Customer"),
+              Text("Add New Area Manager"),
               Spacer(),
             ],
           ),
           Text(
-            "Add new customer",
+            "Add new Area Manager",
             style: theme.textTheme.bodyLarge?.copyWith(
               color: theme.colorScheme.primary,
             ),
           ),
           Column(
-            spacing: 16,
+            spacing: 32,
             children: [
-              TextField(
-                decoration: InputDecoration(
-                  labelText: "Shop Name",
-                  hintText: "Enter shop name",
-                ),
+              // Shop Address
+              Row(
+                spacing: 16,
+                children: [
+                  Flexible(
+                    child: TextField(
+                      decoration: InputDecoration(
+                        labelText: "First Name",
+                        hintText: "Enter area manager first name",
+                      ),
+                    ),
+                  ),
+
+                  // Pin Code
+                  Flexible(
+                    child: TextField(
+                      decoration: InputDecoration(
+                        labelText: "Last Name",
+                        hintText: "Enter area manager last name",
+                      ),
+                      keyboardType: TextInputType.number,
+                    ),
+                  ),
+                ],
               ),
 
               // Shop Address
@@ -59,8 +78,8 @@ class AddNewCustomer extends StatelessWidget {
                   Flexible(
                     child: TextField(
                       decoration: InputDecoration(
-                        labelText: "Shop Address",
-                        hintText: "Enter shop address",
+                        labelText: "Address",
+                        hintText: "Enter area manager address",
                       ),
                     ),
                   ),
@@ -70,7 +89,7 @@ class AddNewCustomer extends StatelessWidget {
                     child: TextField(
                       decoration: InputDecoration(
                         labelText: "Pin Code",
-                        hintText: "Enter shop address pin code",
+                        hintText: "Enter area manager pin code",
                       ),
                       keyboardType: TextInputType.number,
                     ),
@@ -86,7 +105,7 @@ class AddNewCustomer extends StatelessWidget {
                     child: TextField(
                       decoration: InputDecoration(
                         labelText: "Contact Number",
-                        hintText: "Enter your mobile number",
+                        hintText: "Enter area manager contact number",
                       ),
                       keyboardType: TextInputType.phone,
                     ),
@@ -97,7 +116,7 @@ class AddNewCustomer extends StatelessWidget {
                     child: TextField(
                       decoration: InputDecoration(
                         labelText: "Email",
-                        hintText: "Enter shop email address",
+                        hintText: "Enter area manager email address",
                       ),
                       keyboardType: TextInputType.emailAddress,
                     ),
@@ -113,7 +132,7 @@ class AddNewCustomer extends StatelessWidget {
                     child: TextField(
                       decoration: InputDecoration(
                         labelText: "Aadhaar Number",
-                        hintText: "Enter aadhaar number",
+                        hintText: "Enter area manager's aadhaar number",
                       ),
                       keyboardType: TextInputType.number,
                     ),
@@ -124,7 +143,7 @@ class AddNewCustomer extends StatelessWidget {
                     child: TextField(
                       decoration: InputDecoration(
                         labelText: "PAN Number",
-                        hintText: "Enter PAN number",
+                        hintText: "Enter area manager's PAN number",
                       ),
                     ),
                   ),
@@ -139,7 +158,7 @@ class AddNewCustomer extends StatelessWidget {
                     child: TextField(
                       decoration: InputDecoration(
                         labelText: "Location",
-                        hintText: "Enter shop location",
+                        hintText: "Enter area manager's location",
                       ),
                     ),
                   ),
@@ -149,7 +168,7 @@ class AddNewCustomer extends StatelessWidget {
                     child: TextField(
                       decoration: InputDecoration(
                         labelText: "Area",
-                        hintText: "Enter shop area",
+                        hintText: "Enter area manager's area",
                       ),
                     ),
                   ),
@@ -163,8 +182,8 @@ class AddNewCustomer extends StatelessWidget {
                   Flexible(
                     child: TextField(
                       decoration: InputDecoration(
-                        labelText: "GST",
-                        hintText: "Enter your GST number",
+                        labelText: "Date of Birth",
+                        hintText: "dd/mm/yyyy",
                       ),
                     ),
                   ),
@@ -178,14 +197,14 @@ class AddNewCustomer extends StatelessWidget {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              "Shop Logo",
+                              "Photo",
                               textAlign: TextAlign.left,
                               style: textTheme.bodySmall?.copyWith(
                                 color: colorScheme.onSecondary,
                               ),
                             ),
                             Text(
-                              "Upload shop logo",
+                              "Upload photo",
                               style: textTheme.bodySmall?.copyWith(
                                 color: colorScheme.tertiary,
                               ),
@@ -201,11 +220,15 @@ class AddNewCustomer extends StatelessWidget {
                   ),
                 ],
               ),
+
               BlueBorderButtons(
-                title: "             Create New Customer             ",
+                title:
+                    "\t\t\t\t\t\t\t\t\t\t\t\t\t\tCreate New Area Manager\t\t\t\t\t\t\t\t\t\t\t\t\t\t",
                 onClick: () {
                   //TODO
-                  context.showSuccessDialog("New customer added successfully");
+                  context.showSuccessDialog(
+                    "New area manager added successfully",
+                  );
                 },
                 invert: true,
               ),
@@ -213,46 +236,6 @@ class AddNewCustomer extends StatelessWidget {
           ),
         ],
       ),
-    );
-  }
-}
-
-extension Dialogs on BuildContext {
-  showSuccessDialog(String title) {
-    showDialog(
-      context: this,
-      builder: (context) {
-        return Dialog(
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(20),
-          ),
-          child: Container(
-            width: 586,
-            height: 244,
-            padding: const EdgeInsets.all(20.0),
-            child: Column(
-              spacing: 20,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Image(
-                  width: 100,
-                  height: 100,
-                  image: AssetImage("assets/images/green_tick.png"),
-                ),
-                Text(title, style: Theme.of(context).textTheme.headlineMedium),
-                BlueBorderButtons(
-                  title: "            Done            ",
-                  onClick: () {
-                    //TODO:
-                    Navigator.of(context).pop();
-                  },
-                  invert: true,
-                ),
-              ],
-            ),
-          ),
-        );
-      },
     );
   }
 }

@@ -26,115 +26,121 @@ class _LoginScreenState extends State<LoginScreen> {
                 Spacer(),
                 Container(
                   constraints: BoxConstraints(maxWidth: 430),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Image.asset('assets/images/company_logo.png', width: 340),
-                      Text(
-                        "Welcome !!!",
-                        style: textTheme.headlineLarge?.copyWith(
-                          color: colorScheme.onSurface,
+                  child: SingleChildScrollView(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Image.asset(
+                          'assets/images/company_logo.png',
+                          width: 340,
                         ),
-                      ),
-                      Text(
-                        "LOGIN",
-                        style: textTheme.headlineLarge?.copyWith(
-                          fontSize: 48,
-                          fontWeight: FontWeight.w600,
-                          color: Color(0xff2c2c2c),
-                        ),
-                      ),
-                      Row(
-                        children: [
-                          Padding(
-                            padding: const EdgeInsets.all(8.0),
-                            child: Icon(
-                              Icons.email_outlined,
-                              color: Color(0xff6c6c6c),
-                            ),
-                          ),
-                          Text("Email"),
-                        ],
-                      ),
-                      Container(
-                        constraints: BoxConstraints(maxWidth: 430),
-                        child: TextField(
-                          keyboardType: TextInputType.emailAddress,
-                          decoration: InputDecoration(
-                            hintText: "example123@gmail.com",
+                        Text(
+                          "Welcome !!!",
+                          style: textTheme.headlineLarge?.copyWith(
+                            color: colorScheme.onSurface,
                           ),
                         ),
-                      ),
-                      Row(
-                        children: [
-                          Padding(
-                            padding: const EdgeInsets.all(8.0),
-                            child: Icon(
-                              Icons.lock_outline,
-                              color: Color(0xff6c6c6c),
-                            ),
+                        Text(
+                          "LOGIN",
+                          style: textTheme.headlineLarge?.copyWith(
+                            fontSize: 48,
+                            fontWeight: FontWeight.w600,
+                            color: Color(0xff2c2c2c),
                           ),
-                          Text("Password"),
-                        ],
-                      ),
-                      Container(
-                        constraints: BoxConstraints(maxWidth: 430),
-                        child: TextField(
-                          obscureText: isObscured,
-                          keyboardType: TextInputType.visiblePassword,
-                          decoration: InputDecoration(
-                            hintText: "***************",
-                            suffixIcon: InkWell(
-                              onTap: () => setState(() {
-                                isObscured = !isObscured;
-                              }),
+                        ),
+                        Row(
+                          children: [
+                            Padding(
+                              padding: const EdgeInsets.all(8.0),
                               child: Icon(
-                                isObscured
-                                    ? Icons.visibility_outlined
-                                    : Icons.visibility_off_outlined,
+                                Icons.email_outlined,
                                 color: Color(0xff6c6c6c),
                               ),
                             ),
+                            Text("Email"),
+                          ],
+                        ),
+                        Container(
+                          constraints: BoxConstraints(maxWidth: 430),
+                          child: TextField(
+                            keyboardType: TextInputType.emailAddress,
+                            decoration: InputDecoration(
+                              hintText: "example123@gmail.com",
+                            ),
                           ),
                         ),
-                      ),
-                      Row(
-                        children: [
-                          Checkbox(value: false, onChanged: (value) {}),
-                          Text("Remember Me"),
-                          Spacer(),
-                          Text("Forgot Password?"),
-                        ],
-                      ),
-                      SizedBox(height: 48),
-                      InkWell(
-                        onTap: () {
-                          //TODO: Implement Login Functionality
-                          context.go(Routes.dashboard);
-                        },
-                        child: Container(
-                          constraints: BoxConstraints(
-                            maxWidth: 430,
-                            minHeight: 48,
-                          ),
-                          decoration: BoxDecoration(
-                            color: colorScheme.primary,
-                            borderRadius: BorderRadius.circular(16),
-                          ),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Text(
-                                "Login",
-                                style: textTheme.bodyLarge?.copyWith(
-                                  color: colorScheme.onPrimary,
+                        Row(
+                          children: [
+                            Padding(
+                              padding: const EdgeInsets.all(8.0),
+                              child: Icon(
+                                Icons.lock_outline,
+                                color: Color(0xff6c6c6c),
+                              ),
+                            ),
+                            Text("Password"),
+                          ],
+                        ),
+                        Container(
+                          constraints: BoxConstraints(maxWidth: 430),
+                          child: TextField(
+                            obscureText: isObscured,
+                            keyboardType: TextInputType.visiblePassword,
+                            decoration: InputDecoration(
+                              hintText: "***************",
+                              suffixIcon: InkWell(
+                                onTap: () => setState(() {
+                                  isObscured = !isObscured;
+                                }),
+                                child: Icon(
+                                  isObscured
+                                      ? Icons.visibility_outlined
+                                      : Icons.visibility_off_outlined,
+                                  color: Color(0xff6c6c6c),
                                 ),
                               ),
-                            ],
+                            ),
                           ),
                         ),
-                      ),
-                    ],
+                        Row(
+                          children: [
+                            Checkbox(value: false, onChanged: (value) {}),
+                            Text("Remember Me"),
+                            Spacer(),
+                            Text("Forgot Password?"),
+                          ],
+                        ),
+                        SizedBox(height: 48),
+                        InkWell(
+                          onTap: () {
+                            //TODO: Implement Login Functionality
+                            context.go(Routes.dashboard);
+                          },
+                          child: Container(
+                            constraints: BoxConstraints(
+                              maxWidth: 430,
+                              minHeight: 48,
+                            ),
+                            decoration: BoxDecoration(
+                              color: colorScheme.primary,
+                              borderRadius: BorderRadius.circular(16),
+                            ),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Text(
+                                  "Login",
+                                  style: textTheme.bodyLarge?.copyWith(
+                                    color: colorScheme.onPrimary,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                        SizedBox(height: 48),
+                      ],
+                    ),
                   ),
                 ),
                 Spacer(),

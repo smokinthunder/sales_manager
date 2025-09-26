@@ -164,7 +164,13 @@ class HomeScreen extends StatelessWidget {
                         child: Text(
                           (location == Routes.notifications)
                               ? "Notification"
-                              : "Dashboard",
+                              : tabs
+                                    .where(
+                                      (element) =>
+                                          location.startsWith(element.route),
+                                    )
+                                    .first
+                                    .title,
                           style: theme.textTheme.headlineLarge,
                         ),
                       ),

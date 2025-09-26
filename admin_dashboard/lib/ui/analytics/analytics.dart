@@ -41,19 +41,6 @@ class Analytics extends StatelessWidget {
                   ),
                 ),
               ),
-              InkWell(
-                onTap: () {
-                  //TODO:
-                },
-                child: Container(
-                  padding: EdgeInsets.symmetric(vertical: 12, horizontal: 32),
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(8),
-                    border: Border.all(color: theme.colorScheme.onSurface),
-                  ),
-                  child: Text("Search", style: theme.textTheme.labelLarge),
-                ),
-              ),
             ],
           ),
           Row(
@@ -162,6 +149,7 @@ class _SafePaginatedCardGridState extends State<SafePaginatedCardGrid> {
 
   @override
   Widget build(BuildContext context) {
+    if (widget.cards.isEmpty) return SizedBox.shrink();
     return LayoutBuilder(
       builder: (context, constraints) {
         final availableWidth = constraints.maxWidth;
