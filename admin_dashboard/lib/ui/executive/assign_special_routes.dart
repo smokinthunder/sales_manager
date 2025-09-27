@@ -291,7 +291,10 @@ class AssignSpecialRoutes extends StatelessWidget {
     showDialog(
       context: context,
       builder: (context) => Dialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+          side: BorderSide(),
+        ),
         child: Container(
           width: 470,
           height: 130,

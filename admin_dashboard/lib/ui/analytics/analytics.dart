@@ -107,6 +107,7 @@ class SafePaginatedCardGrid extends StatefulWidget {
   final double cardHeight;
   final double spacing;
   final int rowsPerPage;
+  final Color? backgroundColor;
 
   const SafePaginatedCardGrid({
     super.key,
@@ -115,6 +116,7 @@ class SafePaginatedCardGrid extends StatefulWidget {
     this.cardHeight = 190,
     this.spacing = 20,
     this.rowsPerPage = 4,
+    this.backgroundColor,
   });
 
   @override
@@ -150,124 +152,131 @@ class _SafePaginatedCardGridState extends State<SafePaginatedCardGrid> {
   @override
   Widget build(BuildContext context) {
     if (widget.cards.isEmpty) return SizedBox.shrink();
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final availableWidth = constraints.maxWidth;
+    return Container(
+      padding: EdgeInsets.all(8),
+      decoration: BoxDecoration(
+        color: widget.backgroundColor?.withAlpha(48) ?? Colors.transparent,
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final availableWidth = constraints.maxWidth;
 
-        // Calculate cards per row
-        final cardsPerRow =
-            ((availableWidth + widget.spacing) ~/
-                    (widget.cardWidth + widget.spacing))
-                .clamp(1, widget.cards.length);
+          // Calculate cards per row
+          final cardsPerRow =
+              ((availableWidth + widget.spacing) ~/
+                      (widget.cardWidth + widget.spacing))
+                  .clamp(1, widget.cards.length);
 
-        // Cards per page
-        final cardsPerPage = cardsPerRow * widget.rowsPerPage;
+          // Cards per page
+          final cardsPerPage = cardsPerRow * widget.rowsPerPage;
 
-        // Total pages
-        final totalPages = (widget.cards.length / cardsPerPage).ceil();
+          // Total pages
+          final totalPages = (widget.cards.length / cardsPerPage).ceil();
 
-        // Clamp currentPage to valid range
-        if (currentPage >= totalPages) {
-          currentPage = totalPages - 1;
-        }
-        if (currentPage < 0) {
-          currentPage = 0;
-        }
+          // Clamp currentPage to valid range
+          if (currentPage >= totalPages) {
+            currentPage = totalPages - 1;
+          }
+          if (currentPage < 0) {
+            currentPage = 0;
+          }
 
-        // Determine sublist safely
-        final start = currentPage * cardsPerPage;
-        final end = (start + cardsPerPage).clamp(0, widget.cards.length);
-        final pageCards = widget.cards.sublist(start, end);
+          // Determine sublist safely
+          final start = currentPage * cardsPerPage;
+          final end = (start + cardsPerPage).clamp(0, widget.cards.length);
+          final pageCards = widget.cards.sublist(start, end);
 
-        final visiblePages = getVisiblePages(totalPages, currentPage);
+          final visiblePages = getVisiblePages(totalPages, currentPage);
 
-        return Column(
-          children: [
-            // Grid
-            SizedBox(
-              height:
-                  widget.rowsPerPage * widget.cardHeight +
-                  (widget.rowsPerPage - 1) * widget.spacing,
-              child: Padding(
-                padding: EdgeInsets.all(widget.spacing / 2),
-                child: Wrap(
-                  spacing: widget.spacing,
-                  runSpacing: widget.spacing,
-                  children: pageCards
-                      .map(
-                        (card) => SizedBox(
-                          width: widget.cardWidth,
-                          height: widget.cardHeight,
-                          child: card,
-                        ),
-                      )
-                      .toList(),
+          return Column(
+            children: [
+              // Grid
+              SizedBox(
+                height:
+                    widget.rowsPerPage * widget.cardHeight +
+                    (widget.rowsPerPage - 1) * widget.spacing,
+                child: Padding(
+                  padding: EdgeInsets.all(widget.spacing / 2),
+                  child: Wrap(
+                    spacing: widget.spacing,
+                    runSpacing: widget.spacing,
+                    children: pageCards
+                        .map(
+                          (card) => SizedBox(
+                            width: widget.cardWidth,
+                            height: widget.cardHeight,
+                            child: card,
+                          ),
+                        )
+                        .toList(),
+                  ),
                 ),
               ),
-            ),
 
-            const SizedBox(height: 20),
+              const SizedBox(height: 20),
 
-            // Pagination controls
-            if (totalPages > 1)
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  // Previous button
-                  if (currentPage > 0)
-                    InkWell(
-                      onTap: () => setState(() => currentPage--),
-                      child: Text('Previous'),
-                    ),
-                  const SizedBox(width: 8),
+              // Pagination controls
+              if (totalPages > 1)
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    // Previous button
+                    if (currentPage > 0)
+                      InkWell(
+                        onTap: () => setState(() => currentPage--),
+                        child: Text('Previous'),
+                      ),
+                    const SizedBox(width: 8),
 
-                  // Page numbers with ellipsis
-                  ...visiblePages.map((i) {
-                    if (i == -1) {
-                      return const Padding(
-                        padding: EdgeInsets.symmetric(horizontal: 4),
-                        child: Text('…'),
-                      );
-                    } else {
-                      return InkWell(
-                        onTap: () => setState(() => currentPage = i),
-                        child: Container(
-                          padding: EdgeInsets.symmetric(
-                            vertical: 8,
-                            horizontal: 12,
-                          ),
-                          decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(8),
-                            color: i == currentPage
-                                ? Theme.of(context).colorScheme.primary
-                                : null,
-                          ),
-                          child: Text(
-                            '${i + 1}',
-                            style: TextStyle(
+                    // Page numbers with ellipsis
+                    ...visiblePages.map((i) {
+                      if (i == -1) {
+                        return const Padding(
+                          padding: EdgeInsets.symmetric(horizontal: 4),
+                          child: Text('…'),
+                        );
+                      } else {
+                        return InkWell(
+                          onTap: () => setState(() => currentPage = i),
+                          child: Container(
+                            padding: EdgeInsets.symmetric(
+                              vertical: 8,
+                              horizontal: 12,
+                            ),
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(8),
                               color: i == currentPage
-                                  ? Colors.white
-                                  : Colors.black,
+                                  ? Theme.of(context).colorScheme.primary
+                                  : null,
+                            ),
+                            child: Text(
+                              '${i + 1}',
+                              style: TextStyle(
+                                color: i == currentPage
+                                    ? Colors.white
+                                    : Colors.black,
+                              ),
                             ),
                           ),
-                        ),
-                      );
-                    }
-                  }),
+                        );
+                      }
+                    }),
 
-                  const SizedBox(width: 8),
+                    const SizedBox(width: 8),
 
-                  // Next button
-                  if (currentPage < totalPages - 1)
-                    InkWell(
-                      onTap: () => setState(() => currentPage++),
-                      child: Text('Next'),
-                    ),
-                ],
-              ),
-          ],
-        );
-      },
+                    // Next button
+                    if (currentPage < totalPages - 1)
+                      InkWell(
+                        onTap: () => setState(() => currentPage++),
+                        child: Text('Next'),
+                      ),
+                  ],
+                ),
+            ],
+          );
+        },
+      ),
     );
   }
 }
