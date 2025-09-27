@@ -15,6 +15,8 @@ class ExecutiveOutStanding extends ConsumerStatefulWidget {
 
 class _ExecutiveOutStandingState extends ConsumerState<ExecutiveOutStanding> {
   String? selectedValue;
+  String? selectedExecutiveId;
+  String? selectedExecutiveName;
 
   final List<String> options = ["1 Month", "2 Month", "3 Month", "1 Year"];
   CreditType selectedType = CreditType.outstanding;
@@ -50,9 +52,31 @@ class _ExecutiveOutStandingState extends ConsumerState<ExecutiveOutStanding> {
               Flexible(
                 flex: 5,
                 child: (userType == UserRole.areaManager)
-                    ? CustomDropDownMenu(
-                        hintText: "Varun Kumar",
-                        dropdownMenuEntries: [],
+                    ? ref.watch(getAllSalesExecutivesProvider).when(
+                        data: (executives) => CustomDropDownMenu<String>(
+                          hintText: selectedExecutiveName ?? "Select Executive",
+                          dropdownMenuEntries: executives
+                              .map((executive) => DropdownMenuEntry<String>(
+                                    value: executive['id'].toString(),
+                                    label: executive['name'] ?? '',
+                                  ))
+                              .toList(),
+                          onSelected: (String? newValue) {
+                            setState(() {
+                              selectedExecutiveId = newValue;
+                              selectedExecutiveName = executives
+                                  .firstWhere((exec) => exec['id'].toString() == newValue)['name'];
+                            });
+                          },
+                        ),
+                        loading: () => CustomDropDownMenu(
+                          hintText: "Loading executives...",
+                          dropdownMenuEntries: [],
+                        ),
+                        error: (error, _) => CustomDropDownMenu(
+                          hintText: "Error loading executives",
+                          dropdownMenuEntries: [],
+                        ),
                       )
                     : TextField(
                         decoration: InputDecoration(
@@ -173,11 +197,10 @@ class _ExecutiveOutStandingState extends ConsumerState<ExecutiveOutStanding> {
                 padding: const EdgeInsets.symmetric(horizontal: 18.0),
                 child: ref
                     .watch(
-                      index == 0
-                          ? getCurrentOutstandingPaymentsProvider
-                          : index == 1
-                          ? getUpcomingOutstandingPaymentsProvider
-                          : getOverdueOutstandingPaymentsProvider,
+                      getOutstandingPaymentsByStatusAndExecutiveProvider(
+                        CreditType.values[index],
+                        selectedExecutiveId,
+                      ),
                     )
                     .when(
                       data: (data) => OutstandingTable(
@@ -201,16 +224,6 @@ class _ExecutiveOutStandingState extends ConsumerState<ExecutiveOutStanding> {
       ],
     );
   }
-}
-
-enum CreditType {
-  outstanding(Color(0xff1ea123), "Current Outstanding"),
-  upcoming(Color(0xffff9d00), "Upcoming Due"),
-  overdue(Color(0xffbe2121), "Overdue");
-
-  final Color color;
-  final String placeholder;
-  const CreditType(this.color, this.placeholder);
 }
 
 class OutstandingTable extends StatelessWidget {
