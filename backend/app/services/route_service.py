@@ -84,8 +84,8 @@ class RouteService:
             InsufficientPermissionsError: If user lacks permission
             RouteAlreadyExistsError: If route with ID/code already exists
         """
-        # Check permissions - only client_admin and superadmin can create routes
-        if current_user.get("role") not in ["client_admin", "superadmin"]:
+        # Check permissions - only client_admin, area_manager and superadmin can create routes
+        if current_user.get("role") not in ["client_admin", "area_manager", "superadmin"]:
             raise InsufficientPermissionsError(
                 message="Insufficient permissions to create routes"
             )
@@ -275,8 +275,8 @@ class RouteService:
             InsufficientPermissionsError: If user lacks permission
             InvalidRouteDataError: If update fails
         """
-        # Check permissions - only client_admin and superadmin can update routes
-        if current_user.get("role") not in ["client_admin", "superadmin"]:
+        # Check permissions - only client_admin, area_manager and superadmin can update routes
+        if current_user.get("role") not in ["client_admin", "area_manager", "superadmin"]:
             raise InsufficientPermissionsError(
                 message="Insufficient permissions to update routes"
             )
@@ -341,7 +341,7 @@ class RouteService:
             InsufficientPermissionsError: If user lacks permissions
         """
         # Check permissions
-        if current_user.get("role") not in ["client_admin", "superadmin"]:
+        if current_user.get("role") not in ["client_admin", "area_manager", "superadmin"]:
             raise InsufficientPermissionsError(
                 message="Insufficient permissions to delete routes"
             )
@@ -394,8 +394,8 @@ class RouteService:
             InsufficientPermissionsError: If user lacks permission
             InvalidRouteDataError: If assignment fails
         """
-        # Check permissions - only client_admin and superadmin can manage route assignments
-        if current_user.get("role") not in ["client_admin", "superadmin"]:
+        # Check permissions - only client_admin, area_manager and superadmin can manage route assignments
+        if current_user.get("role") not in ["client_admin", "area_manager", "superadmin"]:
             raise InsufficientPermissionsError(
                 message="Insufficient permissions to manage route assignments"
             )
@@ -467,8 +467,8 @@ class RouteService:
             InsufficientPermissionsError: If user lacks permission
             InvalidRouteDataError: If removal fails
         """
-        # Check permissions - only client_admin and superadmin can manage route assignments
-        if current_user.get("role") not in ["client_admin", "superadmin"]:
+        # Check permissions - only client_admin, area_manager and superadmin can manage route assignments
+        if current_user.get("role") not in ["client_admin", "area_manager", "superadmin"]:
             raise InsufficientPermissionsError(
                 message="Insufficient permissions to manage route assignments"
             )
@@ -576,7 +576,7 @@ class RouteService:
             InsufficientPermissionsError: If user lacks permissions
         """
         # Check permissions
-        if current_user.get("role") not in ["client_admin", "superadmin"]:
+        if current_user.get("role") not in ["client_admin", "area_manager", "superadmin"]:
             raise InsufficientPermissionsError(
                 message="Insufficient permissions to view routes"
             )
@@ -590,14 +590,18 @@ class RouteService:
         data_layer = await self._get_data_layer()
         
         try:
+            logger.info(f"Attempting to get route by route_id: {route_id} for tenant: {tenant_id}")
             # Get route directly by route_id
-            return await data_layer.get_route_by_route_id(route_id, tenant_id)
+            route = await data_layer.get_route_by_route_id(route_id, tenant_id)
+            logger.info(f"Retrieved route from data layer: {route}")
+            return route
             
         except Exception as e:
             logger.error(f"Failed to get route by route_id {route_id}: {str(e)}")
+            logger.error(f"Exception type: {type(e).__name__}")
             raise RouteNotFoundError(
                 message="Failed to retrieve route",
-                details={"error": str(e)}
+                details={"error": str(e), "route_id": route_id, "tenant_id": tenant_id}
             )
     
     async def update_route_by_route_id(self, route_id: str, route_data: RouteUpdate, tenant_id: str, current_user: Dict[str, Any]) -> Dict[str, Any]:
@@ -619,7 +623,7 @@ class RouteService:
             InvalidRouteDataError: If update data is invalid
         """
         # Check permissions
-        if current_user.get("role") not in ["client_admin", "superadmin"]:
+        if current_user.get("role") not in ["client_admin", "area_manager", "superadmin"]:
             raise InsufficientPermissionsError(
                 message="Insufficient permissions to update routes"
             )
@@ -675,7 +679,7 @@ class RouteService:
             InsufficientPermissionsError: If user lacks permissions
         """
         # Check permissions
-        if current_user.get("role") not in ["client_admin", "superadmin"]:
+        if current_user.get("role") not in ["client_admin", "area_manager", "superadmin"]:
             raise InsufficientPermissionsError(
                 message="Insufficient permissions to delete routes"
             )
@@ -721,7 +725,7 @@ class RouteService:
             InsufficientPermissionsError: If user lacks permissions
         """
         # Check permissions
-        if current_user.get("role") not in ["client_admin", "superadmin"]:
+        if current_user.get("role") not in ["client_admin", "area_manager", "superadmin"]:
             raise InsufficientPermissionsError(
                 message="Insufficient permissions to manage route assignments"
             )
@@ -742,34 +746,87 @@ class RouteService:
                     message=f"Route with ID {route_id} not found"
                 )
             
+            logger.info(f"Retrieved route for assignment: {route}")
+            
+            # Check if route has the required 'id' field
+            if 'id' not in route:
+                logger.error(f"Route data missing 'id' field: {route}")
+                raise InvalidRouteDataError(
+                    message="Route data is missing database ID",
+                    details={"route": route}
+                )
+            
             # Add shop using the database ID
-            assignment_dict = assignment_data.model_dump() if hasattr(assignment_data, 'model_dump') else dict(assignment_data)
+            assignment_dict = assignment_data.model_dump() if hasattr(assignment_data, 'model_dump') else assignment_data.dict() if hasattr(assignment_data, 'dict') else dict(assignment_data)
             
             # Add the database ID (not the business route_id) to the assignment data
-            assignment_dict["route_id"] = route["id"]
+            # Convert to string as data layer expects route_id as string
+            assignment_dict["route_id"] = str(route["id"])
+            
+            # Add metadata
+            assignment_dict["created_by"] = current_user.get("id")
+            assignment_dict["updated_by"] = current_user.get("id")
+            
+            logger.info(f"Assignment data before date conversion: {assignment_dict}")
             
             # Convert date objects to ISO format strings for JSON serialization
             if 'planned_date' in assignment_dict and assignment_dict['planned_date']:
                 if hasattr(assignment_dict['planned_date'], 'isoformat'):
                     assignment_dict['planned_date'] = assignment_dict['planned_date'].isoformat()
+                else:
+                    # If it's already a string, ensure it's in the right format
+                    logger.info(f"planned_date is already a string: {assignment_dict['planned_date']}")
             
             if 'planned_time' in assignment_dict and assignment_dict['planned_time']:
                 if hasattr(assignment_dict['planned_time'], 'isoformat'):
+                    # Convert time object to string format expected by data layer
                     assignment_dict['planned_time'] = assignment_dict['planned_time'].isoformat()
+                elif hasattr(assignment_dict['planned_time'], 'total_seconds'):
+                    # Handle timedelta objects by converting to time string
+                    total_seconds = int(assignment_dict['planned_time'].total_seconds())
+                    hours = total_seconds // 3600
+                    minutes = (total_seconds % 3600) // 60
+                    seconds = total_seconds % 60
+                    assignment_dict['planned_time'] = f"{hours:02d}:{minutes:02d}:{seconds:02d}"
+                else:
+                    # If it's already a string, ensure it's in the right format
+                    logger.info(f"planned_time is already a string: {assignment_dict['planned_time']}")
+            
+            logger.info(f"Final assignment data for data layer: {assignment_dict}")
+            
+            # Validate required fields before sending to data layer
+            required_fields = ['shop_id', 'sales_executive_id', 'planned_date', 'route_id']
+            missing_fields = [field for field in required_fields if field not in assignment_dict or assignment_dict[field] is None]
+            if missing_fields:
+                logger.error(f"Missing required fields in assignment data: {missing_fields}")
+                raise InvalidRouteDataError(
+                    message=f"Missing required fields: {', '.join(missing_fields)}",
+                    details={"missing_fields": missing_fields, "assignment_data": assignment_dict}
+                )
             
             # Create the assignment
+            logger.info(f"Calling data layer create_route_assignment with data: {assignment_dict}")
             created_assignment = await data_layer.create_route_assignment(assignment_dict, tenant_id)
+            logger.info(f"Data layer returned assignment: {created_assignment}")
             
             logger.info(
                 f"Shop added to route successfully: route_id {route_id}, shop_id {assignment_data.shop_id}, created_by {current_user.get('id')}"
             )
             return created_assignment
             
+        except RouteNotFoundError:
+            # Re-raise route not found errors without wrapping
+            raise
+        except InvalidRouteDataError:
+            # Re-raise invalid route data errors without wrapping
+            raise
         except Exception as e:
             logger.error(f"Failed to add shop to route by route_id {route_id}: {str(e)}")
+            logger.error(f"Exception type: {type(e).__name__}")
+            logger.error(f"Exception details: {e}")
             raise InvalidRouteDataError(
                 message="Failed to add shop to route",
-                details={"error": str(e)}
+                details={"error": str(e), "exception_type": type(e).__name__}
             )
     
     async def remove_shop_from_route_by_route_id(self, route_id: str, assignment_id: int, tenant_id: str, current_user: Dict[str, Any]) -> None:
@@ -787,7 +844,7 @@ class RouteService:
             InsufficientPermissionsError: If user lacks permissions
         """
         # Check permissions
-        if current_user.get("role") not in ["client_admin", "superadmin"]:
+        if current_user.get("role") not in ["client_admin", "area_manager", "superadmin"]:
             raise InsufficientPermissionsError(
                 message="Insufficient permissions to manage route assignments"
             )
@@ -839,7 +896,7 @@ class RouteService:
             InsufficientPermissionsError: If user lacks permissions
         """
         # Check permissions
-        if current_user.get("role") not in ["client_admin", "superadmin"]:
+        if current_user.get("role") not in ["client_admin", "area_manager", "superadmin"]:
             raise InsufficientPermissionsError(
                 message="Insufficient permissions to view routes"
             )

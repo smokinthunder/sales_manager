@@ -83,17 +83,31 @@ class DataLayerClient:
         
         try:
             logger.debug(f"Making {method} request to Data Layer: {url}")
+            logger.debug(f"Request data: {kwargs}")
             response = await self.client.request(method, url, **kwargs)
             response.raise_for_status()
             return response.json()
         except httpx.HTTPStatusError as e:
-            logger.error(f"Data Layer HTTP error: {e.response.status_code} - {e.response.text}")
+            error_details = e.response.text
+            try:
+                # Try to parse JSON error response for more details
+                error_json = e.response.json()
+                error_details = error_json
+            except:
+                pass
+                
+            logger.error(f"Data Layer HTTP error: {e.response.status_code} - {error_details}")
+            logger.error(f"Request URL: {url}")
+            logger.error(f"Request method: {method}")
+            logger.error(f"Request kwargs: {kwargs}")
+            
             raise HTTPException(
                 status_code=e.response.status_code,
-                detail=f"Data Layer error: {e.response.text}"
+                detail=f"Data Layer error: {error_details}"
             )
         except httpx.RequestError as e:
             logger.error(f"Data Layer request error: {e}")
+            logger.error(f"Request URL: {url}")
             raise HTTPException(
                 status_code=503,
                 detail="Data Layer service unavailable"

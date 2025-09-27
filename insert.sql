@@ -138,6 +138,7 @@ SELECT phone, name, email, role, tenant_id FROM users;
 SELECT territory_id, name, code, area_manager_id FROM territories;
 SELECT shop_id, name, code, territory_id FROM shops;
 SELECT route_id, name, territory_id, week_start_date, status FROM routes;
+SELECT id, route_id, shop_id, sales_executive_id, planned_date FROM route_assignments;
 SELECT shop_id, shop_name, amount, due_date, status, territory_id, tenant_id, notes, sales_executive_id FROM due_data;
 
 

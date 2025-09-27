@@ -37,7 +37,7 @@ async def create_route(
     - Routes are collections of shops with planned visits
     - Each route belongs to a specific territory and week
     - Route ID is auto-generated if not provided (format: RT-001, RT-002, etc.)
-    - Only client_admin and superadmin can create routes
+    - Only client_admin, area_manager and superadmin can create routes
     
     **Required Fields:**
     - name: Route name (e.g., "Morning Route", "Weekend Route")
@@ -166,7 +166,7 @@ async def update_route(
     
     **Security:**
     - Requires authentication
-    - Only client_admin and superadmin can update routes
+    - Only client_admin, area_manager and superadmin can update routes
     - Users can only update routes from their assigned tenant
     """
     try:
@@ -206,7 +206,7 @@ async def delete_route(
     
     **Security:**
     - Requires authentication
-    - Only client_admin and superadmin can delete routes
+    - Only client_admin, area_manager and superadmin can delete routes
     - Users can only delete routes from their assigned tenant
     """
     try:
@@ -257,7 +257,7 @@ async def add_shop_to_route(
     
     **Security:**
     - Requires authentication
-    - Only client_admin and superadmin can manage route assignments
+    - Only client_admin, area_manager and superadmin can manage route assignments
     - Users can only manage assignments within their assigned tenant
     """
     try:
@@ -287,7 +287,7 @@ async def remove_shop_from_route(
     
     **Security:**
     - Requires authentication
-    - Only client_admin and superadmin can manage route assignments
+    - Only client_admin, area_manager and superadmin can manage route assignments
     - Users can only manage assignments within their assigned tenant
     """
     try:

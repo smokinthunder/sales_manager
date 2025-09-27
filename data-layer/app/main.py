@@ -186,7 +186,7 @@ class RouteAssignmentResponse(BaseModel):
     shop_id: str
     sales_executive_id: int
     planned_date: date
-    planned_time: Optional[datetime] = None
+    planned_time: Optional[time] = None
     sequence_order: Optional[int] = None
     status: str
     created_at: datetime
@@ -195,6 +195,7 @@ class RouteAssignmentResponse(BaseModel):
 
 class RouteAssignmentCreate(BaseModel):
     """Model for creating new route assignments."""
+    route_id: str
     shop_id: str
     sales_executive_id: int
     planned_date: date
@@ -1614,13 +1615,24 @@ async def create_route_assignment(
         created_assignment = result.fetchone()
         
         if created_assignment:
+            # Convert timedelta to time if needed
+            planned_time_value = created_assignment[5]
+            if planned_time_value and hasattr(planned_time_value, 'total_seconds'):
+                # Convert timedelta to time
+                total_seconds = int(planned_time_value.total_seconds())
+                hours = total_seconds // 3600
+                minutes = (total_seconds % 3600) // 60
+                seconds = total_seconds % 60
+                from datetime import time
+                planned_time_value = time(hours, minutes, seconds)
+            
             return RouteAssignmentResponse(
                 id=created_assignment[0],
                 route_id=created_assignment[1],
                 shop_id=created_assignment[2],
                 sales_executive_id=created_assignment[3],
                 planned_date=created_assignment[4],
-                planned_time=created_assignment[5],
+                planned_time=planned_time_value,
                 sequence_order=created_assignment[6],
                 status=created_assignment[7],
                 created_at=created_assignment[8],
