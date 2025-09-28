@@ -166,6 +166,50 @@ class RemoteRouteService {
     }
   }
 
+  Future<Result<List<Map<String, dynamic>>>> getAllAssignedRoutes({
+    String? salesExecutiveId,
+    String? territoryId,
+    String? routeId,
+    String? shopId,
+    String? plannedDateFrom,
+    String? plannedDateTo,
+    String? status,
+  }) async {
+    final queryParameters = {
+      "tenant_id": tenantId,
+      if (salesExecutiveId != null) "sales_executive_id": salesExecutiveId,
+      if (territoryId != null) "territory_id": territoryId,
+      if (routeId != null) "route_id": routeId,
+      if (shopId != null) "shop_id": shopId,
+      if (plannedDateFrom != null) "planned_date_from": plannedDateFrom,
+      if (plannedDateTo != null) "planned_date_to": plannedDateTo,
+      if (status != null) "status": status,
+    };
+    try {
+      final Response response = await dio.get(
+        ApiEndpoints.routeAssignments,
+        queryParameters: queryParameters,
+      );
+      final rawData = response.data;
+      if (rawData == null || rawData.isEmpty) {
+        return Result.error(Exception("No data received"));
+      }
+      if (rawData is! List) {
+        return Result.error(
+          Exception("Expected a list, got ${rawData.runtimeType}"),
+        );
+      }
+
+      final List<Map<String, dynamic>> result = rawData
+          .map((item) => item as Map<String, dynamic>)
+          .toList();
+
+      return Result.ok(result);
+    } on DioException catch (e) {
+      return Result.error(Exception(e.response?.data['detail'] ?? e.message));
+    }
+  }
+
   Future<Result<Response<Map<String, dynamic>>>> getRouteWithAssignments(
     String routeId,
   ) async {

@@ -30,6 +30,7 @@ class ApiEndpoints {
 
   // Routes Apis
   static final String routes = "${_apiUrl}routes/";
+  static final String routeAssignments = "${routes}assignments/";
 
   // Shops Apis
   static final String shops = "${_apiUrl}shops/";

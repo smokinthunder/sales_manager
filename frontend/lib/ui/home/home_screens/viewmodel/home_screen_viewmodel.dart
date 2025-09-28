@@ -26,6 +26,60 @@ Future<List<Map<String, dynamic>>> getTopFourShops(Ref ref) async {
 }
 
 @Riverpod(keepAlive: true)
+Future<List<Map<String, dynamic>>> getAllAssignedRoutes(Ref ref) async {
+  final today = DateTime.now();
+  final formattedDate =
+      '${today.year}-${today.month.toString().padLeft(2, '0')}-${today.day.toString().padLeft(2, '0')}';
+  final assignedRoutes = await ref.watch(routeRemoteRepositoryProvider).getAllAssignedRoutes(plannedDateFrom: formattedDate, plannedDateTo: formattedDate);
+  final users = await ref
+      .watch(userRemoteRepositoryProvider)
+      .getUsers(role: UserRole.salesExecutive.backendName);
+  final routes = await ref.watch(routeRemoteRepositoryProvider).getRoutes();
+  print(assignedRoutes);
+  switch (assignedRoutes) {
+    case Ok():
+      final rawdata = assignedRoutes.value;
+
+      final assignedRoutesWithNames = rawdata.map((e) {
+        final String salesExecutiveId = e['sales_executive_id'].toString();
+        final String routeId = e['route_id'];
+        String salesExecutiveName = 'Unknown';
+        String routeName = 'Unknown';
+        switch (users) {
+          case Ok():
+            salesExecutiveName = users.value.firstWhere(
+              (user) => user['id'].toString() == salesExecutiveId,
+              orElse: () => {'name': 'Unknown'},
+            )['name'];
+          case Error():
+            salesExecutiveName = 'Unknown';
+        }
+        switch (routes) {
+          case Ok():
+            routeName = routes.value.firstWhere(
+              (route) => route['id'].toString() == routeId,
+              orElse: () => {'name': 'Unknown'},
+            )['name'];
+          case Error():
+            routeName = 'Unknown';
+        }
+        return {
+          ...e,
+          'sales_executive_name': salesExecutiveName,
+          'route_name': routeName,
+        };
+      }).toList();
+      return assignedRoutesWithNames;
+      // return rawdata;
+    case Error():
+      print(assignedRoutes.error.toString());
+      return [
+        {'sales_executive_name': "error", 'route_name': "error"},
+      ];
+  }
+}
+
+@Riverpod(keepAlive: true)
 Future<List<Map<String, dynamic>>> getAllShops(Ref ref) async {
   final res = await ref.watch(shopRemoteRepositoryProvider).getShops();
   print(res);

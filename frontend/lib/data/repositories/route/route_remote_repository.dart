@@ -21,23 +21,26 @@ class RouteRemoteRepository {
     String? routeId,
     String status = "planned",
   }) async => await remoteRouteService.createRoute(
-        name: name,
-        territoryId: territoryId,
-        weekStartDate: weekStartDate,
-        routeId: routeId,
-        status: status);
+    name: name,
+    territoryId: territoryId,
+    weekStartDate: weekStartDate,
+    routeId: routeId,
+    status: status,
+  );
 
   Future<Result<List<Map<String, dynamic>>>> getRoutes({
     int? executiveId,
     String? weekStart,
     String? routeStatus,
   }) async => await remoteRouteService.getRoutes(
-        executiveId: executiveId,
-        weekStart: weekStart,
-        routeStatus: routeStatus);
+    executiveId: executiveId,
+    weekStart: weekStart,
+    routeStatus: routeStatus,
+  );
 
-  Future<Result<Response<Map<String, dynamic>>>> getRoute(String routeId) async =>
-      await remoteRouteService.getRoute(routeId);
+  Future<Result<Response<Map<String, dynamic>>>> getRoute(
+    String routeId,
+  ) async => await remoteRouteService.getRoute(routeId);
 
   Future<Result<Response<Map<String, dynamic>>>> updateRoute({
     required String routeId,
@@ -47,12 +50,13 @@ class RouteRemoteRepository {
     String? status,
     String? updateRouteId,
   }) async => await remoteRouteService.updateRoute(
-        routeId: routeId,
-        name: name,
-        territoryId: territoryId,
-        weekStartDate: weekStartDate,
-        status: status,
-        updateRouteId: updateRouteId);
+    routeId: routeId,
+    name: name,
+    territoryId: territoryId,
+    weekStartDate: weekStartDate,
+    status: status,
+    updateRouteId: updateRouteId,
+  );
 
   Future<Result<Response<void>>> deleteRoute(String routeId) async =>
       await remoteRouteService.deleteRoute(routeId);
@@ -66,22 +70,42 @@ class RouteRemoteRepository {
     int? sequenceOrder,
     String status = "planned",
   }) async => await remoteRouteService.addShopToRoute(
-        routeId: routeId,
-        shopId: shopId,
-        salesExecutiveId: salesExecutiveId,
-        plannedDate: plannedDate,
-        plannedTime: plannedTime,
-        sequenceOrder: sequenceOrder,
-        status: status);
+    routeId: routeId,
+    shopId: shopId,
+    salesExecutiveId: salesExecutiveId,
+    plannedDate: plannedDate,
+    plannedTime: plannedTime,
+    sequenceOrder: sequenceOrder,
+    status: status,
+  );
+  
+  Future<Result<List<Map<String, dynamic>>>> getAllAssignedRoutes({
+    String? salesExecutiveId,
+    String? territoryId,
+    String? routeId,
+    String? shopId,
+    String? plannedDateFrom,
+    String? plannedDateTo,
+    String? status,
+  }) async => await remoteRouteService.getAllAssignedRoutes(
+    salesExecutiveId: salesExecutiveId,
+    territoryId: territoryId,
+    routeId: routeId,
+    shopId: shopId,
+    plannedDateFrom: plannedDateFrom,
+    plannedDateTo: plannedDateTo,
+    status: status,
+  );
 
   Future<Result<Response<Map<String, dynamic>>>> getRouteWithAssignments(
-      String routeId) async =>
-      await remoteRouteService.getRouteWithAssignments(routeId);
+    String routeId,
+  ) async => await remoteRouteService.getRouteWithAssignments(routeId);
 
   Future<Result<Response<void>>> removeShopFromRoute({
     required String routeId,
     required int assignmentId,
-  }) async =>
-      await remoteRouteService.removeShopFromRoute(
-          routeId: routeId, assignmentId: assignmentId);
+  }) async => await remoteRouteService.removeShopFromRoute(
+    routeId: routeId,
+    assignmentId: assignmentId,
+  );
 }

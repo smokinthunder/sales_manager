@@ -1,8 +1,10 @@
+// ignore_for_file: public_member_api_docs, sort_constructors_first
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
+
 import 'package:sales_manager/config/providers/login_message_provider.dart';
 import 'package:sales_manager/routing/route_paths.dart';
 import 'package:sales_manager/ui/home/home_screens/viewmodel/home_screen_viewmodel.dart';
@@ -57,22 +59,22 @@ class _AreaManagerHomeState extends ConsumerState<AreaManagerHome> {
           Text("Create Route", style: textTheme.bodyLarge),
           CreateRouteCard(),
           DailyExecutiveRoute(
-            routeData: [
-              ExecutiveRouteData('John Doe', 'ABC Plumbing', 'North Zone'),
-              ExecutiveRouteData('Jane Smith', 'XYZ Hardware', 'East Zone'),
-              ExecutiveRouteData(
-                'Mike Johnson',
-                'LMN Electricals',
-                'South Zone',
-              ),
-              ExecutiveRouteData('John Doe', 'ABC Plumbing', 'North Zone'),
-              ExecutiveRouteData('Jane Smith', 'XYZ Hardware', 'East Zone'),
-              ExecutiveRouteData(
-                'Mike Johnson',
-                'LMN Electricals',
-                'South Zone',
-              ),
-            ],
+            // routeData: [
+            //   ExecutiveRouteData('John Doe', 'ABC Plumbing', 'North Zone'),
+            //   ExecutiveRouteData('Jane Smith', 'XYZ Hardware', 'East Zone'),
+            //   ExecutiveRouteData(
+            //     'Mike Johnson',
+            //     'LMN Electricals',
+            //     'South Zone',
+            //   ),
+            //   ExecutiveRouteData('John Doe', 'ABC Plumbing', 'North Zone'),
+            //   ExecutiveRouteData('Jane Smith', 'XYZ Hardware', 'East Zone'),
+            //   ExecutiveRouteData(
+            //     'Mike Johnson',
+            //     'LMN Electricals',
+            //     'South Zone',
+            //   ),
+            // ],
           ),
           Padding(
             padding: const EdgeInsets.symmetric(vertical: 12.0),
@@ -268,12 +270,12 @@ class TrackingData extends StatelessWidget {
   }
 }
 
-class DailyExecutiveRoute extends StatelessWidget {
-  const DailyExecutiveRoute({super.key, required this.routeData});
-  final List<ExecutiveRouteData> routeData;
+class DailyExecutiveRoute extends ConsumerWidget {
+  const DailyExecutiveRoute({super.key, });
+  // final List<ExecutiveRouteData> routeData;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final TextTheme textTheme = Theme.of(context).textTheme;
     final ColorScheme colorScheme = Theme.of(context).colorScheme;
     final titleStyle = textTheme.labelLarge?.copyWith(
@@ -293,70 +295,140 @@ class DailyExecutiveRoute extends StatelessWidget {
             ),
           ),
         ),
-        Table(
-          columnWidths: const {
-            0: FlexColumnWidth(2),
-            1: FlexColumnWidth(2),
-            2: FlexColumnWidth(2),
-          },
-          children: [
-            TableRow(
-              children: [
-                Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 12.0),
-                  child: Text(
-                    "Executive",
-                    style: titleStyle,
-                    textAlign: TextAlign.center,
-                  ),
-                ),
-                Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 12.0),
-                  child: Text(
-                    'Location',
-                    style: titleStyle,
-                    textAlign: TextAlign.center,
-                  ),
-                ),
-                Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 12.0),
-                  child: Text(
-                    "Area",
-                    style: titleStyle,
-                    textAlign: TextAlign.center,
-                  ),
-                ),
-              ],
+
+        ref
+            .watch(getAllAssignedRoutesProvider)
+            .when(
+              loading: () => Center(child: CircularProgressIndicator()),
+              error: (error, stackTrace) =>
+                  Center(child: Text('Error: $error')),
+              data: (routes) {
+                return Table(
+                  columnWidths: const {
+                    0: FlexColumnWidth(2),
+                    1: FlexColumnWidth(4),
+                  },
+                  children: [
+                    TableRow(
+                      children: [
+                        Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 12.0),
+                          child: Text(
+                            "Executive",
+                            style: titleStyle,
+                            textAlign: TextAlign.center,
+                          ),
+                        ),
+                        Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 12.0),
+                          child: Text(
+                            'Route Assigned',
+                            style: titleStyle,
+                            textAlign: TextAlign.center,
+                          ),
+                        ),
+                      ],
+                    ),
+
+                    ...routes.map(
+                      (route) => TableRow(
+                        decoration: BoxDecoration(
+                          border: Border(
+                            bottom: BorderSide(color: colorScheme.tertiary),
+                          ),
+                        ),
+                        children: [
+                          Padding(
+                            padding: const EdgeInsets.all(12.0),
+                            child: Center(
+                              child: Text(
+                                route['sales_executive_name'],
+                                style: contentStyle,
+                              ),
+                            ),
+                          ),
+                          Padding(
+                            padding: const EdgeInsets.all(12.0),
+                            child: Center(
+                              child: Text(
+                                route['route_name'],
+                                style: contentStyle,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                );
+              },
             ),
-            ...routeData.map(
-              (e) => TableRow(
-                decoration: BoxDecoration(
-                  border: Border(
-                    bottom: BorderSide(color: colorScheme.tertiary),
-                  ),
-                ),
-                children: [
-                  Padding(
-                    padding: const EdgeInsets.all(12.0),
-                    child: Center(child: Text(e.name, style: contentStyle)),
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.all(12.0),
-                    child: Center(child: Text(e.location, style: contentStyle)),
-                  ),
-                  ExpansionTile(
-                    shape: RoundedRectangleBorder(),
-                    dense: true,
-                    tilePadding: EdgeInsets.zero,
-                    visualDensity: VisualDensity.compact,
-                    title: Text(e.area, style: contentStyle),
-                    children: [Text(e.location, style: contentStyle)],
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
+
+        // Table(
+        //   columnWidths: const {
+        //     0: FlexColumnWidth(2),
+        //     1: FlexColumnWidth(2),
+        //     2: FlexColumnWidth(2),
+        //   },
+        //   children: [
+        //     TableRow(
+        //       children: [
+        //         Padding(
+        //           padding: const EdgeInsets.symmetric(vertical: 12.0),
+        //           child: Text(
+        //             "Executive",
+        //             style: titleStyle,
+        //             textAlign: TextAlign.center,
+        //           ),
+        //         ),
+        //         Padding(
+        //           padding: const EdgeInsets.symmetric(vertical: 12.0),
+        //           child: Text(
+        //             'Location',
+        //             style: titleStyle,
+        //             textAlign: TextAlign.center,
+        //           ),
+        //         ),
+        //         Padding(
+        //           padding: const EdgeInsets.symmetric(vertical: 12.0),
+        //           child: Text(
+        //             "Area",
+        //             style: titleStyle,
+        //             textAlign: TextAlign.center,
+        //           ),
+        //         ),
+        //       ],
+        //     ),
+
+        //     ...routeData.map(
+        //       (e) => TableRow(
+        //         decoration: BoxDecoration(
+        //           border: Border(
+        //             bottom: BorderSide(color: colorScheme.tertiary),
+        //           ),
+        //         ),
+        //         children: [
+        //           Padding(
+        //             padding: const EdgeInsets.all(12.0),
+        //             child: Center(child: Text(e.name, style: contentStyle)),
+        //           ),
+        //           Padding(
+        //             padding: const EdgeInsets.all(12.0),
+        //             child: Center(child: Text(e.location, style: contentStyle)),
+        //           ),
+        //           ExpansionTile(
+        //             shape: RoundedRectangleBorder(),
+        //             dense: true,
+        //             tilePadding: EdgeInsets.zero,
+        //             visualDensity: VisualDensity.compact,
+        //             title: Text(e.area, style: contentStyle),
+        //             children: [Text(e.location, style: contentStyle)],
+        //           ),
+        //         ],
+        //       ),
+        //     ),
+        //   ],
+        // ),
       ],
     );
   }
