@@ -929,6 +929,142 @@ class RouteService:
                 details={"error": str(e)}
             )
 
+    async def get_all_route_assignments(self, tenant_id: str, current_user: Dict[str, Any], filters: Dict[str, Any] = None) -> List[Dict[str, Any]]:
+        """
+        Get all route assignments for the specified tenant with optional filtering.
+        
+        **Access Control:**
+        - Sales executives can only retrieve routes assigned to them (filtered automatically)
+        - Area managers, client admins, and superadmins can retrieve all assignments
+        
+        **Args:**
+            tenant_id (str): Tenant identifier
+            current_user (Dict[str, Any]): Current user information
+            filters (Dict[str, Any], optional): Filter parameters
+        
+        **Returns:**
+            List[Dict[str, Any]]: List of route assignments with details
+        
+        **Raises:**
+            InsufficientPermissionsError: If user lacks proper permissions
+            InvalidRouteDataError: If filter parameters are invalid
+        """
+        try:
+            # Check permissions - allow all authenticated users
+            if not current_user:
+                raise InsufficientPermissionsError(
+                    message="Authentication required to view route assignments"
+                )
+            
+            # Enforce tenant isolation based on user role
+            user_tenant_id = current_user.get("tenant_id")
+            
+            if current_user.get("role") == "superadmin":
+                # Superadmin can view assignments from any tenant
+                target_tenant = tenant_id
+            else:
+                # Non-superadmin users can ONLY access their own tenant
+                if tenant_id != user_tenant_id:
+                    raise InsufficientPermissionsError(
+                        message="You can only view route assignments from your own tenant"
+                    )
+                target_tenant = user_tenant_id
+            
+            # For sales executives, automatically filter by their ID unless they're superadmin
+            if current_user.get("role") == "sales_executive":
+                if filters is None:
+                    filters = {}
+                filters["sales_executive_id"] = current_user.get("id")
+                logger.info(f"Sales executive {current_user.get('id')} requesting their own assignments")
+            
+            # Get data layer client
+            data_layer = await self._get_data_layer()
+            
+            # Validate and process filters
+            processed_filters = self._process_assignment_filters(filters or {})
+            
+            # Get all route assignments from data layer
+            assignments = await data_layer.get_all_route_assignments(target_tenant, processed_filters)
+            
+            logger.info(f"Retrieved {len(assignments)} route assignments for tenant {target_tenant}")
+            return assignments
+            
+        except InsufficientPermissionsError:
+            raise
+        except Exception as e:
+            logger.error(f"Failed to get all route assignments for tenant {tenant_id}: {str(e)}")
+            raise InvalidRouteDataError(
+                message="Failed to retrieve route assignments",
+                details={"error": str(e)}
+            )
+    
+    def _process_assignment_filters(self, filters: Dict[str, Any]) -> Dict[str, Any]:
+        """
+        Process and validate assignment filters.
+        
+        **Args:**
+            filters (Dict[str, Any]): Raw filter parameters
+        
+        **Returns:**
+            Dict[str, Any]: Processed and validated filters
+        
+        **Raises:**
+            InvalidRouteDataError: If filter parameters are invalid
+        """
+        processed_filters = {}
+        
+        try:
+            # Process integer filters
+            if filters.get("sales_executive_id"):
+                processed_filters["sales_executive_id"] = int(filters["sales_executive_id"])
+            
+            # Process string filters
+            for field in ["territory_id", "route_id", "shop_id", "assignment_status"]:
+                if filters.get(field):
+                    processed_filters[field] = str(filters[field]).strip()
+            
+            # Process date filters
+            if filters.get("planned_date_from"):
+                try:
+                    from datetime import datetime
+                    datetime.strptime(filters["planned_date_from"], "%Y-%m-%d")
+                    processed_filters["planned_date_from"] = filters["planned_date_from"]
+                except ValueError:
+                    raise InvalidRouteDataError(
+                        message="Invalid planned_date_from format. Use YYYY-MM-DD",
+                        details={"provided": filters["planned_date_from"]}
+                    )
+            
+            if filters.get("planned_date_to"):
+                try:
+                    from datetime import datetime
+                    datetime.strptime(filters["planned_date_to"], "%Y-%m-%d")
+                    processed_filters["planned_date_to"] = filters["planned_date_to"]
+                except ValueError:
+                    raise InvalidRouteDataError(
+                        message="Invalid planned_date_to format. Use YYYY-MM-DD",
+                        details={"provided": filters["planned_date_to"]}
+                    )
+            
+            # Validate assignment status if provided
+            valid_statuses = ["planned", "in_progress", "completed", "skipped"]
+            if processed_filters.get("assignment_status") and processed_filters["assignment_status"] not in valid_statuses:
+                raise InvalidRouteDataError(
+                    message=f"Invalid assignment_status. Must be one of: {', '.join(valid_statuses)}",
+                    details={"provided": processed_filters["assignment_status"]}
+                )
+            
+            return processed_filters
+            
+        except InvalidRouteDataError:
+            raise
+        except Exception as e:
+            logger.error(f"Error processing assignment filters: {str(e)}")
+            raise InvalidRouteDataError(
+                message="Invalid filter parameters",
+                details={"error": str(e)}
+            )
+
 
 # Dependency injection
 async def get_route_service() -> RouteService:

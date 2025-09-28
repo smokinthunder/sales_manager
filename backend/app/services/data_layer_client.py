@@ -512,6 +512,26 @@ class DataLayerClient:
         except Exception:
             return None
     
+    async def get_all_route_assignments(self, tenant_id: str, filters: Dict[str, Any] = None) -> List[Dict[str, Any]]:
+        """
+        Get all route assignments for a tenant with optional filtering.
+        
+        Args:
+            tenant_id: Tenant identifier
+            filters: Optional filter parameters
+            
+        Returns:
+            List of route assignments
+        """
+        params = {}
+        if filters:
+            # Pass all filters as query parameters
+            for key, value in filters.items():
+                if value is not None:
+                    params[key] = value
+        
+        return await self._make_request("GET", f"/api/route-assignments/{tenant_id}", params=params)
+    
     async def get_shop_analytics(self, tenant_id: str) -> List[Dict[str, Any]]:
         """
         Get shop performance analytics for a specific tenant.

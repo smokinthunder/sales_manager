@@ -119,6 +119,77 @@ async def get_routes(
         )
 
 
+@router.get("/assignments", response_model=List[RouteAssignmentRead])
+async def get_all_route_assignments(
+    tenant_id: str = Query(..., description="Tenant identifier (required)"),
+    sales_executive_id: Optional[int] = Query(None, description="Filter by sales executive ID"),
+    territory_id: Optional[str] = Query(None, description="Filter by territory ID"),
+    route_id: Optional[str] = Query(None, description="Filter by route ID"),
+    shop_id: Optional[str] = Query(None, description="Filter by shop ID"),
+    planned_date_from: Optional[str] = Query(None, description="Filter by planned date from (YYYY-MM-DD)"),
+    planned_date_to: Optional[str] = Query(None, description="Filter by planned date to (YYYY-MM-DD)"),
+    assignment_status: Optional[str] = Query(None, description="Filter by assignment status"),
+    current_user: Dict[str, Any] = Depends(get_current_user),
+    route_service: RouteService = Depends(get_route_service)
+):
+    """
+    Get all route assignments for the specified tenant with optional filtering.
+    
+    **Access Control:**
+    - Sales executives can only retrieve routes assigned to them (filtered automatically)
+    - Area managers, client admins, and superadmins can retrieve all assignments
+    
+    **Filters Available:**
+    - sales_executive_id: Filter assignments by sales executive
+    - territory_id: Filter assignments by territory
+    - route_id: Filter assignments by specific route
+    - shop_id: Filter assignments by specific shop
+    - planned_date_from/to: Filter by planned visit date range
+    - assignment_status: Filter by assignment status (planned, completed, skipped)
+    
+    **Response Includes:**
+    - Assignment ID and route information
+    - Shop and sales executive details
+    - Planned date, time, and sequence order
+    - Assignment status and timestamps
+    
+    **Security:**
+    - Requires authentication
+    - Role-based access control enforced
+    - Automatic filtering for sales executives
+    """
+    try:
+        # Build filter parameters
+        filters = {}
+        if sales_executive_id:
+            filters["sales_executive_id"] = sales_executive_id
+        if territory_id:
+            filters["territory_id"] = territory_id
+        if route_id:
+            filters["route_id"] = route_id
+        if shop_id:
+            filters["shop_id"] = shop_id
+        if planned_date_from:
+            filters["planned_date_from"] = planned_date_from
+        if planned_date_to:
+            filters["planned_date_to"] = planned_date_to
+        if assignment_status:
+            filters["assignment_status"] = assignment_status
+        
+        assignments = await route_service.get_all_route_assignments(tenant_id, current_user, filters)
+        return assignments
+    except InsufficientPermissionsError as e:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail=e.message
+        )
+    except InvalidRouteDataError as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=e.message
+        )
+
+
 @router.get("/{route_id}", response_model=RouteRead)
 async def get_route(
     route_id: str = Path(..., description="Business-friendly route identifier (e.g., RT-001)"),
@@ -303,6 +374,7 @@ async def remove_shop_from_route(
             status_code=status.HTTP_403_FORBIDDEN,
             detail=e.message
         )
+
 
 
 @router.get("/{route_id}/assignments", response_model=RouteWithAssignments)

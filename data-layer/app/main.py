@@ -1751,6 +1751,118 @@ async def get_route_assignments(
         logger.error(f"Unexpected error: {e}")
         raise HTTPException(status_code=500, detail="Internal server error")
 
+
+@app.get("/api/route-assignments/{tenant_id}", response_model=List[RouteAssignmentResponse])
+async def get_all_route_assignments(
+    tenant_id: str,
+    sales_executive_id: Optional[int] = None,
+    territory_id: Optional[str] = None,
+    route_id: Optional[str] = None,
+    shop_id: Optional[str] = None,
+    planned_date_from: Optional[date] = None,
+    planned_date_to: Optional[date] = None,
+    assignment_status: Optional[str] = None,
+    db=Depends(get_db)
+):
+    """Get all route assignments for a tenant with optional filtering."""
+    try:
+        # Build base query with JOINs to get related data
+        base_query = """
+            SELECT DISTINCT
+                ra.id,
+                ra.route_id,
+                ra.shop_id,
+                ra.sales_executive_id,
+                ra.planned_date,
+                ra.planned_time,
+                ra.sequence_order,
+                ra.status,
+                ra.created_at,
+                ra.updated_at
+            FROM route_assignments ra
+            INNER JOIN routes r ON ra.route_id = r.id AND r.tenant_id = :tenant_id
+            LEFT JOIN shops s ON ra.shop_id = s.shop_id AND s.tenant_id = :tenant_id
+            LEFT JOIN users u ON ra.sales_executive_id = u.id AND u.tenant_id = :tenant_id
+        """
+        
+        # Build WHERE conditions
+        where_conditions = []
+        params = {"tenant_id": tenant_id}
+        
+        if sales_executive_id:
+            where_conditions.append("ra.sales_executive_id = :sales_executive_id")
+            params["sales_executive_id"] = sales_executive_id
+        
+        if territory_id:
+            where_conditions.append("r.territory_id = :territory_id")
+            params["territory_id"] = territory_id
+        
+        if route_id:
+            where_conditions.append("r.route_id = :route_id")
+            params["route_id"] = route_id
+        
+        if shop_id:
+            where_conditions.append("ra.shop_id = :shop_id")
+            params["shop_id"] = shop_id
+        
+        if planned_date_from:
+            where_conditions.append("ra.planned_date >= :planned_date_from")
+            params["planned_date_from"] = planned_date_from
+        
+        if planned_date_to:
+            where_conditions.append("ra.planned_date <= :planned_date_to")
+            params["planned_date_to"] = planned_date_to
+        
+        if assignment_status:
+            where_conditions.append("ra.status = :assignment_status")
+            params["assignment_status"] = assignment_status
+        
+        # Construct final query
+        if where_conditions:
+            query = text(base_query + " WHERE " + " AND ".join(where_conditions) + " ORDER BY ra.planned_date DESC, ra.sequence_order ASC")
+        else:
+            query = text(base_query + " ORDER BY ra.planned_date DESC, ra.sequence_order ASC")
+        
+        result = db.execute(query, params)
+        assignments = []
+        
+        for row in result:
+            # Convert timedelta to time if needed
+            planned_time_value = row[5]
+            if planned_time_value and hasattr(planned_time_value, 'total_seconds'):
+                # Convert timedelta to time
+                total_seconds = int(planned_time_value.total_seconds())
+                hours = total_seconds // 3600
+                minutes = (total_seconds % 3600) // 60
+                seconds = total_seconds % 60
+                from datetime import time
+                planned_time_value = time(hours, minutes, seconds)
+            
+            assignments.append(RouteAssignmentResponse(
+                id=row[0],
+                route_id=row[1],
+                shop_id=row[2],
+                sales_executive_id=row[3],
+                planned_date=row[4],
+                planned_time=planned_time_value,
+                sequence_order=row[6],
+                status=row[7],
+                created_at=row[8],
+                updated_at=row[9]
+            ))
+        
+        return assignments
+        
+    except HTTPException:
+        raise
+    except SQLAlchemyError as e:
+        logger.error(f"Database error: {e}")
+        raise HTTPException(status_code=500, detail="Database error")
+    except Exception as e:
+        logger.error(f"Unexpected error: {e}")
+        raise HTTPException(status_code=500, detail="Internal server error")
+
+
 @app.get("/api/analytics/shop-performance/{tenant_id}", response_model=List[AnalyticsResponse])
 async def get_shop_analytics(tenant_id: str, db=Depends(get_db)):
     """Get shop performance analytics for a specific tenant"""
