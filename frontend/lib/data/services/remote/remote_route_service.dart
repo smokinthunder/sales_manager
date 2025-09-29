@@ -192,7 +192,7 @@ class RemoteRouteService {
       );
       final rawData = response.data;
       if (rawData == null || rawData.isEmpty) {
-        return Result.error(Exception("No data received"));
+        return Result.ok([]);
       }
       if (rawData is! List) {
         return Result.error(

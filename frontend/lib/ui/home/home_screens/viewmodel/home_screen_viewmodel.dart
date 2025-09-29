@@ -65,11 +65,7 @@ Future<List<Map<String, dynamic>>> getYourAssignedRoutes(Ref ref) async {
           case Error():
             routeName = 'Unknown';
         }
-        return {
-          ...e,
-          'shop_name': shopName,
-          'route_name': routeName,
-        };
+        return {...e, 'shop_name': shopName, 'route_name': routeName};
       }).toList();
       return assignedRoutesWithNames;
     case Error():
@@ -80,7 +76,7 @@ Future<List<Map<String, dynamic>>> getYourAssignedRoutes(Ref ref) async {
   }
 }
 
-@Riverpod(keepAlive: true)
+@riverpod
 Future<List<Map<String, dynamic>>> getAllAssignedRoutes(Ref ref) async {
   final today = DateTime.now();
   final formattedDate =
@@ -134,7 +130,10 @@ Future<List<Map<String, dynamic>>> getAllAssignedRoutes(Ref ref) async {
     case Error():
       print(assignedRoutes.error.toString());
       return [
-        {'sales_executive_name': "error", 'route_name': "error"},
+        {
+          'sales_executive_name': "error",
+          'route_name': assignedRoutes.error.toString(),
+        },
       ];
   }
 }

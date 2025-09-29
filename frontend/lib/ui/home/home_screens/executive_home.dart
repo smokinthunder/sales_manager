@@ -86,46 +86,42 @@ class _ExecutiveHomeState extends ConsumerState<ExecutiveHome> {
             ),
             child: Column(
               children: [
-                  ...ref
+                ...ref
                     .watch(getYourAssignedRoutesProvider)
                     .when(
-                      loading: () => [Center(child: CircularProgressIndicator())],
-                      error: (error, stackTrace) =>
-                          [Center(child: Text('Error: $error'))],
+                      loading: () => [
+                        Center(child: CircularProgressIndicator()),
+                      ],
+                      error: (error, stackTrace) => [
+                        Center(child: Text('Error: $error')),
+                      ],
                       data: (data) {
-                        return List.generate(data.length,(index) =>
-                        Padding(
-                  padding: const EdgeInsets.all(16.0),
-                  child: Row(
-                    children:  [
-                      Expanded(
-                        child: _InputField(label: "Shop Name", value: data[index]['shop_name']),
-                      ),
-                      SizedBox(width: 10),
-                      Expanded(
-                        child: _InputField(label: "Route Name", value: data[index]['route_name']),
-                      ),
-                    ],
-                  ),
-                ),
-                         ) ;
+                        return List.generate(
+                          data.length,
+                          (index) => Padding(
+                            padding: const EdgeInsets.all(16.0),
+                            child: Row(
+                              children: [
+                                Expanded(
+                                  child: _InputField(
+                                    label: "Shop Name",
+                                    value: data[index]['shop_name'],
+                                  ),
+                                ),
+                                SizedBox(width: 10),
+                                Expanded(
+                                  child: _InputField(
+                                    label: "Route Name",
+                                    value: data[index]['route_name'],
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        );
                       },
                     ),
 
-                Padding(
-                  padding: const EdgeInsets.all(16.0),
-                  child: Row(
-                    children: const [
-                      Expanded(
-                        child: _InputField(label: "Location", value: "Kochi"),
-                      ),
-                      SizedBox(width: 10),
-                      Expanded(
-                        child: _InputField(label: "Area", value: "Kalamassery"),
-                      ),
-                    ],
-                  ),
-                ),
                 ExpansionTile(
                   shape: RoundedRectangleBorder(),
                   title: Text(

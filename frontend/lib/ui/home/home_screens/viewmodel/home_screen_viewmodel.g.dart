@@ -45,12 +45,12 @@ final getYourAssignedRoutesProvider =
 typedef GetYourAssignedRoutesRef =
     FutureProviderRef<List<Map<String, dynamic>>>;
 String _$getAllAssignedRoutesHash() =>
-    r'91ad451c0d47372b85167ee29cc7f484f87536ed';
+    r'4b33880c0ee1301338323e97c1b516b36572e787';
 
 /// See also [getAllAssignedRoutes].
 @ProviderFor(getAllAssignedRoutes)
 final getAllAssignedRoutesProvider =
-    FutureProvider<List<Map<String, dynamic>>>.internal(
+    AutoDisposeFutureProvider<List<Map<String, dynamic>>>.internal(
       getAllAssignedRoutes,
       name: r'getAllAssignedRoutesProvider',
       debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
@@ -62,7 +62,8 @@ final getAllAssignedRoutesProvider =
 
 @Deprecated('Will be removed in 3.0. Use Ref instead')
 // ignore: unused_element
-typedef GetAllAssignedRoutesRef = FutureProviderRef<List<Map<String, dynamic>>>;
+typedef GetAllAssignedRoutesRef =
+    AutoDisposeFutureProviderRef<List<Map<String, dynamic>>>;
 String _$getAllShopsHash() => r'24ba7ff4adac5cb3471c35964aa3d4ad7f504257';
 
 /// See also [getAllShops].
