@@ -378,3 +378,48 @@ def calculate_compliance_rate(
     if total_orders == 0:
         return 0.0
     return (orders_within_30_days / total_orders) * 100
+
+
+# Response models for analytics endpoints
+class TopCustomerResponse(BasePydanticModel):
+    """Response model for top customers analytics."""
+    
+    shop_name: str = Field(..., description="Shop name")
+    points: float = Field(..., description="Customer points")
+
+
+class BestSellingProductResponse(BasePydanticModel):
+    """Response model for best selling products analytics."""
+    
+    product_name: str = Field(..., description="Product name")
+    units_sold: int = Field(..., description="Units sold by sales executive")
+    percentage: float = Field(..., description="Percentage of total products sold")
+
+
+class SalesReportResponse(BasePydanticModel):
+    """Response model for sales report analytics."""
+    
+    month_year: str = Field(..., description="Month and year in YYYY-MM format")
+    sale_point: float = Field(..., description="Sales points for the month")
+
+
+class PurchaseAnalysisResponse(BasePydanticModel):
+    """Response model for purchase analysis."""
+    
+    month_year: str = Field(..., description="Month and year in YYYY-MM format")
+    is_purchased: bool = Field(..., description="Whether purchase was made in this month")
+
+
+class ShopBestSellingProductResponse(BasePydanticModel):
+    """Response model for shop best selling products."""
+    
+    product_name: str = Field(..., description="Product name")
+    units_sold: int = Field(..., description="Units sold")
+    percentage: float = Field(..., description="Percentage of total products sold")
+
+
+class ShopSalesReportResponse(BasePydanticModel):
+    """Response model for shop sales report."""
+    
+    month_year: str = Field(..., description="Month and year in YYYY-MM format")
+    sale_point: float = Field(..., description="Sales points for the month")

@@ -15,10 +15,14 @@ from ...core.database import get_db
 from ...api.deps import get_current_user
 from ...core.logging import get_logger
 from ...domain.models.user import User
+from ...domain.models.analytics import (
+    TopCustomerResponse, BestSellingProductResponse, SalesReportResponse,
+    PurchaseAnalysisResponse, ShopBestSellingProductResponse, ShopSalesReportResponse
+)
 from ...services.analytics_service import AnalyticsService
 
 logger = get_logger(__name__)
-router = APIRouter(prefix="/analytics", tags=["analytics"])
+router = APIRouter(tags=["analytics"])
 
 
 class AnalyticsPeriod(BaseModel):
@@ -28,6 +32,300 @@ class AnalyticsPeriod(BaseModel):
     period_end: Optional[date] = Field(None, description="End date for analytics period")
 
 
+# Executive Analytics Endpoints
+@router.get("/executive/top_customers", response_model=List[TopCustomerResponse])
+async def get_executive_top_customers(
+    tenant_id: str = Query(..., description="Tenant identifier (required)"),
+    sales_executive_id: Optional[int] = Query(None, description="Sales executive ID (only for area_manager, client_admin and superadmin users, for sales_executive it takes its own id)"),
+    current_user: Dict[str, Any] = Depends(get_current_user),
+    db: Session = Depends(get_db)
+) -> List[TopCustomerResponse]:
+    """
+    Get top customers for a sales executive.
+    
+    **Business Logic:**
+    - Returns shops with highest payment amounts (current + upcoming + overdue)
+    - For sales_executive role: automatically uses their own ID
+    - For area_manager, client_admin, superadmin: can specify sales_executive_id
+    
+    **Security:**
+    - Requires authentication
+    - Tenant isolation enforced
+    - Sales executives can only see their own data unless they have higher privileges
+    """
+    try:
+        # Verify tenant access
+        if current_user["tenant_id"] != tenant_id and current_user["role"] != "superadmin":
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Insufficient permissions to access this tenant's data"
+            )
+        
+        analytics_service = AnalyticsService(db)
+        top_customers = await analytics_service.get_executive_top_customers(
+            tenant_id=tenant_id,
+            sales_executive_id=sales_executive_id,
+            current_user=current_user
+        )
+        
+        return [TopCustomerResponse(**customer) for customer in top_customers]
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error in get_executive_top_customers: {str(e)}", exc_info=True)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to get executive top customers: {str(e)}"
+        )
+
+
+@router.get("/executive/best_selling_products", response_model=List[BestSellingProductResponse])
+async def get_executive_best_selling_products(
+    tenant_id: str = Query(..., description="Tenant identifier (required)"),
+    sales_executive_id: Optional[int] = Query(None, description="Sales executive ID (only for area_manager, client_admin and superadmin users, for sales_executive it takes its own id)"),
+    current_user: Dict[str, Any] = Depends(get_current_user),
+    db: Session = Depends(get_db)
+) -> List[BestSellingProductResponse]:
+    """
+    Get best selling products for a sales executive.
+    
+    **Business Logic:**
+    - Returns products with highest units sold by the executive
+    - Calculates percentage of total products sold across all executives
+    - For sales_executive role: automatically uses their own ID
+    - For area_manager, client_admin, superadmin: can specify sales_executive_id
+    
+    **Security:**
+    - Requires authentication
+    - Tenant isolation enforced
+    - Sales executives can only see their own data unless they have higher privileges
+    """
+    try:
+        # Verify tenant access
+        if current_user["tenant_id"] != tenant_id and current_user["role"] != "superadmin":
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Insufficient permissions to access this tenant's data"
+            )
+        
+        analytics_service = AnalyticsService(db)
+        best_selling_products = await analytics_service.get_executive_best_selling_products(
+            tenant_id=tenant_id,
+            sales_executive_id=sales_executive_id,
+            current_user=current_user
+        )
+        
+        return [BestSellingProductResponse(**product) for product in best_selling_products]
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error in get_executive_best_selling_products: {str(e)}", exc_info=True)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to get executive best selling products: {str(e)}"
+        )
+
+
+@router.get("/executive/sales_report", response_model=List[SalesReportResponse])
+async def get_executive_sales_report(
+    tenant_id: str = Query(..., description="Tenant identifier (required)"),
+    sales_executive_id: Optional[int] = Query(None, description="Sales executive ID (only for area_manager, client_admin and superadmin users, for sales_executive it takes its own id)"),
+    current_user: Dict[str, Any] = Depends(get_current_user),
+    db: Session = Depends(get_db)
+) -> List[SalesReportResponse]:
+    """
+    Get sales report for a sales executive for the last year.
+    
+    **Business Logic:**
+    - Returns monthly sales data for the last 12 months
+    - Shows sale points (order amounts) per month in YYYY-MM format
+    - For sales_executive role: automatically uses their own ID
+    - For area_manager, client_admin, superadmin: can specify sales_executive_id
+    
+    **Security:**
+    - Requires authentication
+    - Tenant isolation enforced
+    - Sales executives can only see their own data unless they have higher privileges
+    """
+    try:
+        # Verify tenant access
+        if current_user["tenant_id"] != tenant_id and current_user["role"] != "superadmin":
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Insufficient permissions to access this tenant's data"
+            )
+        
+        analytics_service = AnalyticsService(db)
+        sales_report = await analytics_service.get_executive_sales_report(
+            tenant_id=tenant_id,
+            sales_executive_id=sales_executive_id,
+            current_user=current_user
+        )
+        
+        return [SalesReportResponse(**report) for report in sales_report]
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error in get_executive_sales_report: {str(e)}", exc_info=True)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to get executive sales report: {str(e)}"
+        )
+
+
+# Shop Analytics Endpoints
+@router.get("/shops/purchase_analysis", response_model=List[PurchaseAnalysisResponse])
+async def get_shop_purchase_analysis(
+    tenant_id: str = Query(..., description="Tenant identifier (required)"),
+    shop_id: str = Query(..., description="Shop ID"),
+    year: Optional[int] = Query(None, description="Year (Optional, if not given should provide the result of last one year)"),
+    current_user: Dict[str, Any] = Depends(get_current_user),
+    db: Session = Depends(get_db)
+) -> List[PurchaseAnalysisResponse]:
+    """
+    Get purchase analysis for a shop.
+    
+    **Business Logic:**
+    - Returns monthly purchase data for the specified year
+    - Shows whether purchases were made in each month (YYYY-MM format)
+    - Defaults to last year if year not specified
+    - Creates complete year data (12 months) with purchase status
+    
+    **Security:**
+    - Requires authentication
+    - Tenant isolation enforced
+    - Users can only access shops from their tenant
+    """
+    try:
+        # Verify tenant access
+        if current_user["tenant_id"] != tenant_id and current_user["role"] != "superadmin":
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Insufficient permissions to access this tenant's data"
+            )
+        
+        analytics_service = AnalyticsService(db)
+        purchase_analysis = await analytics_service.get_shop_purchase_analysis(
+            tenant_id=tenant_id,
+            shop_id=shop_id,
+            year=year
+        )
+        
+        return [PurchaseAnalysisResponse(**analysis) for analysis in purchase_analysis]
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error in get_shop_purchase_analysis: {str(e)}", exc_info=True)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to get shop purchase analysis: {str(e)}"
+        )
+
+
+@router.get("/shops/best_selling_products", response_model=List[ShopBestSellingProductResponse])
+async def get_shop_best_selling_products(
+    tenant_id: str = Query(..., description="Tenant identifier (required)"),
+    shop_id: str = Query(..., description="Shop ID"),
+    year: Optional[int] = Query(None, description="Year (Optional, if not given should provide the result of last one year)"),
+    current_user: Dict[str, Any] = Depends(get_current_user),
+    db: Session = Depends(get_db)
+) -> List[ShopBestSellingProductResponse]:
+    """
+    Get best selling products for a shop.
+    
+    **Business Logic:**
+    - Returns products with highest units sold by this shop
+    - Calculates percentage of total products sold across all shops
+    - Defaults to last year if year not specified
+    - For sales_executive role: automatically uses their own ID
+    - For area_manager, client_admin, superadmin: can specify sales_executive_id
+    
+    **Security:**
+    - Requires authentication
+    - Tenant isolation enforced
+    - Users can only access shops from their tenant
+    """
+    try:
+        # Verify tenant access
+        if current_user["tenant_id"] != tenant_id and current_user["role"] != "superadmin":
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Insufficient permissions to access this tenant's data"
+            )
+        
+        analytics_service = AnalyticsService(db)
+        best_selling_products = await analytics_service.get_shop_best_selling_products(
+            tenant_id=tenant_id,
+            shop_id=shop_id,
+            year=year
+        )
+        
+        return [ShopBestSellingProductResponse(**product) for product in best_selling_products]
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error in get_shop_best_selling_products: {str(e)}", exc_info=True)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to get shop best selling products: {str(e)}"
+        )
+
+
+@router.get("/shops/sales_report", response_model=List[ShopSalesReportResponse])
+async def get_shop_sales_report(
+    tenant_id: str = Query(..., description="Tenant identifier (required)"),
+    shop_id: str = Query(..., description="Shop ID"),
+    year: Optional[int] = Query(None, description="Year (Optional, if not given should provide the result of last one year)"),
+    current_user: Dict[str, Any] = Depends(get_current_user),
+    db: Session = Depends(get_db)
+) -> List[ShopSalesReportResponse]:
+    """
+    Get sales report for a shop for the specified year.
+    
+    **Business Logic:**
+    - Returns monthly sales data for the specified year
+    - Shows sale points (order amounts) per month in YYYY-MM format
+    - Defaults to last year if year not specified
+    - Creates complete year data (12 months) with sales amounts
+    
+    **Security:**
+    - Requires authentication
+    - Tenant isolation enforced
+    - Users can only access shops from their tenant
+    """
+    try:
+        # Verify tenant access
+        if current_user["tenant_id"] != tenant_id and current_user["role"] != "superadmin":
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Insufficient permissions to access this tenant's data"
+            )
+        
+        analytics_service = AnalyticsService(db)
+        sales_report = await analytics_service.get_shop_sales_report(
+            tenant_id=tenant_id,
+            shop_id=shop_id,
+            year=year
+        )
+        
+        return [ShopSalesReportResponse(**report) for report in sales_report]
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error in get_shop_sales_report: {str(e)}", exc_info=True)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to get shop sales report: {str(e)}"
+        )
+
+
+# Legacy Analytics Endpoints (keeping existing functionality)
 @router.get("/executive/{user_id}/performance")
 async def get_executive_performance(
     user_id: int = Path(..., description="User ID"),

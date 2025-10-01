@@ -427,7 +427,7 @@ app.include_router(routes_router, prefix="/api/v1/routes", tags=["routes"])
 app.include_router(shops_router, prefix="/api/v1/shops", tags=["shops"])
 app.include_router(outstanding_router, prefix="/api/v1/outstanding", tags=["outstanding"])
 app.include_router(sync_router, prefix="/api/v1", tags=["sync"])
-app.include_router(analytics_router, prefix="/api/v1", tags=["analytics"])
+app.include_router(analytics_router, prefix="/api/v1/analytics", tags=["analytics"])
 
 
 if __name__ == "__main__":

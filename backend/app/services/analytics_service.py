@@ -22,6 +22,7 @@ from ..domain.models.sync_data import SyncedShopData, SyncedOrder, SyncedProduct
 from ..domain.models.shop import Shop
 from ..domain.models.user import User
 from ..domain.models.visit import Visit
+from ..domain.models.route import Route, RouteAssignment
 
 logger = get_logger(__name__)
 
@@ -722,3 +723,507 @@ class AnalyticsService:
             self.db.commit()
             self.db.refresh(new_record)
             return new_record
+    
+    async def get_executive_top_customers(
+        self,
+        tenant_id: str,
+        sales_executive_id: Optional[int] = None,
+        current_user: Dict[str, Any] = None
+    ) -> List[Dict[str, Any]]:
+        """
+        Get top customers for a sales executive.
+        
+        Args:
+            tenant_id: Tenant identifier
+            sales_executive_id: Sales executive ID (optional, defaults to current user)
+            current_user: Current authenticated user
+            
+        Returns:
+            List of top customers with shop names and points
+        """
+        try:
+            # Determine the sales executive ID
+            if sales_executive_id is None:
+                if current_user and current_user.get("role") == "sales_executive":
+                    sales_executive_id = current_user["id"]
+                else:
+                    return []
+            
+            # Get shops managed by this executive
+            shops_query = self.db.query(Shop).filter(
+                and_(
+                    Shop.tenant_id == tenant_id,
+                    Shop.status == "active"
+                )
+            )
+            
+            # If not superadmin/client_admin/area_manager, filter by executive's shops
+            if current_user and current_user.get("role") == "sales_executive":
+                # Get shops assigned to this executive through routes
+                route_assignments = self.db.query(RouteAssignment).join(Route).filter(
+                    and_(
+                        RouteAssignment.sales_executive_id == sales_executive_id,
+                        Route.tenant_id == tenant_id
+                    )
+                ).all()
+                
+                shop_ids = [assignment.shop_id for assignment in route_assignments]
+                if shop_ids:
+                    shops_query = shops_query.filter(Shop.shop_id.in_(shop_ids))
+                else:
+                    return []
+            
+            shops = shops_query.all()
+            
+            # Get synced shop data for these shops
+            shop_data = self.db.query(SyncedShopData).filter(
+                and_(
+                    SyncedShopData.tenant_id == tenant_id,
+                    SyncedShopData.shop_id.in_([shop.shop_id for shop in shops])
+                )
+            ).all()
+            
+            # Calculate points based on total payment amounts
+            top_customers = []
+            for data in shop_data:
+                total_points = data.current_payment + data.upcoming_payment + data.overdue_payment
+                if total_points > 0:
+                    shop = next((s for s in shops if s.shop_id == data.shop_id), None)
+                    if shop:
+                        top_customers.append({
+                            "shop_name": shop.name,
+                            "points": float(total_points)
+                        })
+            
+            # Sort by points descending
+            top_customers.sort(key=lambda x: x["points"], reverse=True)
+            
+            return top_customers
+            
+        except Exception as e:
+            logger.error(f"Error getting executive top customers: {str(e)}", exc_info=True)
+            return []
+    
+    async def get_executive_best_selling_products(
+        self,
+        tenant_id: str,
+        sales_executive_id: Optional[int] = None,
+        current_user: Dict[str, Any] = None
+    ) -> List[Dict[str, Any]]:
+        """
+        Get best selling products for a sales executive.
+        
+        Args:
+            tenant_id: Tenant identifier
+            sales_executive_id: Sales executive ID (optional, defaults to current user)
+            current_user: Current authenticated user
+            
+        Returns:
+            List of best selling products with units sold and percentages
+        """
+        try:
+            # Determine the sales executive ID
+            if sales_executive_id is None:
+                if current_user and current_user.get("role") == "sales_executive":
+                    sales_executive_id = current_user["id"]
+                else:
+                    return []
+            
+            # Get shops managed by this executive
+            shops_query = self.db.query(Shop).filter(
+                and_(
+                    Shop.tenant_id == tenant_id,
+                    Shop.status == "active"
+                )
+            )
+            
+            # If not superadmin/client_admin/area_manager, filter by executive's shops
+            if current_user and current_user.get("role") == "sales_executive":
+                route_assignments = self.db.query(RouteAssignment).join(Route).filter(
+                    and_(
+                        RouteAssignment.sales_executive_id == sales_executive_id,
+                        Route.tenant_id == tenant_id
+                    )
+                ).all()
+                
+                shop_ids = [assignment.shop_id for assignment in route_assignments]
+                if shop_ids:
+                    shops_query = shops_query.filter(Shop.shop_id.in_(shop_ids))
+                else:
+                    return []
+            
+            shops = shops_query.all()
+            shop_ids = [shop.shop_id for shop in shops]
+            
+            if not shop_ids:
+                return []
+            
+            # Get synced shop data for these shops
+            shop_data_ids = self.db.query(SyncedShopData.id).filter(
+                and_(
+                    SyncedShopData.tenant_id == tenant_id,
+                    SyncedShopData.shop_id.in_(shop_ids)
+                )
+            ).all()
+            
+            shop_data_ids = [data.id for data in shop_data_ids]
+            
+            if not shop_data_ids:
+                return []
+            
+            # Get products sold by this executive
+            products = self.db.query(
+                SyncedProduct.product_name,
+                func.count(SyncedProduct.id).label('units_sold'),
+                func.sum(SyncedProduct.product_amount).label('total_amount')
+            ).filter(
+                and_(
+                    SyncedProduct.tenant_id == tenant_id,
+                    SyncedProduct.shop_data_id.in_(shop_data_ids)
+                )
+            ).group_by(
+                SyncedProduct.product_name
+            ).order_by(
+                func.count(SyncedProduct.id).desc()
+            ).all()
+            
+            # Get total products sold across all executives for percentage calculation
+            total_products_sold = self.db.query(
+                func.count(SyncedProduct.id)
+            ).filter(
+                SyncedProduct.tenant_id == tenant_id
+            ).scalar() or 0
+            
+            best_selling_products = []
+            for product in products:
+                percentage = (product.units_sold / total_products_sold * 100) if total_products_sold > 0 else 0
+                best_selling_products.append({
+                    "product_name": product.product_name,
+                    "units_sold": product.units_sold,
+                    "percentage": round(percentage, 2)
+                })
+            
+            return best_selling_products
+            
+        except Exception as e:
+            logger.error(f"Error getting executive best selling products: {str(e)}", exc_info=True)
+            return []
+    
+    async def get_executive_sales_report(
+        self,
+        tenant_id: str,
+        sales_executive_id: Optional[int] = None,
+        current_user: Dict[str, Any] = None
+    ) -> List[Dict[str, Any]]:
+        """
+        Get sales report for a sales executive for the last year.
+        
+        Args:
+            tenant_id: Tenant identifier
+            sales_executive_id: Sales executive ID (optional, defaults to current user)
+            current_user: Current authenticated user
+            
+        Returns:
+            List of monthly sales reports
+        """
+        try:
+            # Determine the sales executive ID
+            if sales_executive_id is None:
+                if current_user and current_user.get("role") == "sales_executive":
+                    sales_executive_id = current_user["id"]
+                else:
+                    return []
+            
+            # Get last year's data
+            end_date = date.today()
+            start_date = date(end_date.year - 1, end_date.month, end_date.day)
+            
+            # Get shops managed by this executive
+            shops_query = self.db.query(Shop).filter(
+                and_(
+                    Shop.tenant_id == tenant_id,
+                    Shop.status == "active"
+                )
+            )
+            
+            # If not superadmin/client_admin/area_manager, filter by executive's shops
+            if current_user and current_user.get("role") == "sales_executive":
+                route_assignments = self.db.query(RouteAssignment).join(Route).filter(
+                    and_(
+                        RouteAssignment.sales_executive_id == sales_executive_id,
+                        Route.tenant_id == tenant_id
+                    )
+                ).all()
+                
+                shop_ids = [assignment.shop_id for assignment in route_assignments]
+                if shop_ids:
+                    shops_query = shops_query.filter(Shop.shop_id.in_(shop_ids))
+                else:
+                    return []
+            
+            shops = shops_query.all()
+            shop_ids = [shop.shop_id for shop in shops]
+            
+            if not shop_ids:
+                return []
+            
+            # Get synced shop data for these shops
+            shop_data_ids = self.db.query(SyncedShopData.id).filter(
+                and_(
+                    SyncedShopData.tenant_id == tenant_id,
+                    SyncedShopData.shop_id.in_(shop_ids)
+                )
+            ).all()
+            
+            shop_data_ids = [data.id for data in shop_data_ids]
+            
+            if not shop_data_ids:
+                return []
+            
+            # Get monthly sales data
+            monthly_sales = self.db.query(
+                func.date_format(SyncedOrder.order_date, '%Y-%m').label('month_year'),
+                func.sum(SyncedOrder.order_amount).label('sale_point')
+            ).filter(
+                and_(
+                    SyncedOrder.tenant_id == tenant_id,
+                    SyncedOrder.shop_data_id.in_(shop_data_ids),
+                    SyncedOrder.order_date >= start_date,
+                    SyncedOrder.order_date <= end_date
+                )
+            ).group_by(
+                func.date_format(SyncedOrder.order_date, '%Y-%m')
+            ).order_by(
+                func.date_format(SyncedOrder.order_date, '%Y-%m')
+            ).all()
+            
+            sales_report = []
+            for sale in monthly_sales:
+                sales_report.append({
+                    "month_year": sale.month_year,
+                    "sale_point": float(sale.sale_point or 0)
+                })
+            
+            return sales_report
+            
+        except Exception as e:
+            logger.error(f"Error getting executive sales report: {str(e)}", exc_info=True)
+            return []
+    
+    async def get_shop_purchase_analysis(
+        self,
+        tenant_id: str,
+        shop_id: str,
+        year: Optional[int] = None
+    ) -> List[Dict[str, Any]]:
+        """
+        Get purchase analysis for a shop.
+        
+        Args:
+            tenant_id: Tenant identifier
+            shop_id: Shop ID
+            year: Year for analysis (optional, defaults to last year)
+            
+        Returns:
+            List of monthly purchase analysis
+        """
+        try:
+            # Set year to last year if not provided
+            if year is None:
+                year = date.today().year - 1
+            
+            start_date = date(year, 1, 1)
+            end_date = date(year, 12, 31)
+            
+            # Get synced shop data for this shop
+            shop_data = self.db.query(SyncedShopData).filter(
+                and_(
+                    SyncedShopData.tenant_id == tenant_id,
+                    SyncedShopData.shop_id == shop_id
+                )
+            ).first()
+            
+            if not shop_data:
+                return []
+            
+            # Get monthly purchase data
+            monthly_purchases = self.db.query(
+                func.date_format(SyncedOrder.order_date, '%Y-%m').label('month_year'),
+                func.count(SyncedOrder.id).label('purchase_count')
+            ).filter(
+                and_(
+                    SyncedOrder.tenant_id == tenant_id,
+                    SyncedOrder.shop_data_id == shop_data.id,
+                    SyncedOrder.order_date >= start_date,
+                    SyncedOrder.order_date <= end_date
+                )
+            ).group_by(
+                func.date_format(SyncedOrder.order_date, '%Y-%m')
+            ).order_by(
+                func.date_format(SyncedOrder.order_date, '%Y-%m')
+            ).all()
+            
+            # Create a complete year's data
+            purchase_analysis = []
+            for month in range(1, 13):
+                month_year = f"{year}-{month:02d}"
+                is_purchased = any(p.month_year == month_year for p in monthly_purchases)
+                purchase_analysis.append({
+                    "month_year": month_year,
+                    "is_purchased": is_purchased
+                })
+            
+            return purchase_analysis
+            
+        except Exception as e:
+            logger.error(f"Error getting shop purchase analysis: {str(e)}", exc_info=True)
+            return []
+    
+    async def get_shop_best_selling_products(
+        self,
+        tenant_id: str,
+        shop_id: str,
+        year: Optional[int] = None
+    ) -> List[Dict[str, Any]]:
+        """
+        Get best selling products for a shop.
+        
+        Args:
+            tenant_id: Tenant identifier
+            shop_id: Shop ID
+            year: Year for analysis (optional, defaults to last year)
+            
+        Returns:
+            List of best selling products for the shop
+        """
+        try:
+            # Set year to last year if not provided
+            if year is None:
+                year = date.today().year - 1
+            
+            start_date = date(year, 1, 1)
+            end_date = date(year, 12, 31)
+            
+            # Get synced shop data for this shop
+            shop_data = self.db.query(SyncedShopData).filter(
+                and_(
+                    SyncedShopData.tenant_id == tenant_id,
+                    SyncedShopData.shop_id == shop_id
+                )
+            ).first()
+            
+            if not shop_data:
+                return []
+            
+            # Get products sold by this shop
+            products = self.db.query(
+                SyncedProduct.product_name,
+                func.count(SyncedProduct.id).label('units_sold'),
+                func.sum(SyncedProduct.product_amount).label('total_amount')
+            ).filter(
+                and_(
+                    SyncedProduct.tenant_id == tenant_id,
+                    SyncedProduct.shop_data_id == shop_data.id,
+                    SyncedProduct.sync_date >= start_date,
+                    SyncedProduct.sync_date <= end_date
+                )
+            ).group_by(
+                SyncedProduct.product_name
+            ).order_by(
+                func.count(SyncedProduct.id).desc()
+            ).all()
+            
+            # Get total products sold across all shops for percentage calculation
+            total_products_sold = self.db.query(
+                func.count(SyncedProduct.id)
+            ).filter(
+                and_(
+                    SyncedProduct.tenant_id == tenant_id,
+                    SyncedProduct.sync_date >= start_date,
+                    SyncedProduct.sync_date <= end_date
+                )
+            ).scalar() or 0
+            
+            best_selling_products = []
+            for product in products:
+                percentage = (product.units_sold / total_products_sold * 100) if total_products_sold > 0 else 0
+                best_selling_products.append({
+                    "product_name": product.product_name,
+                    "units_sold": product.units_sold,
+                    "percentage": round(percentage, 2)
+                })
+            
+            return best_selling_products
+            
+        except Exception as e:
+            logger.error(f"Error getting shop best selling products: {str(e)}", exc_info=True)
+            return []
+    
+    async def get_shop_sales_report(
+        self,
+        tenant_id: str,
+        shop_id: str,
+        year: Optional[int] = None
+    ) -> List[Dict[str, Any]]:
+        """
+        Get sales report for a shop for the specified year.
+        
+        Args:
+            tenant_id: Tenant identifier
+            shop_id: Shop ID
+            year: Year for analysis (optional, defaults to last year)
+            
+        Returns:
+            List of monthly sales reports
+        """
+        try:
+            # Set year to last year if not provided
+            if year is None:
+                year = date.today().year - 1
+            
+            start_date = date(year, 1, 1)
+            end_date = date(year, 12, 31)
+            
+            # Get synced shop data for this shop
+            shop_data = self.db.query(SyncedShopData).filter(
+                and_(
+                    SyncedShopData.tenant_id == tenant_id,
+                    SyncedShopData.shop_id == shop_id
+                )
+            ).first()
+            
+            if not shop_data:
+                return []
+            
+            # Get monthly sales data
+            monthly_sales = self.db.query(
+                func.date_format(SyncedOrder.order_date, '%Y-%m').label('month_year'),
+                func.sum(SyncedOrder.order_amount).label('sale_point')
+            ).filter(
+                and_(
+                    SyncedOrder.tenant_id == tenant_id,
+                    SyncedOrder.shop_data_id == shop_data.id,
+                    SyncedOrder.order_date >= start_date,
+                    SyncedOrder.order_date <= end_date
+                )
+            ).group_by(
+                func.date_format(SyncedOrder.order_date, '%Y-%m')
+            ).order_by(
+                func.date_format(SyncedOrder.order_date, '%Y-%m')
+            ).all()
+            
+            # Create a complete year's data
+            sales_report = []
+            for month in range(1, 13):
+                month_year = f"{year}-{month:02d}"
+                sale_point = next((float(s.sale_point or 0) for s in monthly_sales if s.month_year == month_year), 0.0)
+                sales_report.append({
+                    "month_year": month_year,
+                    "sale_point": sale_point
+                })
+            
+            return sales_report
+            
+        except Exception as e:
+            logger.error(f"Error getting shop sales report: {str(e)}", exc_info=True)
+            return []
