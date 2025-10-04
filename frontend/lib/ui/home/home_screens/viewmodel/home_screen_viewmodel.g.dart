@@ -45,7 +45,7 @@ final getYourAssignedRoutesProvider =
 typedef GetYourAssignedRoutesRef =
     FutureProviderRef<List<Map<String, dynamic>>>;
 String _$getAllAssignedRoutesHash() =>
-    r'4b33880c0ee1301338323e97c1b516b36572e787';
+    r'812991da7acdb7a4824c30a6ed907b42042bc8c7';
 
 /// See also [getAllAssignedRoutes].
 @ProviderFor(getAllAssignedRoutes)

@@ -109,20 +109,127 @@ ON DUPLICATE KEY UPDATE
 INSERT INTO due_data (
     shop_id, shop_name, amount, due_date, status, territory_id, tenant_id, notes, sales_executive_id
 ) VALUES 
-    ('SHOP-TRV-001', 'Lulu Mall Thiruvananthapuram', 15000.00, '2025-10-05', 'upcoming', 'KL-TRV-001', 'default', 'Q4 payment', 5),
-    ('SHOP-KOC-001', 'Lulu Mall Kochi', 23000.00, '2025-09-15', 'current', 'KL-KOC-001', 'default', 'September due', 5),
-    ('SHOP-CAL-001', 'Focus Mall Kozhikode', 12500.00, '2025-08-20', 'overdue', 'KL-CAL-001', 'default', 'August overdue', 5),
-    ('SHOP-TSR-001', 'Sobha City Mall', 8400.00, '2025-10-01', 'upcoming', 'KL-TSR-001', 'default', 'Planned before festival', 5),
-    ('SHOP-KAN-001', 'Pothys Kannur', 5600.00, '2025-09-25', 'current', 'KL-KAN-001', 'default', 'Due today', 5),
-    ('SHOP-KOC-004', 'Gold Souk Grande', 9900.00, '2025-07-30', 'overdue', 'KL-KOC-001', 'default', 'Past due', 5),
-    ('SHOP-TRV-003', 'Pothys Thiruvananthapuram', 7300.00, '2025-09-10', 'overdue', 'KL-TRV-001', 'default', 'Missed reminder', 5),
-    ('SHOP-CAL-003', 'Pothys Kozhikode', 11200.00, '2025-10-12', 'upcoming', 'KL-CAL-001', 'default', 'Festival season', 5),
-    ('SHOP-KOC-002', 'Oberon Mall', 10000.00, '2025-10-10', 'upcoming', 'KL-KOC-001', 'default', 'October due', 5),
-    ('SHOP-KOC-003', 'Centre Square Mall', 13000.00, '2025-09-20', 'current', 'KL-KOC-001', 'default', 'September due', 5),
-    ('SHOP-KOC-004', 'Gold Souk Grande', 9900.00, '2025-07-30', 'overdue', 'KL-KOC-001', 'default', 'Past due', 5),
-    ('SHOP-KOC-005', 'Pothys Kochi', 12000.00, '2025-09-15', 'current', 'KL-KOC-001', 'default', 'September due', 5),
-    ('SHOP-KOC-006', 'HiLITE Mall', 11000.00, '2025-08-25', 'overdue', 'KL-KOC-001', 'default', 'August overdue', 5),
-    ('SHOP-KOC-007', 'Lulu Mall Kochi', 14000.00, '2025-10-05', 'upcoming', 'KL-KOC-001', 'default', 'Q4 payment', 5);
+    ('SHOP-TRV-001', 'Lulu Mall Thiruvananthapuram', 15000.00, '2025-10-05', 'upcoming', 'KL-TRV-001', 'default', 'Q4 payment', 4),
+    ('SHOP-KOC-001', 'Lulu Mall Kochi', 23000.00, '2025-09-15', 'current', 'KL-KOC-001', 'default', 'September due', 4),
+    ('SHOP-CAL-001', 'Focus Mall Kozhikode', 12500.00, '2025-08-20', 'overdue', 'KL-CAL-001', 'default', 'August overdue', 4),
+    ('SHOP-TSR-001', 'Sobha City Mall', 8400.00, '2025-10-01', 'upcoming', 'KL-TSR-001', 'default', 'Planned before festival', 4),
+    ('SHOP-KAN-001', 'Pothys Kannur', 5600.00, '2025-09-25', 'current', 'KL-KAN-001', 'default', 'Due today', 4),
+    ('SHOP-KOC-004', 'Gold Souk Grande', 9900.00, '2025-07-30', 'overdue', 'KL-KOC-001', 'default', 'Past due', 4),
+    ('SHOP-TRV-003', 'Pothys Thiruvananthapuram', 7300.00, '2025-09-10', 'overdue', 'KL-TRV-001', 'default', 'Missed reminder', 4),
+    ('SHOP-CAL-003', 'Pothys Kozhikode', 11200.00, '2025-10-12', 'upcoming', 'KL-CAL-001', 'default', 'Festival season', 4),
+    ('SHOP-KOC-002', 'Oberon Mall', 10000.00, '2025-10-10', 'upcoming', 'KL-KOC-001', 'default', 'October due', 4),
+    ('SHOP-KOC-003', 'Centre Square Mall', 13000.00, '2025-09-20', 'current', 'KL-KOC-001', 'default', 'September due', 4),
+    ('SHOP-KOC-004', 'Gold Souk Grande', 9900.00, '2025-07-30', 'overdue', 'KL-KOC-001', 'default', 'Past due', 4),
+    ('SHOP-KOC-005', 'Pothys Kochi', 12000.00, '2025-09-15', 'current', 'KL-KOC-001', 'default', 'September due', 4),
+    ('SHOP-KOC-006', 'HiLITE Mall', 11000.00, '2025-08-25', 'overdue', 'KL-KOC-001', 'default', 'August overdue', 4),
+    ('SHOP-KOC-007', 'Lulu Mall Kochi', 14000.00, '2025-10-05', 'upcoming', 'KL-KOC-001', 'default', 'Q4 payment', 4);
+
+-- Insert Route Assignments for Sales Executive
+INSERT INTO route_assignments (route_id, shop_id, sales_executive_id, planned_date, sequence_order, status)
+VALUES 
+    -- Thiruvananthapuram Routes
+    ('RT-001', 'SHOP-TRV-001', 4, '2025-10-07', 1, 'planned'),
+    ('RT-001', 'SHOP-TRV-002', 4, '2025-10-07', 2, 'planned'),
+    ('RT-002', 'SHOP-TRV-003', 4, '2025-10-08', 1, 'planned'),
+    
+    -- Kochi Routes
+    ('RT-004', 'SHOP-KOC-001', 4, '2025-10-07', 1, 'planned'),
+    ('RT-004', 'SHOP-KOC-002', 4, '2025-10-07', 2, 'planned'),
+    ('RT-004', 'SHOP-KOC-003', 4, '2025-10-07', 3, 'planned'),
+    ('RT-005', 'SHOP-KOC-004', 4, '2025-10-08', 1, 'planned'),
+    
+    -- Kozhikode Routes
+    ('RT-007', 'SHOP-CAL-001', 4, '2025-10-09', 1, 'planned'),
+    ('RT-007', 'SHOP-CAL-002', 4, '2025-10-09', 2, 'planned'),
+    ('RT-008', 'SHOP-CAL-003', 4, '2025-10-10', 1, 'planned'),
+    
+    -- Thrissur Routes
+    ('RT-010', 'SHOP-TSR-001', 4, '2025-10-11', 1, 'planned'),
+    ('RT-010', 'SHOP-TSR-002', 4, '2025-10-11', 2, 'planned'),
+    ('RT-011', 'SHOP-TSR-003', 4, '2025-10-12', 1, 'planned'),
+    
+    -- Kannur Routes
+    ('RT-013', 'SHOP-KAN-001', 4, '2025-10-14', 1, 'planned'),
+    ('RT-013', 'SHOP-KAN-002', 4, '2025-10-14', 2, 'planned'),
+    ('RT-014', 'SHOP-KAN-003', 4, '2025-10-15', 1, 'planned')
+ON DUPLICATE KEY UPDATE 
+    shop_id = VALUES(shop_id),
+    sales_executive_id = VALUES(sales_executive_id),
+    planned_date = VALUES(planned_date),
+    sequence_order = VALUES(sequence_order),
+    status = VALUES(status);
+
+-- Insert Synced Shop Data (payment information)
+INSERT INTO synced_shop_data (
+    shop_id, shop_name, tenant_id, current_payment, upcoming_payment, overdue_payment, 
+    sync_status, created_by
+) VALUES 
+    -- Thiruvananthapuram Shops
+    ('SHOP-TRV-001', 'Lulu Mall Thiruvananthapuram', 'default', 42000.00, 15000.00, 0.00, 'completed', 1),
+    ('SHOP-TRV-002', 'Spencer Plaza TVM', 'default', 30000.00, 8000.00, 0.00, 'completed', 1),
+    ('SHOP-TRV-003', 'Pothys Thiruvananthapuram', 'default', 25000.00, 0.00, 7300.00, 'completed', 1),
+    
+    -- Kochi Shops (highest payments)
+    ('SHOP-KOC-001', 'Lulu Mall Kochi', 'default', 62000.00, 23000.00, 0.00, 'completed', 1),
+    ('SHOP-KOC-002', 'Oberon Mall', 'default', 48000.00, 10000.00, 0.00, 'completed', 1),
+    ('SHOP-KOC-003', 'Centre Square Mall', 'default', 35000.00, 13000.00, 0.00, 'completed', 1),
+    ('SHOP-KOC-004', 'Gold Souk Grande', 'default', 40000.00, 0.00, 9900.00, 'completed', 1),
+    
+    -- Kozhikode Shops
+    ('SHOP-CAL-001', 'Focus Mall Kozhikode', 'default', 32000.00, 0.00, 12500.00, 'completed', 1),
+    ('SHOP-CAL-002', 'HiLITE Mall', 'default', 27000.00, 6000.00, 0.00, 'completed', 1),
+    ('SHOP-CAL-003', 'Pothys Kozhikode', 'default', 24000.00, 11200.00, 0.00, 'completed', 1),
+    
+    -- Thrissur Shops
+    ('SHOP-TSR-001', 'Sobha City Mall', 'default', 38000.00, 8400.00, 0.00, 'completed', 1),
+    ('SHOP-TSR-002', 'Pothys Thrissur', 'default', 31000.00, 7500.00, 0.00, 'completed', 1),
+    ('SHOP-TSR-003', 'Kalyan Silks Thrissur', 'default', 35000.00, 9200.00, 0.00, 'completed', 1),
+    
+    -- Kannur Shops
+    ('SHOP-KAN-001', 'Pothys Kannur', 'default', 22000.00, 5600.00, 0.00, 'completed', 1),
+    ('SHOP-KAN-002', 'Kalyan Silks Kannur', 'default', 19000.00, 4800.00, 0.00, 'completed', 1),
+    ('SHOP-KAN-003', 'Fashion Store Kannur', 'default', 17000.00, 3200.00, 0.00, 'completed', 1)
+ON DUPLICATE KEY UPDATE 
+    shop_name = VALUES(shop_name),
+    current_payment = VALUES(current_payment),
+    upcoming_payment = VALUES(upcoming_payment),
+    overdue_payment = VALUES(overdue_payment),
+    sync_status = VALUES(sync_status),
+    created_by = VALUES(created_by);
+
+-- Insert Sales Performance Data (sample seed)
+INSERT INTO sales_performance (
+    user_id, tenant_id, period_start, period_end, 
+    total_orders, total_order_value, average_order_value, 
+    current_payments, upcoming_payments, overdue_payments, 
+    payment_collection_rate, performance_level, payment_trend, 
+    shops_managed, active_shops, total_visits, completed_visits, 
+    visit_completion_rate, created_by
+) VALUES 
+    -- September 2025 Performance Data
+    (4, 'default', '2025-09-01', '2025-09-30', 95, 545000.00, 5736.84, 488000.00, 35000.00, 22000.00, 89.54, 'good', 'stable', 16, 16, 151, 143, 94.70, 1),
+    
+    -- August 2025 Performance Data  
+    (4, 'default', '2025-08-01', '2025-08-31', 103, 598000.00, 5805.83, 568000.00, 25000.00, 5000.00, 94.98, 'excellent', 'improving', 16, 16, 165, 158, 95.76, 1),
+    
+    -- July 2025 Performance Data
+    (4, 'default', '2025-07-01', '2025-07-31', 87, 497000.00, 5712.64, 465000.00, 20000.00, 12000.00, 93.56, 'good', 'stable', 16, 16, 142, 135, 95.07, 1)
+ON DUPLICATE KEY UPDATE 
+    total_orders = VALUES(total_orders),
+    total_order_value = VALUES(total_order_value),
+    average_order_value = VALUES(average_order_value),
+    current_payments = VALUES(current_payments),
+    upcoming_payments = VALUES(upcoming_payments),
+    overdue_payments = VALUES(overdue_payments),
+    payment_collection_rate = VALUES(payment_collection_rate),
+    performance_level = VALUES(performance_level),
+    payment_trend = VALUES(payment_trend),
+    shops_managed = VALUES(shops_managed),
+    active_shops = VALUES(active_shops),
+    total_visits = VALUES(total_visits),
+    completed_visits = VALUES(completed_visits),
+    visit_completion_rate = VALUES(visit_completion_rate),
+    created_by = VALUES(created_by);
 
 /*
 
@@ -140,6 +247,8 @@ SELECT shop_id, name, code, territory_id FROM shops;
 SELECT route_id, name, territory_id, week_start_date, status FROM routes;
 SELECT id, route_id, shop_id, sales_executive_id, planned_date FROM route_assignments;
 SELECT shop_id, shop_name, amount, due_date, status, territory_id, tenant_id, notes, sales_executive_id FROM due_data;
+SELECT user_id, period_start, period_end, total_orders, total_order_value, payment_collection_rate, performance_level FROM sales_performance;
+SELECT shop_id, shop_name, current_payment, upcoming_payment, overdue_payment, sync_status FROM synced_shop_data;
 
 
 

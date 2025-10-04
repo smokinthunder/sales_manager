@@ -3,9 +3,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:sales_manager/config/providers/current_user_notifier.dart';
 import 'package:sales_manager/domain/models/user/user_role.dart';
+import 'package:sales_manager/ui/analytics/analytics.dart';
+import 'package:sales_manager/ui/analytics/viewmodels/executive_analytics_viewmodel.dart';
 import 'package:sales_manager/ui/analytics/widgets/best_selling_product.dart';
 import 'package:sales_manager/ui/analytics/widgets/sales_report.dart';
 import 'package:sales_manager/ui/analytics/widgets/switch_row.dart';
+import 'package:sales_manager/ui/home/home_screens/viewmodel/home_screen_viewmodel.dart';
 import 'package:sales_manager/ui/widgets/drop_down_menu.dart';
 
 class ConsolidatedAnalyticsScreen extends ConsumerStatefulWidget {
@@ -21,6 +24,7 @@ class _ConsolidatedAnalyticsScreenState
   bool showTopTen = false;
   bool showSalesReport = false;
   bool showBestSelling = false;
+  String? selectedExecutive;
 
   @override
   Widget build(BuildContext context) {
@@ -59,19 +63,47 @@ class _ConsolidatedAnalyticsScreenState
                       if (user.role == UserRole.areaManager)
                         Padding(
                           padding: const EdgeInsets.all(8.0),
-                          child: CustomDropDownMenu(
-                            hintText: "Akhil Dev",
-                            dropdownMenuEntries: [
-                              DropdownMenuEntry(
-                                value: "Akhil Dev",
-                                label: "Akhil Dev",
+                          child: ref
+                              .watch(getAllSalesExecutivesProvider)
+                              .when(
+                                loading: () => const CustomDropDownMenu(
+                                  tinyTitle: true,
+                                  hintText: "...Loading Executives",
+                                  dropdownMenuEntries: [],
+                                  title: "Executives",
+                                ),
+                                error: (error, stackTrace) =>
+                                    Center(child: Text('Error: $error')),
+                                data: (executives) => CustomDropDownMenu(
+                                  hintText: "Select Executive",
+                                  tinyTitle: true,
+                                  onSelected: (value) => setState(() {
+                                    selectedExecutive = value;
+                                  }),
+                                  dropdownMenuEntries: [
+                                    ...executives.map(
+                                      (executive) => DropdownMenuEntry(
+                                        value: executive['id'].toString(),
+                                        label: executive['name'],
+                                      ),
+                                    ),
+                                  ],
+                                  title: "Executives",
+                                ),
+                                // ),
+                                //     CustomDropDownMenu(
+                                //       hintText: "Akhil Dev",
+                                //       dropdownMenuEntries: [
+                                //         DropdownMenuEntry(
+                                //           value: "Akhil Dev",
+                                //           label: "Akhil Dev",
+                                //         ),
+                                //         DropdownMenuEntry(
+                                //           value: "John Doe",
+                                //           label: "John Doe",
+                                //         ),
+                                //       ],
                               ),
-                              DropdownMenuEntry(
-                                value: "John Doe",
-                                label: "John Doe",
-                              ),
-                            ],
-                          ),
                         ),
                       SwitchRow(
                         title: "TOP 10 Customer",
@@ -107,6 +139,22 @@ class _ConsolidatedAnalyticsScreenState
                     child: Text("Find Analytics"),
                   ),
                 ),
+                if (!showTopTen)
+                  ref
+                      .watch(
+                        getTopTenCustomersProvider(
+                          salesExecutiveId: selectedExecutive,
+                        ),
+                      )
+                      .when(
+                        loading: () =>
+                            TopTenCustomers(customers: ["loading.."]),
+                        error: (error, stackTrace) => TopTenCustomers(
+                          customers: ["Error", error.toString()],
+                        ),
+                        data: (data) => TopTenCustomers(customers: data),
+                      ),
+
                 if (showTopTen)
                   TopTenCustomers(
                     customers: [

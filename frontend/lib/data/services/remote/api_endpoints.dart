@@ -38,4 +38,21 @@ class ApiEndpoints {
   // Outstanding Payment Apis
   static final String outstandingPayments = "${_apiUrl}outstanding/";
   
+
+  // Analytics Apis
+  static final String _analyticsApi = "${_apiUrl}analytics/";
+  // Executive Analytics
+  static final String _executiveAnalyticsApi = "${_analyticsApi}executive/";
+
+  static final String executiveTopCustomers = "${_executiveAnalyticsApi}top_customers";
+  static final String executiveBestSellingProducts = "${_executiveAnalyticsApi}best_selling_products";
+  static final String executiveSalesReport = "${_executiveAnalyticsApi}sales_report";
+
+  // Shops Analytics 
+  static final String _shopsAnalyticsApi = "${_analyticsApi}shops/";
+
+  static final String shopPurchaseAnalysis = "${_shopsAnalyticsApi}purchase_analysis";
+  static final String shopBestSellingProducts = "${_shopsAnalyticsApi}best_selling_products";
+  static final String shopSalesReport = "${_shopsAnalyticsApi}sales_report";
+
 }
