@@ -352,3 +352,4 @@ class AssignmentService:
                 "error": str(e),
                 "summary_timestamp": datetime.utcnow().isoformat()
             }
+

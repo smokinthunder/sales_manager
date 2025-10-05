@@ -62,3 +62,4 @@ Write-Host "   - AREA_MANAGER: +1111111112 (AquaStar North Manager)" -Foreground
 Write-Host "   - SALES_EXECUTIVE: +1111111121 (Alex Thompson)" -ForegroundColor White
 Write-Host ""
 Write-Host "Analytics endpoints ready for testing with proper user hierarchy!" -ForegroundColor Green
+

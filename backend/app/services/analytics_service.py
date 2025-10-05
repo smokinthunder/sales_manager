@@ -33,6 +33,8 @@ class AnalyticsService:
         tenant_id: str,
         sales_executive_id: Optional[int] = None,
         area_manager_id: Optional[int] = None,
+        start_date: Optional[str] = None,
+        end_date: Optional[str] = None,
         current_user: Dict[str, Any] = None
     ) -> List[Dict[str, Any]]:
         """
@@ -42,13 +44,15 @@ class AnalyticsService:
             tenant_id: Tenant identifier
             sales_executive_id: Sales executive ID (optional, defaults to aggregated view based on role)
             area_manager_id: Area manager ID (optional, for client_admin to filter by area manager)
+            start_date: Start date for the report period (YYYY-MM-DD format, optional)
+            end_date: End date for the report period (YYYY-MM-DD format, optional)
             current_user: Current authenticated user
             
         Returns:
             List of top customers with shop names and points
         """
         try:
-            logger.info(f"Getting executive top customers for tenant {tenant_id}, sales_executive_id: {sales_executive_id}, area_manager_id: {area_manager_id}, current_user: {current_user}")
+            logger.info(f"Getting executive top customers for tenant {tenant_id}, sales_executive_id: {sales_executive_id}, area_manager_id: {area_manager_id}, start_date: {start_date}, end_date: {end_date}, current_user: {current_user}")
             
             if not current_user:
                 logger.warning("No current user provided")
@@ -61,7 +65,7 @@ class AnalyticsService:
             # Handle different user roles
             if user_role == "sales_executive":
                 # Sales executives can only see their own data
-                top_customers = await data_layer.get_executive_top_customers(tenant_id, user_id)
+                top_customers = await data_layer.get_executive_top_customers(tenant_id, user_id, start_date, end_date)
                 logger.info(f"Retrieved {len(top_customers)} top customers for sales executive {user_id}")
                 return top_customers
             
@@ -69,7 +73,7 @@ class AnalyticsService:
                 if sales_executive_id is not None:
                     # Area manager viewing specific sales executive - validate they're under this area manager
                     if await self._validate_executive_under_area_manager(sales_executive_id, user_id, tenant_id):
-                        top_customers = await data_layer.get_executive_top_customers(tenant_id, sales_executive_id)
+                        top_customers = await data_layer.get_executive_top_customers(tenant_id, sales_executive_id, start_date, end_date)
                         logger.info(f"Retrieved {len(top_customers)} top customers for executive {sales_executive_id}")
                         return top_customers
                     else:
@@ -79,7 +83,7 @@ class AnalyticsService:
                     # Area manager viewing aggregated data for their territory
                     territory_id = current_user.get("territory_id")
                     if territory_id:
-                        top_customers = await data_layer.get_territory_top_customers(tenant_id, territory_id)
+                        top_customers = await data_layer.get_territory_top_customers(tenant_id, territory_id, start_date, end_date)
                         logger.info(f"Retrieved {len(top_customers)} top customers for territory {territory_id}")
                         return top_customers
                     else:
@@ -89,17 +93,17 @@ class AnalyticsService:
             elif user_role in ["client_admin", "superadmin"]:
                 if sales_executive_id is not None:
                     # Admin viewing specific sales executive
-                    top_customers = await data_layer.get_executive_top_customers(tenant_id, sales_executive_id)
+                    top_customers = await data_layer.get_executive_top_customers(tenant_id, sales_executive_id, start_date, end_date)
                     logger.info(f"Retrieved {len(top_customers)} top customers for executive {sales_executive_id}")
                     return top_customers
                 elif area_manager_id is not None:
                     # Admin viewing aggregated data for specific area manager
-                    top_customers = await data_layer.get_area_manager_top_customers(tenant_id, area_manager_id)
+                    top_customers = await data_layer.get_area_manager_top_customers(tenant_id, area_manager_id, start_date, end_date)
                     logger.info(f"Retrieved {len(top_customers)} top customers for area manager {area_manager_id}")
                     return top_customers
                 else:
                     # Admin viewing aggregated data for entire tenant
-                    top_customers = await data_layer.get_tenant_top_customers(tenant_id)
+                    top_customers = await data_layer.get_tenant_top_customers(tenant_id, start_date, end_date)
                     logger.info(f"Retrieved {len(top_customers)} top customers for tenant {tenant_id}")
                     return top_customers
             
@@ -115,6 +119,8 @@ class AnalyticsService:
         tenant_id: str,
         sales_executive_id: Optional[int] = None,
         area_manager_id: Optional[int] = None,
+        start_date: Optional[str] = None,
+        end_date: Optional[str] = None,
         current_user: Dict[str, Any] = None
     ) -> List[Dict[str, Any]]:
         """
@@ -124,13 +130,15 @@ class AnalyticsService:
             tenant_id: Tenant identifier
             sales_executive_id: Sales executive ID (optional, defaults to aggregated view based on role)
             area_manager_id: Area manager ID (optional, for client_admin to filter by area manager)
+            start_date: Start date for the report period (YYYY-MM-DD format, optional)
+            end_date: End date for the report period (YYYY-MM-DD format, optional)
             current_user: Current authenticated user
             
         Returns:
             List of best selling products with units sold and percentages
         """
         try:
-            logger.info(f"Getting executive best selling products for tenant {tenant_id}, sales_executive_id: {sales_executive_id}, area_manager_id: {area_manager_id}, current_user: {current_user}")
+            logger.info(f"Getting executive best selling products for tenant {tenant_id}, sales_executive_id: {sales_executive_id}, area_manager_id: {area_manager_id}, start_date: {start_date}, end_date: {end_date}, current_user: {current_user}")
             
             if not current_user:
                 logger.warning("No current user provided")
@@ -143,7 +151,7 @@ class AnalyticsService:
             # Handle different user roles
             if user_role == "sales_executive":
                 # Sales executives can only see their own data
-                best_selling_products = await data_layer.get_products_by_executive(tenant_id, user_id)
+                best_selling_products = await data_layer.get_products_by_executive(tenant_id, user_id, start_date, end_date)
                 logger.info(f"Retrieved {len(best_selling_products)} best selling products for sales executive {user_id}")
                 return best_selling_products
             
@@ -151,7 +159,7 @@ class AnalyticsService:
                 if sales_executive_id is not None:
                     # Area manager viewing specific sales executive - validate they're under this area manager
                     if await self._validate_executive_under_area_manager(sales_executive_id, user_id, tenant_id):
-                        best_selling_products = await data_layer.get_products_by_executive(tenant_id, sales_executive_id)
+                        best_selling_products = await data_layer.get_products_by_executive(tenant_id, sales_executive_id, start_date, end_date)
                         logger.info(f"Retrieved {len(best_selling_products)} best selling products for executive {sales_executive_id}")
                         return best_selling_products
                     else:
@@ -161,7 +169,7 @@ class AnalyticsService:
                     # Area manager viewing aggregated data for their territory
                     territory_id = current_user.get("territory_id")
                     if territory_id:
-                        best_selling_products = await data_layer.get_territory_best_selling_products(tenant_id, territory_id)
+                        best_selling_products = await data_layer.get_territory_best_selling_products(tenant_id, territory_id, start_date, end_date)
                         logger.info(f"Retrieved {len(best_selling_products)} best selling products for territory {territory_id}")
                         return best_selling_products
                     else:
@@ -171,17 +179,17 @@ class AnalyticsService:
             elif user_role in ["client_admin", "superadmin"]:
                 if sales_executive_id is not None:
                     # Admin viewing specific sales executive
-                    best_selling_products = await data_layer.get_products_by_executive(tenant_id, sales_executive_id)
+                    best_selling_products = await data_layer.get_products_by_executive(tenant_id, sales_executive_id, start_date, end_date)
                     logger.info(f"Retrieved {len(best_selling_products)} best selling products for executive {sales_executive_id}")
                     return best_selling_products
                 elif area_manager_id is not None:
                     # Admin viewing aggregated data for specific area manager
-                    best_selling_products = await data_layer.get_area_manager_best_selling_products(tenant_id, area_manager_id)
+                    best_selling_products = await data_layer.get_area_manager_best_selling_products(tenant_id, area_manager_id, start_date, end_date)
                     logger.info(f"Retrieved {len(best_selling_products)} best selling products for area manager {area_manager_id}")
                     return best_selling_products
                 else:
                     # Admin viewing aggregated data for entire tenant
-                    best_selling_products = await data_layer.get_tenant_best_selling_products(tenant_id)
+                    best_selling_products = await data_layer.get_tenant_best_selling_products(tenant_id, start_date, end_date)
                     logger.info(f"Retrieved {len(best_selling_products)} best selling products for tenant {tenant_id}")
                     return best_selling_products
             
@@ -196,43 +204,102 @@ class AnalyticsService:
         self,
         tenant_id: str,
         sales_executive_id: Optional[int] = None,
+        area_manager_id: Optional[int] = None,
+        start_date: Optional[str] = None,
+        end_date: Optional[str] = None,
         current_user: Dict[str, Any] = None
     ) -> List[Dict[str, Any]]:
         """
-        Get sales report for a sales executive for the last year.
+        Get sales report for a sales executive or aggregated view.
         
         Args:
             tenant_id: Tenant identifier
-            sales_executive_id: Sales executive ID (optional, defaults to current user)
+            sales_executive_id: Sales executive ID (optional, defaults to aggregated view based on role)
+            area_manager_id: Area manager ID (optional, for client_admin to filter by area manager)
+            start_date: Start date for the report period (YYYY-MM-DD format, optional)
+            end_date: End date for the report period (YYYY-MM-DD format, optional)
             current_user: Current authenticated user
             
         Returns:
-            List of monthly sales data for the last 12 months
+            List of monthly sales data for the specified period
         """
         try:
-            logger.info(f"Getting executive sales report for tenant {tenant_id}, sales_executive_id: {sales_executive_id}, current_user: {current_user}")
+            logger.info(f"Getting executive sales report for tenant {tenant_id}, sales_executive_id: {sales_executive_id}, area_manager_id: {area_manager_id}, start_date: {start_date}, end_date: {end_date}, current_user: {current_user}")
             
-            # Determine the sales executive ID based on user role and permissions
-            target_executive_id = await self._determine_target_executive_id(
-                sales_executive_id, current_user, tenant_id
-            )
-            
-            if target_executive_id is None:
-                logger.info("No valid sales executive ID determined, returning empty list")
+            if not current_user:
+                logger.warning("No current user provided")
                 return []
             
+            user_role = current_user.get("role")
+            user_id = current_user.get("id")
             data_layer = await self._get_data_layer()
             
-            # Get sales data for the last year
-            end_date = date.today()
-            start_date = end_date - timedelta(days=365)
+            # Calculate date range - use provided dates or defaults
+            from datetime import datetime, timedelta
+            if start_date is None:
+                # Default to 1 year ago
+                end_date_obj = datetime.now()
+                start_date_obj = end_date_obj - timedelta(days=365)
+                start_date_str = start_date_obj.strftime('%Y-%m-%d')
+            else:
+                start_date_str = start_date
+                
+            if end_date is None:
+                # Default to today
+                end_date_obj = datetime.now()
+                end_date_str = end_date_obj.strftime('%Y-%m-%d')
+            else:
+                end_date_str = end_date
             
-            sales_report = await data_layer.get_executive_sales_report(
-                tenant_id, target_executive_id, start_date, end_date
-            )
+            logger.info(f"Using date range: {start_date_str} to {end_date_str}")
             
-            logger.info(f"Retrieved sales report for executive {target_executive_id} with {len(sales_report)} months")
-            return sales_report
+            # Handle different user roles
+            if user_role == "sales_executive":
+                # Sales executives can only see their own data
+                sales_report = await data_layer.get_executive_sales_report(tenant_id, user_id, start_date_str, end_date_str)
+                logger.info(f"Retrieved sales report for sales executive {user_id}")
+                return sales_report
+            
+            elif user_role == "area_manager":
+                if sales_executive_id is not None:
+                    # Area manager viewing specific sales executive - validate they're under this area manager
+                    if await self._validate_executive_under_area_manager(sales_executive_id, user_id, tenant_id):
+                        sales_report = await data_layer.get_executive_sales_report(tenant_id, sales_executive_id, start_date_str, end_date_str)
+                        logger.info(f"Retrieved sales report for executive {sales_executive_id}")
+                        return sales_report
+                    else:
+                        logger.warning(f"Area manager {user_id} attempted to access executive {sales_executive_id} not under their management")
+                        return []
+                else:
+                    # Area manager viewing aggregated data for their territory
+                    territory_id = current_user.get("territory_id")
+                    if territory_id:
+                        sales_report = await data_layer.get_territory_sales_report(tenant_id, territory_id, start_date_str, end_date_str)
+                        logger.info(f"Retrieved sales report for territory {territory_id}")
+                        return sales_report
+                    else:
+                        logger.warning(f"Area manager {user_id} has no territory_id")
+                        return []
+            
+            elif user_role in ["client_admin", "superadmin"]:
+                if sales_executive_id is not None:
+                    # Admin viewing specific sales executive
+                    sales_report = await data_layer.get_executive_sales_report(tenant_id, sales_executive_id, start_date_str, end_date_str)
+                    logger.info(f"Retrieved sales report for executive {sales_executive_id}")
+                    return sales_report
+                elif area_manager_id is not None:
+                    # Admin viewing aggregated data for specific area manager
+                    sales_report = await data_layer.get_area_manager_sales_report(tenant_id, area_manager_id, start_date_str, end_date_str)
+                    logger.info(f"Retrieved sales report for area manager {area_manager_id}")
+                    return sales_report
+                else:
+                    # Admin viewing aggregated data for entire tenant
+                    sales_report = await data_layer.get_tenant_sales_report(tenant_id, start_date_str, end_date_str)
+                    logger.info(f"Retrieved sales report for tenant {tenant_id}")
+                    return sales_report
+            
+            logger.warning(f"Unsupported user role: {user_role}")
+            return []
             
         except Exception as e:
             logger.error(f"Error getting executive sales report: {str(e)}", exc_info=True)

@@ -1,4 +1,5 @@
 # Simplified Dummy Data for Sales Manager Analytics System
+docker-compose --profile seed up db-seeder
 
 This directory contains simplified dummy data for testing the Sales Manager analytics system with exactly the structure you requested.
 

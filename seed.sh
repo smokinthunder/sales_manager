@@ -28,3 +28,4 @@ echo "   - AREA_MANAGER: +1111111112 (AquaStar North Manager)"
 echo "   - SALES_EXECUTIVE: +1111111121 (Alex Thompson)"
 echo ""
 echo "You can now start the full system with: docker-compose up -d"
+

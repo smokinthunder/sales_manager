@@ -120,3 +120,4 @@ INSERT INTO shops (shop_id, name, code, status, address, phone, contact_person, 
 ('UR-I-003', 'Factory Urban Shop', 'URI003', 'active', '300 Factory St, Factory', '+1234582003', 'Carter Factory', 41.4200, -73.2800, 'UR-INDUSTRIAL', 'URBAN', 1),
 ('UR-I-004', 'Warehouse Urban Mart', 'URI004', 'active', '400 Warehouse Ave, Warehouse', '+1234582004', 'Madison Warehouse', 41.4300, -73.2700, 'UR-INDUSTRIAL', 'URBAN', 1),
 ('UR-I-005', 'Distribution Urban Store', 'URI005', 'active', '500 Distribution St, Distribution', '+1234582005', 'Wyatt Distribution', 41.4400, -73.2600, 'UR-INDUSTRIAL', 'URBAN', 1);
+

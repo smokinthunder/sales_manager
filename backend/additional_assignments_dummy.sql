@@ -195,3 +195,4 @@ INSERT INTO sales_executive_assignments (sales_executive_id, shop_id, territory_
 -- Ethan Adams gets remaining shops in UR-INDUSTRIAL (when we add more)
 -- (38, 'UR-I-016', 'UR-INDUSTRIAL', 'URBAN', '2024-01-01', 'active', 1),
 -- (38, 'UR-I-017', 'UR-INDUSTRIAL', 'URBAN', '2024-01-01', 'active', 1);
+

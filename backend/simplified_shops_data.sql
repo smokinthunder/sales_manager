@@ -85,3 +85,4 @@ INSERT INTO shops (shop_id, name, code, status, address, phone, contact_person, 
 -- Samantha Harris (Sales Executive) - 2 shops
 ('MR-M-003', 'Mixed Metro Shop', 'MRM003', 'active', '300 Mixed St, Mixed', '+1234577003', 'Emma Mixed', 41.1700, -73.5300, 'MR-MIDTOWN', 'METRO', 1),
 ('MR-M-004', 'Transition Metro Mart', 'MRM004', 'active', '400 Transition Ave, Transition', '+1234577004', 'Noah Transition', 41.1800, -73.5200, 'MR-MIDTOWN', 'METRO', 1);
+

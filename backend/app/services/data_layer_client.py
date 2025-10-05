@@ -839,18 +839,26 @@ class DataLayerClient:
             params.update(filters)
         return await self._make_request("GET", f"/api/due-data/{tenant_id}", params=params)
     
-    async def get_products_by_executive(self, tenant_id: str, sales_executive_id: int) -> List[Dict[str, Any]]:
+    async def get_products_by_executive(self, tenant_id: str, sales_executive_id: int, start_date: Optional[str] = None, end_date: Optional[str] = None) -> List[Dict[str, Any]]:
         """
         Get products sold by a specific sales executive.
         
         Args:
             tenant_id: Tenant identifier
             sales_executive_id: Sales executive ID
+            start_date: Start date for filtering (YYYY-MM-DD format, optional)
+            end_date: End date for filtering (YYYY-MM-DD format, optional)
             
         Returns:
             List of products sold by the executive
         """
-        return await self._make_request("GET", f"/api/analytics/executive/{sales_executive_id}/best-selling-products", params={"tenant_id": tenant_id})
+        params = {"tenant_id": tenant_id}
+        if start_date:
+            params["start_date"] = start_date
+        if end_date:
+            params["end_date"] = end_date
+            
+        return await self._make_request("GET", f"/api/analytics/executive/{sales_executive_id}/best-selling-products", params=params)
     
     async def get_all_products(self, tenant_id: str) -> List[Dict[str, Any]]:
         """
@@ -866,101 +874,193 @@ class DataLayerClient:
         # In a real implementation, you might want a dedicated endpoint for this
         return await self._make_request("GET", f"/api/products/all", params={"tenant_id": tenant_id})
     
-    async def get_executive_sales_report(self, tenant_id: str, sales_executive_id: int, start_date: date, end_date: date) -> List[Dict[str, Any]]:
+    async def get_executive_sales_report(self, tenant_id: str, sales_executive_id: int, start_date: str, end_date: str) -> List[Dict[str, Any]]:
         """
         Get sales report for a sales executive.
         
         Args:
             tenant_id: Tenant identifier
             sales_executive_id: Sales executive ID
-            start_date: Start date for the report
-            end_date: End date for the report
+            start_date: Start date for the report (YYYY-MM-DD format)
+            end_date: End date for the report (YYYY-MM-DD format)
             
         Returns:
             List of sales data
         """
         params = {
             "tenant_id": tenant_id,
-            "start_date": start_date.isoformat(),
-            "end_date": end_date.isoformat()
+            "start_date": start_date,
+            "end_date": end_date
         }
         return await self._make_request("GET", f"/api/analytics/executive/{sales_executive_id}/sales-report", params=params)
     
-    async def get_tenant_top_customers(self, tenant_id: str) -> List[Dict[str, Any]]:
+    async def get_tenant_top_customers(self, tenant_id: str, start_date: Optional[str] = None, end_date: Optional[str] = None) -> List[Dict[str, Any]]:
         """
         Get top customers for entire tenant (aggregated view).
         
         Args:
             tenant_id: Tenant identifier
+            start_date: Start date for filtering (YYYY-MM-DD format, optional)
+            end_date: End date for filtering (YYYY-MM-DD format, optional)
             
         Returns:
             List of top customers with shop names and points
         """
-        return await self._make_request("GET", "/api/analytics/tenant/top-customers", params={"tenant_id": tenant_id})
+        params = {"tenant_id": tenant_id}
+        if start_date:
+            params["start_date"] = start_date
+        if end_date:
+            params["end_date"] = end_date
+            
+        return await self._make_request("GET", "/api/analytics/tenant/top-customers", params=params)
     
-    async def get_territory_top_customers(self, tenant_id: str, territory_id: str) -> List[Dict[str, Any]]:
+    async def get_territory_top_customers(self, tenant_id: str, territory_id: str, start_date: Optional[str] = None, end_date: Optional[str] = None) -> List[Dict[str, Any]]:
         """
         Get top customers for a specific territory (aggregated view).
         
         Args:
             tenant_id: Tenant identifier
             territory_id: Territory identifier
+            start_date: Start date for filtering (YYYY-MM-DD format, optional)
+            end_date: End date for filtering (YYYY-MM-DD format, optional)
             
         Returns:
             List of top customers with shop names and points
         """
-        return await self._make_request("GET", f"/api/analytics/territory/{territory_id}/top-customers", params={"tenant_id": tenant_id})
+        params = {"tenant_id": tenant_id}
+        if start_date:
+            params["start_date"] = start_date
+        if end_date:
+            params["end_date"] = end_date
+            
+        return await self._make_request("GET", f"/api/analytics/territory/{territory_id}/top-customers", params=params)
     
-    async def get_area_manager_top_customers(self, tenant_id: str, area_manager_id: int) -> List[Dict[str, Any]]:
+    async def get_area_manager_top_customers(self, tenant_id: str, area_manager_id: int, start_date: Optional[str] = None, end_date: Optional[str] = None) -> List[Dict[str, Any]]:
         """
         Get top customers for all territories managed by an area manager.
         
         Args:
             tenant_id: Tenant identifier
             area_manager_id: Area manager ID
+            start_date: Start date for filtering (YYYY-MM-DD format, optional)
+            end_date: End date for filtering (YYYY-MM-DD format, optional)
             
         Returns:
             List of top customers with shop names and points
         """
-        return await self._make_request("GET", f"/api/analytics/area-manager/{area_manager_id}/top-customers", params={"tenant_id": tenant_id})
+        params = {"tenant_id": tenant_id}
+        if start_date:
+            params["start_date"] = start_date
+        if end_date:
+            params["end_date"] = end_date
+            
+        return await self._make_request("GET", f"/api/analytics/area-manager/{area_manager_id}/top-customers", params=params)
     
-    async def get_tenant_best_selling_products(self, tenant_id: str) -> List[Dict[str, Any]]:
+    async def get_tenant_best_selling_products(self, tenant_id: str, start_date: Optional[str] = None, end_date: Optional[str] = None) -> List[Dict[str, Any]]:
         """
         Get best selling products for entire tenant (aggregated view).
         
         Args:
             tenant_id: Tenant identifier
+            start_date: Start date for filtering (YYYY-MM-DD format, optional)
+            end_date: End date for filtering (YYYY-MM-DD format, optional)
             
         Returns:
             List of best selling products with units sold and percentages
         """
-        return await self._make_request("GET", "/api/analytics/tenant/best-selling-products", params={"tenant_id": tenant_id})
+        params = {"tenant_id": tenant_id}
+        if start_date:
+            params["start_date"] = start_date
+        if end_date:
+            params["end_date"] = end_date
+            
+        return await self._make_request("GET", "/api/analytics/tenant/best-selling-products", params=params)
     
-    async def get_territory_best_selling_products(self, tenant_id: str, territory_id: str) -> List[Dict[str, Any]]:
+    async def get_territory_best_selling_products(self, tenant_id: str, territory_id: str, start_date: Optional[str] = None, end_date: Optional[str] = None) -> List[Dict[str, Any]]:
         """
         Get best selling products for a specific territory (aggregated view).
         
         Args:
             tenant_id: Tenant identifier
             territory_id: Territory identifier
+            start_date: Start date for filtering (YYYY-MM-DD format, optional)
+            end_date: End date for filtering (YYYY-MM-DD format, optional)
             
         Returns:
             List of best selling products with units sold and percentages
         """
-        return await self._make_request("GET", f"/api/analytics/territory/{territory_id}/best-selling-products", params={"tenant_id": tenant_id})
+        params = {"tenant_id": tenant_id}
+        if start_date:
+            params["start_date"] = start_date
+        if end_date:
+            params["end_date"] = end_date
+            
+        return await self._make_request("GET", f"/api/analytics/territory/{territory_id}/best-selling-products", params=params)
     
-    async def get_area_manager_best_selling_products(self, tenant_id: str, area_manager_id: int) -> List[Dict[str, Any]]:
+    async def get_area_manager_best_selling_products(self, tenant_id: str, area_manager_id: int, start_date: Optional[str] = None, end_date: Optional[str] = None) -> List[Dict[str, Any]]:
         """
         Get best selling products for all territories managed by an area manager.
         
         Args:
             tenant_id: Tenant identifier
             area_manager_id: Area manager ID
+            start_date: Start date for filtering (YYYY-MM-DD format, optional)
+            end_date: End date for filtering (YYYY-MM-DD format, optional)
             
         Returns:
             List of best selling products with units sold and percentages
         """
-        return await self._make_request("GET", f"/api/analytics/area-manager/{area_manager_id}/best-selling-products", params={"tenant_id": tenant_id})
+        params = {"tenant_id": tenant_id}
+        if start_date:
+            params["start_date"] = start_date
+        if end_date:
+            params["end_date"] = end_date
+            
+        return await self._make_request("GET", f"/api/analytics/area-manager/{area_manager_id}/best-selling-products", params=params)
+    
+    async def get_tenant_sales_report(self, tenant_id: str, start_date: str, end_date: str) -> List[Dict[str, Any]]:
+        """
+        Get sales report for entire tenant (aggregated view).
+        
+        Args:
+            tenant_id: Tenant identifier
+            start_date: Start date for the report period
+            end_date: End date for the report period
+            
+        Returns:
+            List of monthly sales data
+        """
+        return await self._make_request("GET", "/api/analytics/tenant/sales-report", params={"tenant_id": tenant_id, "start_date": start_date, "end_date": end_date})
+    
+    async def get_territory_sales_report(self, tenant_id: str, territory_id: str, start_date: str, end_date: str) -> List[Dict[str, Any]]:
+        """
+        Get sales report for a specific territory (aggregated view).
+        
+        Args:
+            tenant_id: Tenant identifier
+            territory_id: Territory identifier
+            start_date: Start date for the report period
+            end_date: End date for the report period
+            
+        Returns:
+            List of monthly sales data
+        """
+        return await self._make_request("GET", f"/api/analytics/territory/{territory_id}/sales-report", params={"tenant_id": tenant_id, "start_date": start_date, "end_date": end_date})
+    
+    async def get_area_manager_sales_report(self, tenant_id: str, area_manager_id: int, start_date: str, end_date: str) -> List[Dict[str, Any]]:
+        """
+        Get sales report for all territories managed by an area manager.
+        
+        Args:
+            tenant_id: Tenant identifier
+            area_manager_id: Area manager ID
+            start_date: Start date for the report period
+            end_date: End date for the report period
+            
+        Returns:
+            List of monthly sales data
+        """
+        return await self._make_request("GET", f"/api/analytics/area-manager/{area_manager_id}/sales-report", params={"tenant_id": tenant_id, "start_date": start_date, "end_date": end_date})
     
     async def get_shop_purchase_analysis(self, tenant_id: str, shop_id: str, year: int) -> List[Dict[str, Any]]:
         """
@@ -1007,18 +1107,26 @@ class DataLayerClient:
         params = {"tenant_id": tenant_id, "year": year}
         return await self._make_request("GET", f"/api/analytics/shops/{shop_id}/sales-report", params=params)
 
-    async def get_executive_top_customers(self, tenant_id: str, sales_executive_id: int) -> List[Dict[str, Any]]:
+    async def get_executive_top_customers(self, tenant_id: str, sales_executive_id: int, start_date: Optional[str] = None, end_date: Optional[str] = None) -> List[Dict[str, Any]]:
         """
         Get top customers for a sales executive.
         
         Args:
             tenant_id: Tenant identifier
             sales_executive_id: Sales executive ID
+            start_date: Start date for filtering (YYYY-MM-DD format, optional)
+            end_date: End date for filtering (YYYY-MM-DD format, optional)
             
         Returns:
             List of top customers with shop names and points
         """
-        return await self._make_request("GET", f"/api/analytics/executive/{sales_executive_id}/top-customers", params={"tenant_id": tenant_id})
+        params = {"tenant_id": tenant_id}
+        if start_date:
+            params["start_date"] = start_date
+        if end_date:
+            params["end_date"] = end_date
+            
+        return await self._make_request("GET", f"/api/analytics/executive/{sales_executive_id}/top-customers", params=params)
 
     async def get_executive_shop_assignments(self, tenant_id: str, sales_executive_id: int) -> List[Dict[str, Any]]:
         """

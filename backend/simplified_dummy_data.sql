@@ -88,3 +88,4 @@ UPDATE territories SET area_manager_id = 10 WHERE territory_id = 'FF-RURAL';
 UPDATE territories SET area_manager_id = 12 WHERE territory_id = 'MR-DOWNTOWN';
 UPDATE territories SET area_manager_id = 13 WHERE territory_id = 'MR-UPTOWN';
 UPDATE territories SET area_manager_id = 14 WHERE territory_id = 'MR-MIDTOWN';
+

@@ -34,6 +34,8 @@ async def get_executive_top_customers(
     tenant_id: str = Query(..., description="Tenant identifier (required)"),
     sales_executive_id: Optional[int] = Query(None, description="Sales executive ID (only for area_manager, client_admin and superadmin users, for sales_executive it takes its own id)"),
     area_manager_id: Optional[int] = Query(None, description="Area manager ID (only for client_admin and superadmin users to filter by area manager)"),
+    start_date: Optional[str] = Query(None, description="Start date for the report period (YYYY-MM-DD format, optional)"),
+    end_date: Optional[str] = Query(None, description="End date for the report period (YYYY-MM-DD format, optional)"),
     current_user: Dict[str, Any] = Depends(get_current_user)
 ) -> List[TopCustomerResponse]:
     """
@@ -73,6 +75,8 @@ async def get_executive_top_customers(
             tenant_id=tenant_id,
             sales_executive_id=sales_executive_id,
             area_manager_id=area_manager_id,
+            start_date=start_date,
+            end_date=end_date,
             current_user=current_user
         )
         logger.info(f"Analytics service returned: {top_customers}")
@@ -98,6 +102,8 @@ async def get_executive_best_selling_products(
     tenant_id: str = Query(..., description="Tenant identifier (required)"),
     sales_executive_id: Optional[int] = Query(None, description="Sales executive ID (only for area_manager, client_admin and superadmin users, for sales_executive it takes its own id)"),
     area_manager_id: Optional[int] = Query(None, description="Area manager ID (only for client_admin and superadmin users to filter by area manager)"),
+    start_date: Optional[str] = Query(None, description="Start date for the report period (YYYY-MM-DD format, optional)"),
+    end_date: Optional[str] = Query(None, description="End date for the report period (YYYY-MM-DD format, optional)"),
     current_user: Dict[str, Any] = Depends(get_current_user)
 ) -> List[BestSellingProductResponse]:
     """
@@ -130,6 +136,8 @@ async def get_executive_best_selling_products(
             tenant_id=tenant_id,
             sales_executive_id=sales_executive_id,
             area_manager_id=area_manager_id,
+            start_date=start_date,
+            end_date=end_date,
             current_user=current_user
         )
         
@@ -149,21 +157,28 @@ async def get_executive_best_selling_products(
 async def get_executive_sales_report(
     tenant_id: str = Query(..., description="Tenant identifier (required)"),
     sales_executive_id: Optional[int] = Query(None, description="Sales executive ID (only for area_manager, client_admin and superadmin users, for sales_executive it takes its own id)"),
+    area_manager_id: Optional[int] = Query(None, description="Area manager ID (only for client_admin and superadmin users to filter by area manager)"),
+    start_date: Optional[str] = Query(None, description="Start date for the report period (YYYY-MM-DD format, defaults to 1 year ago)"),
+    end_date: Optional[str] = Query(None, description="End date for the report period (YYYY-MM-DD format, defaults to today)"),
     current_user: Dict[str, Any] = Depends(get_current_user)
 ) -> List[SalesReportResponse]:
     """
-    Get sales report for a sales executive for the last year.
+    Get sales report for a sales executive or aggregated view for a specified period.
     
     **Business Logic:**
-    - Returns monthly sales data for the last 12 months
+    - Returns monthly sales data for the specified date range
     - Shows sale points (order amounts) per month in YYYY-MM format
     - For sales_executive role: automatically uses their own ID
-    - For area_manager, client_admin, superadmin: can specify sales_executive_id
+    - For area_manager: can specify sales_executive_id or get territory aggregated data
+    - For client_admin, superadmin: can specify sales_executive_id, area_manager_id, or get tenant aggregated data
+    - Date range defaults to last 12 months if not specified
     
     **Security:**
     - Requires authentication
     - Tenant isolation enforced
-    - Sales executives can only see their own data unless they have higher privileges
+    - Sales executives can only see their own data
+    - Area managers can only see data for their territory
+    - Client admins can see all data for their tenant
     """
     try:
         # Verify tenant access
@@ -177,6 +192,9 @@ async def get_executive_sales_report(
         sales_report = await analytics_service.get_executive_sales_report(
             tenant_id=tenant_id,
             sales_executive_id=sales_executive_id,
+            area_manager_id=area_manager_id,
+            start_date=start_date,
+            end_date=end_date,
             current_user=current_user
         )
         

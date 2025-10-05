@@ -76,3 +76,4 @@ INSERT INTO sales_executive_assignments (sales_executive_id, shop_id, territory_
 -- Samantha Harris (ID: 22) - MR-MIDTOWN Territory
 (22, 'MR-M-003', 'MR-MIDTOWN', 'METRO', '2024-01-01', 'active', 1),
 (22, 'MR-M-004', 'MR-MIDTOWN', 'METRO', '2024-01-01', 'active', 1);
+

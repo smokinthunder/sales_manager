@@ -2404,7 +2404,13 @@ async def delete_due_data(tenant_id: str, due_data_id: int, db=Depends(get_db)):
 # ------------------ Analytics Endpoints ------------------
 
 @app.get("/api/analytics/executive/{executive_id}/top-customers")
-async def get_executive_top_customers(executive_id: int, tenant_id: str = Query(...), db=Depends(get_db)):
+async def get_executive_top_customers(
+    executive_id: int, 
+    tenant_id: str = Query(...), 
+    start_date: Optional[str] = Query(None),
+    end_date: Optional[str] = Query(None),
+    db=Depends(get_db)
+):
     """Get top customers for a sales executive based on total outstanding amounts."""
     try:
         # Get shops assigned to this sales executive
@@ -2437,6 +2443,8 @@ async def get_executive_top_customers(executive_id: int, tenant_id: str = Query(
             FROM due_data dd
             WHERE dd.shop_id IN ({placeholders})
             AND dd.tenant_id = :tenant_id
+            {"AND dd.due_date >= :start_date" if start_date else ""}
+            {"AND dd.due_date <= :end_date" if end_date else ""}
             GROUP BY dd.shop_id, dd.shop_name
             ORDER BY total_amount DESC
         """)
@@ -2444,6 +2452,11 @@ async def get_executive_top_customers(executive_id: int, tenant_id: str = Query(
         params = {"tenant_id": tenant_id}
         for i, shop_id in enumerate(shop_ids):
             params[f"shop_id_{i}"] = shop_id
+        
+        if start_date:
+            params["start_date"] = start_date
+        if end_date:
+            params["end_date"] = end_date
         
         results = db.execute(outstanding_query, params).fetchall()
         
@@ -2461,7 +2474,12 @@ async def get_executive_top_customers(executive_id: int, tenant_id: str = Query(
 
 
 @app.get("/api/analytics/tenant/top-customers")
-async def get_tenant_top_customers(tenant_id: str = Query(...), db=Depends(get_db)):
+async def get_tenant_top_customers(
+    tenant_id: str = Query(...), 
+    start_date: Optional[str] = Query(None),
+    end_date: Optional[str] = Query(None),
+    db=Depends(get_db)
+):
     """Get top customers for entire tenant (aggregated view)."""
     try:
         # Get all shops with their outstanding amounts
@@ -2473,11 +2491,19 @@ async def get_tenant_top_customers(tenant_id: str = Query(...), db=Depends(get_d
             FROM shops s
             LEFT JOIN due_data dd ON s.shop_id = dd.shop_id AND s.tenant_id = dd.tenant_id
             WHERE s.tenant_id = :tenant_id
+            """ + ("AND dd.due_date >= :start_date" if start_date else "") + """
+            """ + ("AND dd.due_date <= :end_date" if end_date else "") + """
             GROUP BY s.shop_id, s.name
             ORDER BY total_amount DESC
         """)
 
-        results = db.execute(shops_query, {"tenant_id": tenant_id}).fetchall()
+        params = {"tenant_id": tenant_id}
+        if start_date:
+            params["start_date"] = start_date
+        if end_date:
+            params["end_date"] = end_date
+            
+        results = db.execute(shops_query, params).fetchall()
 
         return [
             {
@@ -2583,7 +2609,13 @@ async def get_area_manager_top_customers(area_manager_id: int, tenant_id: str = 
 
 
 @app.get("/api/analytics/executive/{executive_id}/best-selling-products")
-async def get_executive_best_selling_products(executive_id: int, tenant_id: str = Query(...), db=Depends(get_db)):
+async def get_executive_best_selling_products(
+    executive_id: int, 
+    tenant_id: str = Query(...), 
+    start_date: Optional[str] = Query(None),
+    end_date: Optional[str] = Query(None),
+    db=Depends(get_db)
+):
     """Get best selling products for a sales executive."""
     try:
         # Get products sold by this executive
@@ -2594,13 +2626,17 @@ async def get_executive_best_selling_products(executive_id: int, tenant_id: str 
             FROM synced_products sp
             WHERE sp.sales_executive_id = :executive_id 
             AND sp.tenant_id = :tenant_id
+            """ + ("AND sp.created_at >= :start_date" if start_date else "") + """
+            """ + ("AND sp.created_at <= :end_date" if end_date else "") + """
             GROUP BY sp.product_name
             ORDER BY units_sold DESC
         """)
         
         executive_products = db.execute(products_query, {
             "executive_id": executive_id,
-            "tenant_id": tenant_id
+            "tenant_id": tenant_id,
+            **({"start_date": start_date} if start_date else {}),
+            **({"end_date": end_date} if end_date else {})
         }).fetchall()
         
         if not executive_products:
@@ -2611,9 +2647,15 @@ async def get_executive_best_selling_products(executive_id: int, tenant_id: str 
             SELECT COUNT(*) as total_units
             FROM synced_products sp
             WHERE sp.tenant_id = :tenant_id
+            """ + ("AND sp.created_at >= :start_date" if start_date else "") + """
+            """ + ("AND sp.created_at <= :end_date" if end_date else "") + """
         """)
         
-        total_result = db.execute(total_query, {"tenant_id": tenant_id}).fetchone()
+        total_result = db.execute(total_query, {
+            "tenant_id": tenant_id,
+            **({"start_date": start_date} if start_date else {}),
+            **({"end_date": end_date} if end_date else {})
+        }).fetchone()
         total_units = total_result[0] if total_result else 0
         
         return [
@@ -2773,8 +2815,8 @@ async def get_area_manager_best_selling_products(area_manager_id: int, tenant_id
 async def get_executive_sales_report(
     executive_id: int, 
     tenant_id: str = Query(...),
-    start_date: str = Query(...),
-    end_date: str = Query(...),
+    start_date: Optional[str] = Query(None),
+    end_date: Optional[str] = Query(None),
     db=Depends(get_db)
 ):
     """Get sales report for a sales executive for the specified period."""
@@ -2787,13 +2829,58 @@ async def get_executive_sales_report(
             FROM synced_orders so
             WHERE so.sales_executive_id = :executive_id 
             AND so.tenant_id = :tenant_id
+            """ + ("AND so.order_date >= :start_date" if start_date else "") + """
+            """ + ("AND so.order_date <= :end_date" if end_date else "") + """
+            GROUP BY DATE_FORMAT(so.order_date, '%Y-%m')
+            ORDER BY month_year
+        """)
+        
+        params = {
+            "executive_id": executive_id,
+            "tenant_id": tenant_id
+        }
+        if start_date:
+            params["start_date"] = start_date
+        if end_date:
+            params["end_date"] = end_date
+            
+        results = db.execute(sales_query, params).fetchall()
+        
+        return [
+            {
+                "month_year": row[0],
+                "sale_point": float(row[1])
+            }
+            for row in results
+        ]
+        
+    except Exception as e:
+        logger.error(f"Error getting executive sales report: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to get sales report: {str(e)}")
+
+
+@app.get("/api/analytics/tenant/sales-report")
+async def get_tenant_sales_report(
+    tenant_id: str = Query(...),
+    start_date: str = Query(...),
+    end_date: str = Query(...),
+    db=Depends(get_db)
+):
+    """Get sales report for entire tenant (aggregated view)."""
+    try:
+        # Get monthly sales data across all executives in the tenant
+        sales_query = text("""
+            SELECT 
+                DATE_FORMAT(so.order_date, '%Y-%m') as month_year,
+                SUM(so.order_amount) as total_amount
+            FROM synced_orders so
+            WHERE so.tenant_id = :tenant_id
             AND so.order_date BETWEEN :start_date AND :end_date
             GROUP BY DATE_FORMAT(so.order_date, '%Y-%m')
             ORDER BY month_year
         """)
         
         results = db.execute(sales_query, {
-            "executive_id": executive_id,
             "tenant_id": tenant_id,
             "start_date": start_date,
             "end_date": end_date
@@ -2808,8 +2895,114 @@ async def get_executive_sales_report(
         ]
         
     except Exception as e:
-        logger.error(f"Error getting executive sales report: {e}")
-        raise HTTPException(status_code=500, detail=f"Failed to get sales report: {str(e)}")
+        logger.error(f"Error getting tenant sales report: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to get tenant sales report: {str(e)}")
+
+
+@app.get("/api/analytics/territory/{territory_id}/sales-report")
+async def get_territory_sales_report(
+    territory_id: str,
+    tenant_id: str = Query(...),
+    start_date: str = Query(...),
+    end_date: str = Query(...),
+    db=Depends(get_db)
+):
+    """Get sales report for a specific territory (aggregated view)."""
+    try:
+        # Get monthly sales data by executives in this territory
+        sales_query = text("""
+            SELECT 
+                DATE_FORMAT(so.order_date, '%Y-%m') as month_year,
+                SUM(so.order_amount) as total_amount
+            FROM synced_orders so
+            JOIN users u ON so.sales_executive_id = u.id
+            WHERE u.territory_id = :territory_id
+            AND so.tenant_id = :tenant_id
+            AND so.order_date BETWEEN :start_date AND :end_date
+            GROUP BY DATE_FORMAT(so.order_date, '%Y-%m')
+            ORDER BY month_year
+        """)
+        
+        results = db.execute(sales_query, {
+            "territory_id": territory_id,
+            "tenant_id": tenant_id,
+            "start_date": start_date,
+            "end_date": end_date
+        }).fetchall()
+        
+        return [
+            {
+                "month_year": row[0],
+                "sale_point": float(row[1])
+            }
+            for row in results
+        ]
+        
+    except Exception as e:
+        logger.error(f"Error getting territory sales report: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to get territory sales report: {str(e)}")
+
+
+@app.get("/api/analytics/area-manager/{area_manager_id}/sales-report")
+async def get_area_manager_sales_report(
+    area_manager_id: int,
+    tenant_id: str = Query(...),
+    start_date: str = Query(...),
+    end_date: str = Query(...),
+    db=Depends(get_db)
+):
+    """Get sales report for all territories managed by an area manager."""
+    try:
+        # Get territories managed by this area manager
+        territories_query = text("""
+            SELECT territory_id 
+            FROM territories 
+            WHERE area_manager_id = :area_manager_id 
+            AND tenant_id = :tenant_id
+        """)
+        
+        territory_results = db.execute(territories_query, {
+            "area_manager_id": area_manager_id,
+            "tenant_id": tenant_id
+        }).fetchall()
+        
+        if not territory_results:
+            return []
+        
+        territory_ids = [row[0] for row in territory_results]
+        
+        # Get monthly sales data by executives in these territories
+        sales_query = text("""
+            SELECT 
+                DATE_FORMAT(so.order_date, '%Y-%m') as month_year,
+                SUM(so.order_amount) as total_amount
+            FROM synced_orders so
+            JOIN users u ON so.sales_executive_id = u.id
+            WHERE u.territory_id IN :territory_ids
+            AND so.tenant_id = :tenant_id
+            AND so.order_date BETWEEN :start_date AND :end_date
+            GROUP BY DATE_FORMAT(so.order_date, '%Y-%m')
+            ORDER BY month_year
+        """)
+        
+        results = db.execute(sales_query, {
+            "territory_ids": tuple(territory_ids),
+            "tenant_id": tenant_id,
+            "start_date": start_date,
+            "end_date": end_date
+        }).fetchall()
+        
+        return [
+            {
+                "month_year": row[0],
+                "sale_point": float(row[1])
+            }
+            for row in results
+        ]
+        
+    except Exception as e:
+        logger.error(f"Error getting area manager sales report: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to get area manager sales report: {str(e)}")
 
 
 @app.get("/api/analytics/shops/{shop_id}/purchase-analysis")

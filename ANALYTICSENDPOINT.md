@@ -3,14 +3,14 @@
 > *Should be authenticated and header should have the access token*
 ### Executive analytics
 
-#### GET analytics/executive/top_customers
+#### GET analytics/executive/top_customers #DONE
 - ##### INPUT (Query Parameters)
 	- tenant_id
 	- sales_executive_id (only  for area_manager, client_admin and superadmin users, for sales_executive it takes its own id )
 - ##### OUTPUT (List)
 	- shop_name (get it using the foreign key shop_id)
 	- points
-#### GET analytics/executive/best_selling_products
+#### GET analytics/executive/best_selling_products #DONE
 - ##### INPUT (Query Parameters)
 	- tenant_id
 	- sales_executive_id (only  for area_manager, client_admin and superadmin users, for sales_executive it takes its own id )
@@ -18,7 +18,7 @@
 	- product_name (get it using the foreign key shop_id)
 	- units sold by this sales executive
 	- percentage (units of this product sold by this executive divided by total products(all) ever sold)
-#### GET analytics/executive/sales_report
+#### GET analytics/executive/sales_report #DONE
 - ##### INPUT (Query Parameters)
 	- tenant_id
 	- sales_executive_id (only  for area_manager, client_admin and superadmin users, for sales_executive it takes its own id )
