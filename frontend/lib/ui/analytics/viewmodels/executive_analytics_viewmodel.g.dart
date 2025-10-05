@@ -7,7 +7,7 @@ part of 'executive_analytics_viewmodel.dart';
 // **************************************************************************
 
 String _$getTopTenCustomersHash() =>
-    r'eb5355cf44db6567e3c5aeb0d0c761639b3ce331';
+    r'250f43f9e6a72a66e0a6d18a2053d2015ad61518';
 
 /// Copied from Dart SDK
 class _SystemHash {
@@ -67,7 +67,8 @@ class GetTopTenCustomersFamily extends Family<AsyncValue<List<String>>> {
 }
 
 /// See also [getTopTenCustomers].
-class GetTopTenCustomersProvider extends FutureProvider<List<String>> {
+class GetTopTenCustomersProvider
+    extends AutoDisposeFutureProvider<List<String>> {
   /// See also [getTopTenCustomers].
   GetTopTenCustomersProvider({String? salesExecutiveId})
     : this._internal(
@@ -117,7 +118,7 @@ class GetTopTenCustomersProvider extends FutureProvider<List<String>> {
   }
 
   @override
-  FutureProviderElement<List<String>> createElement() {
+  AutoDisposeFutureProviderElement<List<String>> createElement() {
     return _GetTopTenCustomersProviderElement(this);
   }
 
@@ -138,19 +139,151 @@ class GetTopTenCustomersProvider extends FutureProvider<List<String>> {
 
 @Deprecated('Will be removed in 3.0. Use Ref instead')
 // ignore: unused_element
-mixin GetTopTenCustomersRef on FutureProviderRef<List<String>> {
+mixin GetTopTenCustomersRef on AutoDisposeFutureProviderRef<List<String>> {
   /// The parameter `salesExecutiveId` of this provider.
   String? get salesExecutiveId;
 }
 
 class _GetTopTenCustomersProviderElement
-    extends FutureProviderElement<List<String>>
+    extends AutoDisposeFutureProviderElement<List<String>>
     with GetTopTenCustomersRef {
   _GetTopTenCustomersProviderElement(super.provider);
 
   @override
   String? get salesExecutiveId =>
       (origin as GetTopTenCustomersProvider).salesExecutiveId;
+}
+
+String _$getBestSellingProductsHash() =>
+    r'64e3d02fba494e0a04c0967c342c7a77fafaac98';
+
+/// See also [getBestSellingProducts].
+@ProviderFor(getBestSellingProducts)
+const getBestSellingProductsProvider = GetBestSellingProductsFamily();
+
+/// See also [getBestSellingProducts].
+class GetBestSellingProductsFamily
+    extends Family<AsyncValue<List<Map<String, dynamic>>>> {
+  /// See also [getBestSellingProducts].
+  const GetBestSellingProductsFamily();
+
+  /// See also [getBestSellingProducts].
+  GetBestSellingProductsProvider call({String? salesExecutiveId}) {
+    return GetBestSellingProductsProvider(salesExecutiveId: salesExecutiveId);
+  }
+
+  @override
+  GetBestSellingProductsProvider getProviderOverride(
+    covariant GetBestSellingProductsProvider provider,
+  ) {
+    return call(salesExecutiveId: provider.salesExecutiveId);
+  }
+
+  static const Iterable<ProviderOrFamily>? _dependencies = null;
+
+  @override
+  Iterable<ProviderOrFamily>? get dependencies => _dependencies;
+
+  static const Iterable<ProviderOrFamily>? _allTransitiveDependencies = null;
+
+  @override
+  Iterable<ProviderOrFamily>? get allTransitiveDependencies =>
+      _allTransitiveDependencies;
+
+  @override
+  String? get name => r'getBestSellingProductsProvider';
+}
+
+/// See also [getBestSellingProducts].
+class GetBestSellingProductsProvider
+    extends AutoDisposeFutureProvider<List<Map<String, dynamic>>> {
+  /// See also [getBestSellingProducts].
+  GetBestSellingProductsProvider({String? salesExecutiveId})
+    : this._internal(
+        (ref) => getBestSellingProducts(
+          ref as GetBestSellingProductsRef,
+          salesExecutiveId: salesExecutiveId,
+        ),
+        from: getBestSellingProductsProvider,
+        name: r'getBestSellingProductsProvider',
+        debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
+            ? null
+            : _$getBestSellingProductsHash,
+        dependencies: GetBestSellingProductsFamily._dependencies,
+        allTransitiveDependencies:
+            GetBestSellingProductsFamily._allTransitiveDependencies,
+        salesExecutiveId: salesExecutiveId,
+      );
+
+  GetBestSellingProductsProvider._internal(
+    super._createNotifier, {
+    required super.name,
+    required super.dependencies,
+    required super.allTransitiveDependencies,
+    required super.debugGetCreateSourceHash,
+    required super.from,
+    required this.salesExecutiveId,
+  }) : super.internal();
+
+  final String? salesExecutiveId;
+
+  @override
+  Override overrideWith(
+    FutureOr<List<Map<String, dynamic>>> Function(
+      GetBestSellingProductsRef provider,
+    )
+    create,
+  ) {
+    return ProviderOverride(
+      origin: this,
+      override: GetBestSellingProductsProvider._internal(
+        (ref) => create(ref as GetBestSellingProductsRef),
+        from: from,
+        name: null,
+        dependencies: null,
+        allTransitiveDependencies: null,
+        debugGetCreateSourceHash: null,
+        salesExecutiveId: salesExecutiveId,
+      ),
+    );
+  }
+
+  @override
+  AutoDisposeFutureProviderElement<List<Map<String, dynamic>>> createElement() {
+    return _GetBestSellingProductsProviderElement(this);
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return other is GetBestSellingProductsProvider &&
+        other.salesExecutiveId == salesExecutiveId;
+  }
+
+  @override
+  int get hashCode {
+    var hash = _SystemHash.combine(0, runtimeType.hashCode);
+    hash = _SystemHash.combine(hash, salesExecutiveId.hashCode);
+
+    return _SystemHash.finish(hash);
+  }
+}
+
+@Deprecated('Will be removed in 3.0. Use Ref instead')
+// ignore: unused_element
+mixin GetBestSellingProductsRef
+    on AutoDisposeFutureProviderRef<List<Map<String, dynamic>>> {
+  /// The parameter `salesExecutiveId` of this provider.
+  String? get salesExecutiveId;
+}
+
+class _GetBestSellingProductsProviderElement
+    extends AutoDisposeFutureProviderElement<List<Map<String, dynamic>>>
+    with GetBestSellingProductsRef {
+  _GetBestSellingProductsProviderElement(super.provider);
+
+  @override
+  String? get salesExecutiveId =>
+      (origin as GetBestSellingProductsProvider).salesExecutiveId;
 }
 
 // ignore_for_file: type=lint
