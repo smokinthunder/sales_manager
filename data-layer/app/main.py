@@ -6,7 +6,7 @@ The backend (Server C) communicates with this service via HTTP APIs.
 This is a standalone version that doesn't depend on the core module.
 """
 
-from fastapi import FastAPI, HTTPException, Depends
+from fastapi import FastAPI, HTTPException, Depends, Query
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 from typing import List, Optional, Dict, Any
@@ -2399,6 +2399,675 @@ async def delete_due_data(tenant_id: str, due_data_id: int, db=Depends(get_db)):
         db.rollback()
         logger.error(f"Error deleting due data: {e}")
         raise HTTPException(status_code=500, detail=f"Failed to delete due data: {str(e)}")
+
+
+# ------------------ Analytics Endpoints ------------------
+
+@app.get("/api/analytics/executive/{executive_id}/top-customers")
+async def get_executive_top_customers(executive_id: int, tenant_id: str = Query(...), db=Depends(get_db)):
+    """Get top customers for a sales executive based on total outstanding amounts."""
+    try:
+        # Get shops assigned to this sales executive
+        shops_query = text("""
+            SELECT DISTINCT s.shop_id, s.name as shop_name
+            FROM sales_executive_assignments sea
+            JOIN shops s ON sea.shop_id = s.shop_id AND sea.tenant_id = s.tenant_id
+            WHERE sea.sales_executive_id = :executive_id 
+            AND sea.tenant_id = :tenant_id 
+            AND sea.status = 'active'
+        """)
+        
+        shops = db.execute(shops_query, {
+            "executive_id": executive_id,
+            "tenant_id": tenant_id
+        }).fetchall()
+        
+        if not shops:
+            return []
+        
+        # Get outstanding amounts for each shop
+        shop_ids = [shop[0] for shop in shops]
+        placeholders = ','.join([':shop_id_' + str(i) for i in range(len(shop_ids))])
+        
+        outstanding_query = text(f"""
+            SELECT 
+                dd.shop_id,
+                dd.shop_name,
+                COALESCE(SUM(dd.amount), 0) as total_amount
+            FROM due_data dd
+            WHERE dd.shop_id IN ({placeholders})
+            AND dd.tenant_id = :tenant_id
+            GROUP BY dd.shop_id, dd.shop_name
+            ORDER BY total_amount DESC
+        """)
+        
+        params = {"tenant_id": tenant_id}
+        for i, shop_id in enumerate(shop_ids):
+            params[f"shop_id_{i}"] = shop_id
+        
+        results = db.execute(outstanding_query, params).fetchall()
+        
+        return [
+            {
+                "shop_name": row[1],
+                "points": float(row[2])
+            }
+            for row in results
+        ]
+        
+    except Exception as e:
+        logger.error(f"Error getting executive top customers: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to get top customers: {str(e)}")
+
+
+@app.get("/api/analytics/tenant/top-customers")
+async def get_tenant_top_customers(tenant_id: str = Query(...), db=Depends(get_db)):
+    """Get top customers for entire tenant (aggregated view)."""
+    try:
+        # Get all shops with their outstanding amounts
+        shops_query = text("""
+            SELECT 
+                s.shop_id,
+                s.name as shop_name,
+                COALESCE(SUM(dd.amount), 0) as total_amount
+            FROM shops s
+            LEFT JOIN due_data dd ON s.shop_id = dd.shop_id AND s.tenant_id = dd.tenant_id
+            WHERE s.tenant_id = :tenant_id
+            GROUP BY s.shop_id, s.name
+            ORDER BY total_amount DESC
+        """)
+
+        results = db.execute(shops_query, {"tenant_id": tenant_id}).fetchall()
+
+        return [
+            {
+                "shop_name": row[1],
+                "points": float(row[2])
+            }
+            for row in results
+        ]
+        
+    except Exception as e:
+        logger.error(f"Error getting tenant top customers: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to get tenant top customers: {str(e)}")
+
+
+@app.get("/api/analytics/territory/{territory_id}/top-customers")
+async def get_territory_top_customers(territory_id: str, tenant_id: str = Query(...), db=Depends(get_db)):
+    """Get top customers for a specific territory (aggregated view)."""
+    try:
+        # Get shops in this territory with their outstanding amounts
+        shops_query = text("""
+            SELECT 
+                s.shop_id,
+                s.name as shop_name,
+                COALESCE(SUM(dd.amount), 0) as total_amount
+            FROM shops s
+            LEFT JOIN due_data dd ON s.shop_id = dd.shop_id AND s.tenant_id = dd.tenant_id
+            WHERE s.territory_id = :territory_id
+            AND s.tenant_id = :tenant_id
+            GROUP BY s.shop_id, s.name
+            ORDER BY total_amount DESC
+        """)
+
+        results = db.execute(shops_query, {
+            "territory_id": territory_id,
+            "tenant_id": tenant_id
+        }).fetchall()
+
+        return [
+            {
+                "shop_name": row[1],
+                "points": float(row[2])
+            }
+            for row in results
+        ]
+        
+    except Exception as e:
+        logger.error(f"Error getting territory top customers: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to get territory top customers: {str(e)}")
+
+
+@app.get("/api/analytics/area-manager/{area_manager_id}/top-customers")
+async def get_area_manager_top_customers(area_manager_id: int, tenant_id: str = Query(...), db=Depends(get_db)):
+    """Get top customers for all territories managed by an area manager."""
+    try:
+        # Get territories managed by this area manager
+        territories_query = text("""
+            SELECT territory_id 
+            FROM territories 
+            WHERE area_manager_id = :area_manager_id 
+            AND tenant_id = :tenant_id
+        """)
+        
+        territory_results = db.execute(territories_query, {
+            "area_manager_id": area_manager_id,
+            "tenant_id": tenant_id
+        }).fetchall()
+        
+        if not territory_results:
+            return []
+        
+        territory_ids = [row[0] for row in territory_results]
+        
+        # Get shops in these territories with their outstanding amounts
+        shops_query = text("""
+            SELECT 
+                s.shop_id,
+                s.name as shop_name,
+                COALESCE(SUM(dd.amount), 0) as total_amount
+            FROM shops s
+            LEFT JOIN due_data dd ON s.shop_id = dd.shop_id AND s.tenant_id = dd.tenant_id
+            WHERE s.territory_id IN :territory_ids
+            AND s.tenant_id = :tenant_id
+            GROUP BY s.shop_id, s.name
+            ORDER BY total_amount DESC
+        """)
+
+        results = db.execute(shops_query, {
+            "territory_ids": tuple(territory_ids),
+            "tenant_id": tenant_id
+        }).fetchall()
+
+        return [
+            {
+                "shop_name": row[1],
+                "points": float(row[2])
+            }
+            for row in results
+        ]
+        
+    except Exception as e:
+        logger.error(f"Error getting area manager top customers: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to get area manager top customers: {str(e)}")
+
+
+@app.get("/api/analytics/executive/{executive_id}/best-selling-products")
+async def get_executive_best_selling_products(executive_id: int, tenant_id: str = Query(...), db=Depends(get_db)):
+    """Get best selling products for a sales executive."""
+    try:
+        # Get products sold by this executive
+        products_query = text("""
+            SELECT 
+                sp.product_name,
+                COUNT(*) as units_sold
+            FROM synced_products sp
+            WHERE sp.sales_executive_id = :executive_id 
+            AND sp.tenant_id = :tenant_id
+            GROUP BY sp.product_name
+            ORDER BY units_sold DESC
+        """)
+        
+        executive_products = db.execute(products_query, {
+            "executive_id": executive_id,
+            "tenant_id": tenant_id
+        }).fetchall()
+        
+        if not executive_products:
+            return []
+        
+        # Get total units sold across all executives for percentage calculation
+        total_query = text("""
+            SELECT COUNT(*) as total_units
+            FROM synced_products sp
+            WHERE sp.tenant_id = :tenant_id
+        """)
+        
+        total_result = db.execute(total_query, {"tenant_id": tenant_id}).fetchone()
+        total_units = total_result[0] if total_result else 0
+        
+        return [
+            {
+                "product_name": row[0],
+                "units_sold": row[1],
+                "percentage": round((row[1] / total_units * 100), 2) if total_units > 0 else 0
+            }
+            for row in executive_products
+        ]
+        
+    except Exception as e:
+        logger.error(f"Error getting executive best selling products: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to get best selling products: {str(e)}")
+
+
+@app.get("/api/analytics/tenant/best-selling-products")
+async def get_tenant_best_selling_products(tenant_id: str = Query(...), db=Depends(get_db)):
+    """Get best selling products for entire tenant (aggregated view)."""
+    try:
+        # Get products sold across all executives in the tenant
+        products_query = text("""
+            SELECT 
+                sp.product_name,
+                COUNT(*) as units_sold
+            FROM synced_products sp
+            WHERE sp.tenant_id = :tenant_id
+            GROUP BY sp.product_name
+            ORDER BY units_sold DESC
+        """)
+
+        results = db.execute(products_query, {"tenant_id": tenant_id}).fetchall()
+
+        if not results:
+            return []
+
+        # Calculate total units sold across all executives
+        total_units = sum(row[1] for row in results)
+
+        return [
+            {
+                "product_name": row[0],
+                "units_sold": int(row[1]),
+                "percentage": round((row[1] / total_units) * 100, 2) if total_units > 0 else 0
+            }
+            for row in results
+        ]
+        
+    except Exception as e:
+        logger.error(f"Error getting tenant best selling products: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to get tenant best selling products: {str(e)}")
+
+
+@app.get("/api/analytics/territory/{territory_id}/best-selling-products")
+async def get_territory_best_selling_products(territory_id: str, tenant_id: str = Query(...), db=Depends(get_db)):
+    """Get best selling products for a specific territory (aggregated view)."""
+    try:
+        # Get products sold by executives in this territory
+        products_query = text("""
+            SELECT 
+                sp.product_name,
+                COUNT(*) as units_sold
+            FROM synced_products sp
+            JOIN users u ON sp.sales_executive_id = u.id
+            WHERE u.territory_id = :territory_id
+            AND sp.tenant_id = :tenant_id
+            GROUP BY sp.product_name
+            ORDER BY units_sold DESC
+        """)
+
+        results = db.execute(products_query, {
+            "territory_id": territory_id,
+            "tenant_id": tenant_id
+        }).fetchall()
+
+        if not results:
+            return []
+
+        # Calculate total units sold in this territory
+        total_units = sum(row[1] for row in results)
+
+        return [
+            {
+                "product_name": row[0],
+                "units_sold": int(row[1]),
+                "percentage": round((row[1] / total_units) * 100, 2) if total_units > 0 else 0
+            }
+            for row in results
+        ]
+        
+    except Exception as e:
+        logger.error(f"Error getting territory best selling products: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to get territory best selling products: {str(e)}")
+
+
+@app.get("/api/analytics/area-manager/{area_manager_id}/best-selling-products")
+async def get_area_manager_best_selling_products(area_manager_id: int, tenant_id: str = Query(...), db=Depends(get_db)):
+    """Get best selling products for all territories managed by an area manager."""
+    try:
+        # Get territories managed by this area manager
+        territories_query = text("""
+            SELECT territory_id 
+            FROM territories 
+            WHERE area_manager_id = :area_manager_id 
+            AND tenant_id = :tenant_id
+        """)
+        
+        territory_results = db.execute(territories_query, {
+            "area_manager_id": area_manager_id,
+            "tenant_id": tenant_id
+        }).fetchall()
+        
+        if not territory_results:
+            return []
+        
+        territory_ids = [row[0] for row in territory_results]
+        
+        # Get products sold by executives in these territories
+        products_query = text("""
+            SELECT 
+                sp.product_name,
+                COUNT(*) as units_sold
+            FROM synced_products sp
+            JOIN users u ON sp.sales_executive_id = u.id
+            WHERE u.territory_id IN :territory_ids
+            AND sp.tenant_id = :tenant_id
+            GROUP BY sp.product_name
+            ORDER BY units_sold DESC
+        """)
+
+        results = db.execute(products_query, {
+            "territory_ids": tuple(territory_ids),
+            "tenant_id": tenant_id
+        }).fetchall()
+
+        if not results:
+            return []
+
+        # Calculate total units sold in these territories
+        total_units = sum(row[1] for row in results)
+
+        return [
+            {
+                "product_name": row[0],
+                "units_sold": int(row[1]),
+                "percentage": round((row[1] / total_units) * 100, 2) if total_units > 0 else 0
+            }
+            for row in results
+        ]
+        
+    except Exception as e:
+        logger.error(f"Error getting area manager best selling products: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to get area manager best selling products: {str(e)}")
+
+
+@app.get("/api/analytics/executive/{executive_id}/sales-report")
+async def get_executive_sales_report(
+    executive_id: int, 
+    tenant_id: str = Query(...),
+    start_date: str = Query(...),
+    end_date: str = Query(...),
+    db=Depends(get_db)
+):
+    """Get sales report for a sales executive for the specified period."""
+    try:
+        # Get sales data for the executive in the specified period
+        sales_query = text("""
+            SELECT 
+                DATE_FORMAT(so.order_date, '%Y-%m') as month_year,
+                SUM(so.order_amount) as total_amount
+            FROM synced_orders so
+            WHERE so.sales_executive_id = :executive_id 
+            AND so.tenant_id = :tenant_id
+            AND so.order_date BETWEEN :start_date AND :end_date
+            GROUP BY DATE_FORMAT(so.order_date, '%Y-%m')
+            ORDER BY month_year
+        """)
+        
+        results = db.execute(sales_query, {
+            "executive_id": executive_id,
+            "tenant_id": tenant_id,
+            "start_date": start_date,
+            "end_date": end_date
+        }).fetchall()
+        
+        return [
+            {
+                "month_year": row[0],
+                "sale_point": float(row[1])
+            }
+            for row in results
+        ]
+        
+    except Exception as e:
+        logger.error(f"Error getting executive sales report: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to get sales report: {str(e)}")
+
+
+@app.get("/api/analytics/shops/{shop_id}/purchase-analysis")
+async def get_shop_purchase_analysis(
+    shop_id: str, 
+    tenant_id: str = Query(...),
+    year: int = Query(...),
+    db=Depends(get_db)
+):
+    """Get purchase analysis for a shop for the specified year."""
+    try:
+        # Get purchase data for the shop in the specified year
+        purchases_query = text("""
+            SELECT 
+                DATE_FORMAT(so.order_date, '%Y-%m') as month_year
+            FROM synced_orders so
+            WHERE so.shop_data_id IN (
+                SELECT id FROM synced_shop_data 
+                WHERE shop_id = :shop_id AND tenant_id = :tenant_id
+            )
+            AND YEAR(so.order_date) = :year
+            GROUP BY DATE_FORMAT(so.order_date, '%Y-%m')
+        """)
+        
+        results = db.execute(purchases_query, {
+            "shop_id": shop_id,
+            "tenant_id": tenant_id,
+            "year": year
+        }).fetchall()
+        
+        # Create a set of months with purchases
+        purchase_months = {row[0] for row in results}
+        
+        # Generate analysis for all months in the year
+        analysis = []
+        for month in range(1, 13):
+            month_year = f"{year}-{month:02d}"
+            analysis.append({
+                "month_year": month_year,
+                "is_purchased": month_year in purchase_months
+            })
+        
+        return analysis
+        
+    except Exception as e:
+        logger.error(f"Error getting shop purchase analysis: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to get purchase analysis: {str(e)}")
+
+
+@app.get("/api/analytics/shops/{shop_id}/best-selling-products")
+async def get_shop_best_selling_products(
+    shop_id: str, 
+    tenant_id: str = Query(...),
+    year: int = Query(...),
+    db=Depends(get_db)
+):
+    """Get best selling products for a shop for the specified year."""
+    try:
+        # Get products sold to this shop
+        products_query = text("""
+            SELECT 
+                sp.product_name,
+                COUNT(*) as units_sold
+            FROM synced_products sp
+            JOIN synced_orders so ON sp.order_id = so.id
+            JOIN synced_shop_data ssd ON so.shop_data_id = ssd.id
+            WHERE ssd.shop_id = :shop_id 
+            AND ssd.tenant_id = :tenant_id
+            AND YEAR(so.order_date) = :year
+            GROUP BY sp.product_name
+            ORDER BY units_sold DESC
+        """)
+        
+        shop_products = db.execute(products_query, {
+            "shop_id": shop_id,
+            "tenant_id": tenant_id,
+            "year": year
+        }).fetchall()
+        
+        if not shop_products:
+            return []
+        
+        # Get total units sold across all shops for percentage calculation
+        total_query = text("""
+            SELECT COUNT(*) as total_units
+            FROM synced_products sp
+            JOIN synced_orders so ON sp.order_id = so.id
+            WHERE so.tenant_id = :tenant_id
+            AND YEAR(so.order_date) = :year
+        """)
+        
+        total_result = db.execute(total_query, {
+            "tenant_id": tenant_id,
+            "year": year
+        }).fetchone()
+        total_units = total_result[0] if total_result else 0
+        
+        return [
+            {
+                "product_name": row[0],
+                "units_sold": row[1],
+                "percentage": round((row[1] / total_units * 100), 2) if total_units > 0 else 0
+            }
+            for row in shop_products
+        ]
+        
+    except Exception as e:
+        logger.error(f"Error getting shop best selling products: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to get best selling products: {str(e)}")
+
+
+@app.get("/api/analytics/shops/{shop_id}/sales-report")
+async def get_shop_sales_report(
+    shop_id: str, 
+    tenant_id: str = Query(...),
+    year: int = Query(...),
+    db=Depends(get_db)
+):
+    """Get sales report for a shop for the specified year."""
+    try:
+        # Get sales data for the shop in the specified year
+        sales_query = text("""
+            SELECT 
+                DATE_FORMAT(so.order_date, '%Y-%m') as month_year,
+                SUM(so.order_amount) as total_amount
+            FROM synced_orders so
+            JOIN synced_shop_data ssd ON so.shop_data_id = ssd.id
+            WHERE ssd.shop_id = :shop_id 
+            AND ssd.tenant_id = :tenant_id
+            AND YEAR(so.order_date) = :year
+            GROUP BY DATE_FORMAT(so.order_date, '%Y-%m')
+            ORDER BY month_year
+        """)
+        
+        results = db.execute(sales_query, {
+            "shop_id": shop_id,
+            "tenant_id": tenant_id,
+            "year": year
+        }).fetchall()
+        
+        return [
+            {
+                "month_year": row[0],
+                "sale_point": float(row[1])
+            }
+            for row in results
+        ]
+        
+    except Exception as e:
+        logger.error(f"Error getting shop sales report: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to get sales report: {str(e)}")
+
+
+# ------------------ Assignment Management Endpoints ------------------
+
+@app.get("/api/assignments/executive/{executive_id}/shops")
+async def get_executive_shop_assignments(executive_id: int, tenant_id: str = Query(...), db=Depends(get_db)):
+    """Get all shop assignments for a sales executive."""
+    try:
+        query = text("""
+            SELECT 
+                sea.id,
+                sea.shop_id,
+                s.name as shop_name,
+                sea.territory_id,
+                t.name as territory_name,
+                sea.assigned_date,
+                sea.status,
+                sea.created_at,
+                sea.updated_at
+            FROM sales_executive_assignments sea
+            JOIN shops s ON sea.shop_id = s.shop_id AND sea.tenant_id = s.tenant_id
+            LEFT JOIN territories t ON sea.territory_id = t.territory_id AND sea.tenant_id = t.tenant_id
+            WHERE sea.sales_executive_id = :executive_id 
+            AND sea.tenant_id = :tenant_id
+            ORDER BY sea.assigned_date DESC
+        """)
+        
+        results = db.execute(query, {
+            "executive_id": executive_id,
+            "tenant_id": tenant_id
+        }).fetchall()
+        
+        return [
+            {
+                "id": row[0],
+                "shop_id": row[1],
+                "shop_name": row[2],
+                "territory_id": row[3],
+                "territory_name": row[4],
+                "assigned_date": row[5],
+                "status": row[6],
+                "created_at": row[7],
+                "updated_at": row[8]
+            }
+            for row in results
+        ]
+        
+    except Exception as e:
+        logger.error(f"Error getting executive shop assignments: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to get shop assignments: {str(e)}")
+
+
+@app.post("/api/assignments/executive-shop")
+async def create_executive_shop_assignment(assignment_data: dict, db=Depends(get_db)):
+    """Create a new sales executive to shop assignment."""
+    try:
+        # Validate required fields
+        required_fields = ["sales_executive_id", "shop_id", "territory_id", "tenant_id", "assigned_date"]
+        for field in required_fields:
+            if field not in assignment_data:
+                raise HTTPException(status_code=400, detail=f"Missing required field: {field}")
+        
+        # Check if assignment already exists
+        existing = db.execute(
+            text("""
+                SELECT id FROM sales_executive_assignments 
+                WHERE sales_executive_id = :executive_id 
+                AND shop_id = :shop_id 
+                AND tenant_id = :tenant_id
+            """),
+            {
+                "executive_id": assignment_data["sales_executive_id"],
+                "shop_id": assignment_data["shop_id"],
+                "tenant_id": assignment_data["tenant_id"]
+            }
+        ).fetchone()
+        
+        if existing:
+            raise HTTPException(status_code=409, detail="Assignment already exists")
+        
+        # Create the assignment
+        insert_query = text("""
+            INSERT INTO sales_executive_assignments 
+            (sales_executive_id, shop_id, territory_id, tenant_id, assigned_date, status, created_by, updated_by)
+            VALUES (:sales_executive_id, :shop_id, :territory_id, :tenant_id, :assigned_date, :status, :created_by, :updated_by)
+        """)
+        
+        db.execute(insert_query, {
+            "sales_executive_id": assignment_data["sales_executive_id"],
+            "shop_id": assignment_data["shop_id"],
+            "territory_id": assignment_data["territory_id"],
+            "tenant_id": assignment_data["tenant_id"],
+            "assigned_date": assignment_data["assigned_date"],
+            "status": assignment_data.get("status", "active"),
+            "created_by": assignment_data.get("created_by"),
+            "updated_by": assignment_data.get("updated_by")
+        })
+        db.commit()
+        
+        return {"message": "Assignment created successfully"}
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        db.rollback()
+        logger.error(f"Error creating executive shop assignment: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to create assignment: {str(e)}")
 
 
 if __name__ == "__main__":

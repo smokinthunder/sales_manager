@@ -822,6 +822,228 @@ class DataLayerClient:
             Summary statistics
         """
         return await self._make_request("GET", f"/api/due-data/{tenant_id}/summary")
+    
+    async def get_outstanding(self, tenant_id: str, filters: Optional[Dict[str, Any]] = None) -> List[Dict[str, Any]]:
+        """
+        Get outstanding payments with optional filtering.
+        
+        Args:
+            tenant_id: Tenant identifier
+            filters: Optional filters for the query
+            
+        Returns:
+            List of outstanding payment records
+        """
+        params = {"tenant_id": tenant_id}
+        if filters:
+            params.update(filters)
+        return await self._make_request("GET", f"/api/due-data/{tenant_id}", params=params)
+    
+    async def get_products_by_executive(self, tenant_id: str, sales_executive_id: int) -> List[Dict[str, Any]]:
+        """
+        Get products sold by a specific sales executive.
+        
+        Args:
+            tenant_id: Tenant identifier
+            sales_executive_id: Sales executive ID
+            
+        Returns:
+            List of products sold by the executive
+        """
+        return await self._make_request("GET", f"/api/analytics/executive/{sales_executive_id}/best-selling-products", params={"tenant_id": tenant_id})
+    
+    async def get_all_products(self, tenant_id: str) -> List[Dict[str, Any]]:
+        """
+        Get all products across all executives.
+        
+        Args:
+            tenant_id: Tenant identifier
+            
+        Returns:
+            List of all products sold
+        """
+        # For now, we'll get products from a specific executive to get the structure
+        # In a real implementation, you might want a dedicated endpoint for this
+        return await self._make_request("GET", f"/api/products/all", params={"tenant_id": tenant_id})
+    
+    async def get_executive_sales_report(self, tenant_id: str, sales_executive_id: int, start_date: date, end_date: date) -> List[Dict[str, Any]]:
+        """
+        Get sales report for a sales executive.
+        
+        Args:
+            tenant_id: Tenant identifier
+            sales_executive_id: Sales executive ID
+            start_date: Start date for the report
+            end_date: End date for the report
+            
+        Returns:
+            List of sales data
+        """
+        params = {
+            "tenant_id": tenant_id,
+            "start_date": start_date.isoformat(),
+            "end_date": end_date.isoformat()
+        }
+        return await self._make_request("GET", f"/api/analytics/executive/{sales_executive_id}/sales-report", params=params)
+    
+    async def get_tenant_top_customers(self, tenant_id: str) -> List[Dict[str, Any]]:
+        """
+        Get top customers for entire tenant (aggregated view).
+        
+        Args:
+            tenant_id: Tenant identifier
+            
+        Returns:
+            List of top customers with shop names and points
+        """
+        return await self._make_request("GET", "/api/analytics/tenant/top-customers", params={"tenant_id": tenant_id})
+    
+    async def get_territory_top_customers(self, tenant_id: str, territory_id: str) -> List[Dict[str, Any]]:
+        """
+        Get top customers for a specific territory (aggregated view).
+        
+        Args:
+            tenant_id: Tenant identifier
+            territory_id: Territory identifier
+            
+        Returns:
+            List of top customers with shop names and points
+        """
+        return await self._make_request("GET", f"/api/analytics/territory/{territory_id}/top-customers", params={"tenant_id": tenant_id})
+    
+    async def get_area_manager_top_customers(self, tenant_id: str, area_manager_id: int) -> List[Dict[str, Any]]:
+        """
+        Get top customers for all territories managed by an area manager.
+        
+        Args:
+            tenant_id: Tenant identifier
+            area_manager_id: Area manager ID
+            
+        Returns:
+            List of top customers with shop names and points
+        """
+        return await self._make_request("GET", f"/api/analytics/area-manager/{area_manager_id}/top-customers", params={"tenant_id": tenant_id})
+    
+    async def get_tenant_best_selling_products(self, tenant_id: str) -> List[Dict[str, Any]]:
+        """
+        Get best selling products for entire tenant (aggregated view).
+        
+        Args:
+            tenant_id: Tenant identifier
+            
+        Returns:
+            List of best selling products with units sold and percentages
+        """
+        return await self._make_request("GET", "/api/analytics/tenant/best-selling-products", params={"tenant_id": tenant_id})
+    
+    async def get_territory_best_selling_products(self, tenant_id: str, territory_id: str) -> List[Dict[str, Any]]:
+        """
+        Get best selling products for a specific territory (aggregated view).
+        
+        Args:
+            tenant_id: Tenant identifier
+            territory_id: Territory identifier
+            
+        Returns:
+            List of best selling products with units sold and percentages
+        """
+        return await self._make_request("GET", f"/api/analytics/territory/{territory_id}/best-selling-products", params={"tenant_id": tenant_id})
+    
+    async def get_area_manager_best_selling_products(self, tenant_id: str, area_manager_id: int) -> List[Dict[str, Any]]:
+        """
+        Get best selling products for all territories managed by an area manager.
+        
+        Args:
+            tenant_id: Tenant identifier
+            area_manager_id: Area manager ID
+            
+        Returns:
+            List of best selling products with units sold and percentages
+        """
+        return await self._make_request("GET", f"/api/analytics/area-manager/{area_manager_id}/best-selling-products", params={"tenant_id": tenant_id})
+    
+    async def get_shop_purchase_analysis(self, tenant_id: str, shop_id: str, year: int) -> List[Dict[str, Any]]:
+        """
+        Get purchase analysis for a shop.
+        
+        Args:
+            tenant_id: Tenant identifier
+            shop_id: Shop identifier
+            year: Year for analysis
+            
+        Returns:
+            List of purchase data
+        """
+        params = {"tenant_id": tenant_id, "year": year}
+        return await self._make_request("GET", f"/api/analytics/shops/{shop_id}/purchase-analysis", params=params)
+    
+    async def get_shop_products(self, tenant_id: str, shop_id: str, year: int) -> List[Dict[str, Any]]:
+        """
+        Get products sold to a specific shop.
+        
+        Args:
+            tenant_id: Tenant identifier
+            shop_id: Shop identifier
+            year: Year for analysis
+            
+        Returns:
+            List of products sold to the shop
+        """
+        params = {"tenant_id": tenant_id, "year": year}
+        return await self._make_request("GET", f"/api/analytics/shops/{shop_id}/best-selling-products", params=params)
+    
+    async def get_shop_sales_report(self, tenant_id: str, shop_id: str, year: int) -> List[Dict[str, Any]]:
+        """
+        Get sales report for a shop.
+        
+        Args:
+            tenant_id: Tenant identifier
+            shop_id: Shop identifier
+            year: Year for analysis
+            
+        Returns:
+            List of sales data
+        """
+        params = {"tenant_id": tenant_id, "year": year}
+        return await self._make_request("GET", f"/api/analytics/shops/{shop_id}/sales-report", params=params)
+
+    async def get_executive_top_customers(self, tenant_id: str, sales_executive_id: int) -> List[Dict[str, Any]]:
+        """
+        Get top customers for a sales executive.
+        
+        Args:
+            tenant_id: Tenant identifier
+            sales_executive_id: Sales executive ID
+            
+        Returns:
+            List of top customers with shop names and points
+        """
+        return await self._make_request("GET", f"/api/analytics/executive/{sales_executive_id}/top-customers", params={"tenant_id": tenant_id})
+
+    async def get_executive_shop_assignments(self, tenant_id: str, sales_executive_id: int) -> List[Dict[str, Any]]:
+        """
+        Get all shop assignments for a sales executive.
+        
+        Args:
+            tenant_id: Tenant identifier
+            sales_executive_id: Sales executive ID
+            
+        Returns:
+            List of shop assignments
+        """
+        return await self._make_request("GET", f"/api/assignments/executive/{sales_executive_id}/shops", params={"tenant_id": tenant_id})
+
+    async def create_executive_shop_assignment(self, assignment_data: Dict[str, Any]) -> Dict[str, Any]:
+        """
+        Create a new sales executive to shop assignment.
+        
+        Args:
+            assignment_data: Assignment data to create
+            
+        Returns:
+            Assignment creation result
+        """
+        return await self._make_request("POST", "/api/assignments/executive-shop", json=assignment_data)
 
 
 # Global instance

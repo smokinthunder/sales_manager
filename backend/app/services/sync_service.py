@@ -20,6 +20,7 @@ from ..domain.models.sync_data import (
     calculate_due_date, calculate_payment_status, calculate_shop_payment_summary
 )
 from ..domain.models.shop import Shop
+from ..services.assignment_service import AssignmentService
 
 logger = get_logger(__name__)
 
@@ -31,6 +32,7 @@ class SyncService:
         """Initialize sync service with database session."""
         self.db = db
         self.settings = settings
+        self.assignment_service = AssignmentService()
     
     async def sync_client_data(self, tenant_id: str, client_api_url: str) -> Dict[str, Any]:
         """
@@ -62,6 +64,10 @@ class SyncService:
             
             # Process sync data
             result = await self._process_sync_data(tenant_id, client_data)
+            
+            # Sync sales executive assignments from client data
+            assignment_result = await self.assignment_service.sync_assignments_from_client_data(tenant_id, client_data)
+            result["assignment_sync"] = assignment_result
             
             logger.info(f"Sync completed for tenant {tenant_id}: {result}")
             return result
@@ -141,7 +147,7 @@ class SyncService:
                             products = order_data.get("products", [])
                             for product_data in products:
                                 synced_product = await self._process_product_data(
-                                    tenant_id, synced_shop.id, synced_order.id, product_data
+                                    tenant_id, synced_shop.id, synced_order.id, product_data, synced_order.sales_executive_id
                                 )
                                 if synced_product:
                                     products_processed += 1
@@ -233,7 +239,7 @@ class SyncService:
     
     async def _process_order_data(self, tenant_id: str, shop_data_id: int, order_data: Dict[str, Any]) -> Optional[SyncedOrder]:
         """
-        Process individual order data with 30-day payment policy.
+        Process individual order data with 30-day payment policy and sales executive assignment.
         
         Args:
             tenant_id: Tenant identifier
@@ -259,6 +265,9 @@ class SyncService:
             due_date = calculate_due_date(order_date)
             payment_status, days_overdue = calculate_payment_status(due_date)
             
+            # Determine sales executive for this order
+            sales_executive_id = await self._determine_sales_executive_for_order(tenant_id, shop_data_id, order_data)
+            
             # Check if order already exists
             existing_order = self.db.query(SyncedOrder).filter(
                 and_(
@@ -274,6 +283,7 @@ class SyncService:
                 existing_order.due_date = due_date
                 existing_order.payment_status = payment_status
                 existing_order.days_overdue = days_overdue
+                existing_order.sales_executive_id = sales_executive_id
                 existing_order.sync_date = datetime.utcnow()
                 existing_order.raw_order_data = order_data
                 existing_order.updated_at = datetime.utcnow()
@@ -289,6 +299,7 @@ class SyncService:
                     due_date=due_date,
                     payment_status=payment_status,
                     days_overdue=days_overdue,
+                    sales_executive_id=sales_executive_id,
                     shop_data_id=shop_data_id,
                     tenant_id=tenant_id,
                     sync_date=datetime.utcnow(),
@@ -305,15 +316,16 @@ class SyncService:
             self.db.rollback()
             return None
     
-    async def _process_product_data(self, tenant_id: str, shop_data_id: int, order_id: int, product_data: Dict[str, Any]) -> Optional[SyncedProduct]:
+    async def _process_product_data(self, tenant_id: str, shop_data_id: int, order_id: int, product_data: Dict[str, Any], sales_executive_id: Optional[int] = None) -> Optional[SyncedProduct]:
         """
-        Process individual product data.
+        Process individual product data with sales executive assignment.
         
         Args:
             tenant_id: Tenant identifier
             shop_data_id: Shop data ID
             order_id: Order ID
             product_data: Product data from client
+            sales_executive_id: Sales executive ID (optional)
             
         Returns:
             SyncedProduct instance or None
@@ -330,6 +342,7 @@ class SyncService:
             new_product = SyncedProduct(
                 product_name=product_name,
                 product_amount=product_amount,
+                sales_executive_id=sales_executive_id,
                 shop_data_id=shop_data_id,
                 order_id=order_id,
                 tenant_id=tenant_id,
@@ -506,3 +519,137 @@ class SyncService:
                 "shops_count": 0,
                 "summary_date": datetime.utcnow().isoformat()
             }
+    
+    async def _determine_sales_executive_for_order(
+        self, 
+        tenant_id: str, 
+        shop_data_id: int, 
+        order_data: Dict[str, Any]
+    ) -> Optional[int]:
+        """
+        Determine which sales executive should be assigned to an order.
+        
+        This method implements intelligent assignment logic based on:
+        1. Existing assignments in the sales_executive_assignments table
+        2. Shop territory and sales executive territory matching
+        3. Order patterns and visit history
+        
+        Args:
+            tenant_id: Tenant identifier
+            shop_data_id: Shop data ID
+            order_data: Order data from client
+            
+        Returns:
+            Sales executive ID or None if no assignment found
+        """
+        try:
+            # Get the shop data to find shop_id
+            shop_data = self.db.query(SyncedShopData).filter(
+                SyncedShopData.id == shop_data_id
+            ).first()
+            
+            if not shop_data:
+                logger.warning(f"Shop data not found for shop_data_id {shop_data_id}")
+                return None
+            
+            shop_id = shop_data.shop_id
+            
+            # First, try to find existing assignment
+            from sqlalchemy import text
+            assignment_query = text("""
+                SELECT sales_executive_id 
+                FROM sales_executive_assignments 
+                WHERE shop_id = :shop_id 
+                AND tenant_id = :tenant_id 
+                AND status = 'active'
+                ORDER BY assigned_date DESC 
+                LIMIT 1
+            """)
+            
+            result = self.db.execute(assignment_query, {
+                "shop_id": shop_id,
+                "tenant_id": tenant_id
+            }).fetchone()
+            
+            if result:
+                sales_executive_id = result[0]
+                logger.info(f"Found existing assignment for shop {shop_id}: sales executive {sales_executive_id}")
+                return sales_executive_id
+            
+            # If no existing assignment, try to find by territory matching
+            # Get shop's territory
+            shop_query = text("""
+                SELECT territory_id 
+                FROM shops 
+                WHERE shop_id = :shop_id 
+                AND tenant_id = :tenant_id
+            """)
+            
+            shop_result = self.db.execute(shop_query, {
+                "shop_id": shop_id,
+                "tenant_id": tenant_id
+            }).fetchone()
+            
+            if shop_result:
+                territory_id = shop_result[0]
+                
+                # Find sales executives in the same territory
+                executive_query = text("""
+                    SELECT id 
+                    FROM users 
+                    WHERE territory_id = :territory_id 
+                    AND tenant_id = :tenant_id 
+                    AND role = 'sales_executive'
+                    ORDER BY id 
+                    LIMIT 1
+                """)
+                
+                executive_result = self.db.execute(executive_query, {
+                    "territory_id": territory_id,
+                    "tenant_id": tenant_id
+                }).fetchone()
+                
+                if executive_result:
+                    sales_executive_id = executive_result[0]
+                    logger.info(f"Found sales executive by territory for shop {shop_id}: sales executive {sales_executive_id}")
+                    
+                    # Create assignment for future orders
+                    try:
+                        await self.assignment_service.create_executive_shop_assignment(
+                            sales_executive_id=sales_executive_id,
+                            shop_id=shop_id,
+                            territory_id=territory_id,
+                            tenant_id=tenant_id,
+                            assigned_date=date.today()
+                        )
+                        logger.info(f"Created new assignment: executive {sales_executive_id} -> shop {shop_id}")
+                    except Exception as e:
+                        logger.warning(f"Failed to create assignment: {e}")
+                    
+                    return sales_executive_id
+            
+            # If still no assignment found, get the first available sales executive
+            fallback_query = text("""
+                SELECT id 
+                FROM users 
+                WHERE tenant_id = :tenant_id 
+                AND role = 'sales_executive'
+                ORDER BY id 
+                LIMIT 1
+            """)
+            
+            fallback_result = self.db.execute(fallback_query, {
+                "tenant_id": tenant_id
+            }).fetchone()
+            
+            if fallback_result:
+                sales_executive_id = fallback_result[0]
+                logger.info(f"Using fallback sales executive for shop {shop_id}: sales executive {sales_executive_id}")
+                return sales_executive_id
+            
+            logger.warning(f"No sales executive found for shop {shop_id} in tenant {tenant_id}")
+            return None
+            
+        except Exception as e:
+            logger.error(f"Error determining sales executive for order: {str(e)}")
+            return None

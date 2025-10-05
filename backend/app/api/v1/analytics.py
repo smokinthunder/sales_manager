@@ -7,14 +7,10 @@ Handles analytics and reporting with 30-day payment policy integration.
 from datetime import datetime, date, timedelta
 from typing import Dict, Any, List, Optional
 from fastapi import APIRouter, Depends, HTTPException, status, Query, Path
-from sqlalchemy.orm import Session
-from sqlalchemy import and_
 from pydantic import BaseModel, Field
 
-from ...core.database import get_db
 from ...api.deps import get_current_user
 from ...core.logging import get_logger
-from ...domain.models.user import User
 from ...domain.models.analytics import (
     TopCustomerResponse, BestSellingProductResponse, SalesReportResponse,
     PurchaseAnalysisResponse, ShopBestSellingProductResponse, ShopSalesReportResponse
@@ -37,38 +33,55 @@ class AnalyticsPeriod(BaseModel):
 async def get_executive_top_customers(
     tenant_id: str = Query(..., description="Tenant identifier (required)"),
     sales_executive_id: Optional[int] = Query(None, description="Sales executive ID (only for area_manager, client_admin and superadmin users, for sales_executive it takes its own id)"),
-    current_user: Dict[str, Any] = Depends(get_current_user),
-    db: Session = Depends(get_db)
+    area_manager_id: Optional[int] = Query(None, description="Area manager ID (only for client_admin and superadmin users to filter by area manager)"),
+    current_user: Dict[str, Any] = Depends(get_current_user)
 ) -> List[TopCustomerResponse]:
     """
-    Get top customers for a sales executive.
+    Get top customers for a sales executive or aggregated view.
     
     **Business Logic:**
     - Returns shops with highest payment amounts (current + upcoming + overdue)
     - For sales_executive role: automatically uses their own ID
-    - For area_manager, client_admin, superadmin: can specify sales_executive_id
+    - For area_manager: can specify sales_executive_id or get territory aggregated data
+    - For client_admin, superadmin: can specify sales_executive_id, area_manager_id, or get tenant aggregated data
     
     **Security:**
     - Requires authentication
     - Tenant isolation enforced
-    - Sales executives can only see their own data unless they have higher privileges
+    - Sales executives can only see their own data
+    - Area managers can only see data for their territory
+    - Client admins can see all data for their tenant
     """
     try:
+        logger.info(f"=== ANALYTICS ENDPOINT CALLED ===")
+        logger.info(f"tenant_id: {tenant_id}")
+        logger.info(f"sales_executive_id: {sales_executive_id}")
+        logger.info(f"current_user: {current_user}")
+        
         # Verify tenant access
         if current_user["tenant_id"] != tenant_id and current_user["role"] != "superadmin":
+            logger.error(f"Tenant access denied: user_tenant={current_user['tenant_id']}, requested_tenant={tenant_id}")
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail="Insufficient permissions to access this tenant's data"
             )
         
-        analytics_service = AnalyticsService(db)
+        logger.info("Tenant access verified, creating analytics service")
+        analytics_service = AnalyticsService()
+        logger.info(f"Created analytics service, calling get_executive_top_customers")
         top_customers = await analytics_service.get_executive_top_customers(
             tenant_id=tenant_id,
             sales_executive_id=sales_executive_id,
+            area_manager_id=area_manager_id,
             current_user=current_user
         )
+        logger.info(f"Analytics service returned: {top_customers}")
         
-        return [TopCustomerResponse(**customer) for customer in top_customers]
+        logger.info(f"Converting to TopCustomerResponse objects")
+        response_objects = [TopCustomerResponse(**customer) for customer in top_customers]
+        logger.info(f"Response objects created: {response_objects}")
+        
+        return response_objects
         
     except HTTPException:
         raise
@@ -84,22 +97,25 @@ async def get_executive_top_customers(
 async def get_executive_best_selling_products(
     tenant_id: str = Query(..., description="Tenant identifier (required)"),
     sales_executive_id: Optional[int] = Query(None, description="Sales executive ID (only for area_manager, client_admin and superadmin users, for sales_executive it takes its own id)"),
-    current_user: Dict[str, Any] = Depends(get_current_user),
-    db: Session = Depends(get_db)
+    area_manager_id: Optional[int] = Query(None, description="Area manager ID (only for client_admin and superadmin users to filter by area manager)"),
+    current_user: Dict[str, Any] = Depends(get_current_user)
 ) -> List[BestSellingProductResponse]:
     """
-    Get best selling products for a sales executive.
+    Get best selling products for a sales executive or aggregated view.
     
     **Business Logic:**
     - Returns products with highest units sold by the executive
     - Calculates percentage of total products sold across all executives
     - For sales_executive role: automatically uses their own ID
-    - For area_manager, client_admin, superadmin: can specify sales_executive_id
+    - For area_manager: can specify sales_executive_id or get territory aggregated data
+    - For client_admin, superadmin: can specify sales_executive_id, area_manager_id, or get tenant aggregated data
     
     **Security:**
     - Requires authentication
     - Tenant isolation enforced
-    - Sales executives can only see their own data unless they have higher privileges
+    - Sales executives can only see their own data
+    - Area managers can only see data for their territory
+    - Client admins can see all data for their tenant
     """
     try:
         # Verify tenant access
@@ -109,10 +125,11 @@ async def get_executive_best_selling_products(
                 detail="Insufficient permissions to access this tenant's data"
             )
         
-        analytics_service = AnalyticsService(db)
+        analytics_service = AnalyticsService()
         best_selling_products = await analytics_service.get_executive_best_selling_products(
             tenant_id=tenant_id,
             sales_executive_id=sales_executive_id,
+            area_manager_id=area_manager_id,
             current_user=current_user
         )
         
@@ -132,8 +149,7 @@ async def get_executive_best_selling_products(
 async def get_executive_sales_report(
     tenant_id: str = Query(..., description="Tenant identifier (required)"),
     sales_executive_id: Optional[int] = Query(None, description="Sales executive ID (only for area_manager, client_admin and superadmin users, for sales_executive it takes its own id)"),
-    current_user: Dict[str, Any] = Depends(get_current_user),
-    db: Session = Depends(get_db)
+    current_user: Dict[str, Any] = Depends(get_current_user)
 ) -> List[SalesReportResponse]:
     """
     Get sales report for a sales executive for the last year.
@@ -157,7 +173,7 @@ async def get_executive_sales_report(
                 detail="Insufficient permissions to access this tenant's data"
             )
         
-        analytics_service = AnalyticsService(db)
+        analytics_service = AnalyticsService()
         sales_report = await analytics_service.get_executive_sales_report(
             tenant_id=tenant_id,
             sales_executive_id=sales_executive_id,
@@ -182,8 +198,7 @@ async def get_shop_purchase_analysis(
     tenant_id: str = Query(..., description="Tenant identifier (required)"),
     shop_id: str = Query(..., description="Shop ID"),
     year: Optional[int] = Query(None, description="Year (Optional, if not given should provide the result of last one year)"),
-    current_user: Dict[str, Any] = Depends(get_current_user),
-    db: Session = Depends(get_db)
+    current_user: Dict[str, Any] = Depends(get_current_user)
 ) -> List[PurchaseAnalysisResponse]:
     """
     Get purchase analysis for a shop.
@@ -207,7 +222,7 @@ async def get_shop_purchase_analysis(
                 detail="Insufficient permissions to access this tenant's data"
             )
         
-        analytics_service = AnalyticsService(db)
+        analytics_service = AnalyticsService()
         purchase_analysis = await analytics_service.get_shop_purchase_analysis(
             tenant_id=tenant_id,
             shop_id=shop_id,
@@ -231,8 +246,7 @@ async def get_shop_best_selling_products(
     tenant_id: str = Query(..., description="Tenant identifier (required)"),
     shop_id: str = Query(..., description="Shop ID"),
     year: Optional[int] = Query(None, description="Year (Optional, if not given should provide the result of last one year)"),
-    current_user: Dict[str, Any] = Depends(get_current_user),
-    db: Session = Depends(get_db)
+    current_user: Dict[str, Any] = Depends(get_current_user)
 ) -> List[ShopBestSellingProductResponse]:
     """
     Get best selling products for a shop.
@@ -257,7 +271,7 @@ async def get_shop_best_selling_products(
                 detail="Insufficient permissions to access this tenant's data"
             )
         
-        analytics_service = AnalyticsService(db)
+        analytics_service = AnalyticsService()
         best_selling_products = await analytics_service.get_shop_best_selling_products(
             tenant_id=tenant_id,
             shop_id=shop_id,
@@ -281,8 +295,7 @@ async def get_shop_sales_report(
     tenant_id: str = Query(..., description="Tenant identifier (required)"),
     shop_id: str = Query(..., description="Shop ID"),
     year: Optional[int] = Query(None, description="Year (Optional, if not given should provide the result of last one year)"),
-    current_user: Dict[str, Any] = Depends(get_current_user),
-    db: Session = Depends(get_db)
+    current_user: Dict[str, Any] = Depends(get_current_user)
 ) -> List[ShopSalesReportResponse]:
     """
     Get sales report for a shop for the specified year.
@@ -306,7 +319,7 @@ async def get_shop_sales_report(
                 detail="Insufficient permissions to access this tenant's data"
             )
         
-        analytics_service = AnalyticsService(db)
+        analytics_service = AnalyticsService()
         sales_report = await analytics_service.get_shop_sales_report(
             tenant_id=tenant_id,
             shop_id=shop_id,
@@ -332,8 +345,7 @@ async def get_executive_performance(
     tenant_id: str = Query(..., description="Tenant identifier"),
     period_start: Optional[date] = Query(None, description="Start date for analytics period"),
     period_end: Optional[date] = Query(None, description="End date for analytics period"),
-    current_user: User = Depends(get_current_user),
-    db: Session = Depends(get_db)
+    current_user: Dict[str, Any] = Depends(get_current_user)
 ) -> Dict[str, Any]:
     """
     Get executive performance analytics.
@@ -365,7 +377,7 @@ async def get_executive_performance(
             )
         
         # Initialize analytics service
-        analytics_service = AnalyticsService(db)
+        analytics_service = AnalyticsService()
         
         # Get executive performance
         performance = await analytics_service.get_executive_performance(
@@ -396,8 +408,7 @@ async def get_shop_analytics(
     tenant_id: str = Query(..., description="Tenant identifier"),
     period_start: Optional[date] = Query(None, description="Start date for analytics period"),
     period_end: Optional[date] = Query(None, description="End date for analytics period"),
-    current_user: User = Depends(get_current_user),
-    db: Session = Depends(get_db)
+    current_user: Dict[str, Any] = Depends(get_current_user)
 ) -> Dict[str, Any]:
     """
     Get shop-specific analytics.
@@ -429,7 +440,7 @@ async def get_shop_analytics(
             )
         
         # Initialize analytics service
-        analytics_service = AnalyticsService(db)
+        analytics_service = AnalyticsService()
         
         # Get shop analytics
         analytics = await analytics_service.get_shop_analytics(
@@ -459,8 +470,7 @@ async def get_payment_analytics(
     tenant_id: str = Query(..., description="Tenant identifier"),
     period_start: Optional[date] = Query(None, description="Start date for analytics period"),
     period_end: Optional[date] = Query(None, description="End date for analytics period"),
-    current_user: User = Depends(get_current_user),
-    db: Session = Depends(get_db)
+    current_user: Dict[str, Any] = Depends(get_current_user)
 ) -> Dict[str, Any]:
     """
     Get payment analytics for a tenant.
@@ -490,7 +500,7 @@ async def get_payment_analytics(
             )
         
         # Initialize analytics service
-        analytics_service = AnalyticsService(db)
+        analytics_service = AnalyticsService()
         
         # Get payment analytics
         analytics = await analytics_service.get_payment_analytics(
@@ -518,8 +528,7 @@ async def get_payment_analytics(
 @router.get("/payments/overdue")
 async def get_overdue_analysis(
     tenant_id: str = Query(..., description="Tenant identifier"),
-    current_user: User = Depends(get_current_user),
-    db: Session = Depends(get_db)
+    current_user: Dict[str, Any] = Depends(get_current_user)
 ) -> Dict[str, Any]:
     """
     Get overdue payments analysis.
@@ -547,7 +556,7 @@ async def get_overdue_analysis(
             )
         
         # Initialize analytics service
-        analytics_service = AnalyticsService(db)
+        analytics_service = AnalyticsService()
         
         # Get overdue analysis
         analysis = await analytics_service.get_overdue_analysis(tenant_id)
@@ -574,8 +583,7 @@ async def get_overdue_analysis(
 async def get_best_selling_products(
     tenant_id: str = Query(..., description="Tenant identifier"),
     limit: int = Query(10, description="Maximum number of products to return", ge=1, le=50),
-    current_user: User = Depends(get_current_user),
-    db: Session = Depends(get_db)
+    current_user: Dict[str, Any] = Depends(get_current_user)
 ) -> Dict[str, Any]:
     """
     Get best selling products analysis.
@@ -604,7 +612,7 @@ async def get_best_selling_products(
             )
         
         # Initialize analytics service
-        analytics_service = AnalyticsService(db)
+        analytics_service = AnalyticsService()
         
         # Get best selling products
         products = await analytics_service.get_best_selling_products(tenant_id, limit)
@@ -632,8 +640,7 @@ async def get_executives_summary(
     tenant_id: str = Query(..., description="Tenant identifier"),
     period_start: Optional[date] = Query(None, description="Start date for analytics period"),
     period_end: Optional[date] = Query(None, description="End date for analytics period"),
-    current_user: User = Depends(get_current_user),
-    db: Session = Depends(get_db)
+    current_user: Dict[str, Any] = Depends(get_current_user)
 ) -> Dict[str, Any]:
     """
     Get summary of all executives' performance.
@@ -669,7 +676,7 @@ async def get_executives_summary(
             period_start = period_end - timedelta(days=30)
         
         # Initialize analytics service
-        analytics_service = AnalyticsService(db)
+        analytics_service = AnalyticsService()
         
         # Get all sales executives for the tenant
         from ...domain.models.user import User
@@ -730,8 +737,7 @@ async def get_shops_summary(
     tenant_id: str = Query(..., description="Tenant identifier"),
     period_start: Optional[date] = Query(None, description="Start date for analytics period"),
     period_end: Optional[date] = Query(None, description="End date for analytics period"),
-    current_user: User = Depends(get_current_user),
-    db: Session = Depends(get_db)
+    current_user: Dict[str, Any] = Depends(get_current_user)
 ) -> Dict[str, Any]:
     """
     Get summary of all shops' analytics.
@@ -767,7 +773,7 @@ async def get_shops_summary(
             period_start = period_end - timedelta(days=30)
         
         # Initialize analytics service
-        analytics_service = AnalyticsService(db)
+        analytics_service = AnalyticsService()
         
         # Get all shops for the tenant
         from ...domain.models.shop import Shop

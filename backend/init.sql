@@ -401,9 +401,47 @@ CREATE TABLE IF NOT EXISTS due_data (
     FOREIGN KEY (updated_by) REFERENCES users(id) ON DELETE SET NULL
 );
 
+-- Create sales_executive_assignments table for analytics
+CREATE TABLE IF NOT EXISTS sales_executive_assignments (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    sales_executive_id INT NOT NULL,
+    shop_id VARCHAR(20) NOT NULL,
+    territory_id VARCHAR(20) NOT NULL,
+    tenant_id VARCHAR(50) NOT NULL,
+    assigned_date DATE NOT NULL,
+    status ENUM('active', 'inactive') DEFAULT 'active',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    created_by INT,
+    updated_by INT,
+    INDEX idx_executive_shop (sales_executive_id, shop_id),
+    INDEX idx_tenant_executive (tenant_id, sales_executive_id),
+    INDEX idx_territory (territory_id),
+    INDEX idx_status (status),
+    FOREIGN KEY (sales_executive_id) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (shop_id) REFERENCES shops(shop_id) ON DELETE CASCADE,
+    FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE SET NULL,
+    FOREIGN KEY (updated_by) REFERENCES users(id) ON DELETE SET NULL,
+    UNIQUE KEY unique_executive_shop (sales_executive_id, shop_id)
+);
+
+-- Enhance synced_orders table with sales executive assignment
+ALTER TABLE synced_orders ADD COLUMN sales_executive_id INT;
+ALTER TABLE synced_orders ADD INDEX idx_sales_executive (sales_executive_id);
+ALTER TABLE synced_orders ADD CONSTRAINT fk_synced_orders_sales_executive 
+    FOREIGN KEY (sales_executive_id) REFERENCES users(id) ON DELETE SET NULL;
+
+-- Enhance synced_products table with sales executive assignment  
+ALTER TABLE synced_products ADD COLUMN sales_executive_id INT;
+ALTER TABLE synced_products ADD INDEX idx_sales_executive (sales_executive_id);
+ALTER TABLE synced_products ADD CONSTRAINT fk_synced_products_sales_executive 
+    FOREIGN KEY (sales_executive_id) REFERENCES users(id) ON DELETE SET NULL;
+
 -- Create indexes for performance
 CREATE INDEX idx_users_tenant_role ON users(tenant_id, role);
 CREATE INDEX idx_territories_tenant ON territories(tenant_id);
 CREATE INDEX idx_shops_tenant_territory ON shops(tenant_id, territory_id);
 CREATE INDEX idx_routes_tenant_week ON routes(tenant_id, week_start_date);
 CREATE INDEX idx_visits_tenant_date ON visits(tenant_id, checkin_time);
+CREATE INDEX idx_sales_executive_assignments_tenant ON sales_executive_assignments(tenant_id);
+CREATE INDEX idx_sales_executive_assignments_territory ON sales_executive_assignments(territory_id);

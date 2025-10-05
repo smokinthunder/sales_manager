@@ -133,6 +133,82 @@ services:
     networks:
       - backend_network
 
+  # Database Seeding Service (run with --seed flag)
+  db-seeder:
+    image: mysql:8.0
+    container_name: sales_manager_seeder
+    depends_on:
+      mysql:
+        condition: service_healthy
+    environment:
+      DB_HOST: mysql
+      DB_PORT: 3306
+      DB_NAME: sales_manager
+      DB_USER: sales_user
+      DB_PASSWORD: sales_password
+    volumes:
+      - ./backend/init.sql:/docker-entrypoint-initdb.d/01-init.sql
+      - ./backend/simplified_dummy_data.sql:/docker-entrypoint-initdb.d/02-users.sql
+      - ./backend/simplified_shops_data.sql:/docker-entrypoint-initdb.d/03-shops.sql
+      - ./backend/simplified_assignments.sql:/docker-entrypoint-initdb.d/04-assignments.sql
+      - ./backend/simplified_synced_data.sql:/docker-entrypoint-initdb.d/05-synced-data.sql
+    command: >
+      bash -c "
+        echo '🌱 Starting database seeding process...' &&
+        echo '📊 Database Configuration:' &&
+        echo '   Host: mysql' &&
+        echo '   Port: 3306' &&
+        echo '   Database: sales_manager' &&
+        echo '   User: sales_user' &&
+        echo '⏳ Waiting for database to be ready...' &&
+        until mysql -h mysql -P 3306 -u sales_user -psales_password -e 'SELECT 1' > /dev/null 2>&1; do
+          echo 'Database is unavailable - sleeping' &&
+          sleep 2
+        done &&
+        echo '✅ Database is ready!' &&
+        echo '📁 Ensuring database exists...' &&
+        mysql -h mysql -P 3306 -u sales_user -psales_password -e 'CREATE DATABASE IF NOT EXISTS sales_manager;' &&
+        echo '🏗️ Running database initialization...' &&
+        mysql -h mysql -P 3306 -u sales_user -psales_password sales_manager < /docker-entrypoint-initdb.d/01-init.sql &&
+        echo '👥 Seeding users and tenants...' &&
+        mysql -h mysql -P 3306 -u sales_user -psales_password sales_manager < /docker-entrypoint-initdb.d/02-users.sql &&
+        echo '🏪 Seeding shops...' &&
+        mysql -h mysql -P 3306 -u sales_user -psales_password sales_manager < /docker-entrypoint-initdb.d/03-shops.sql &&
+        echo '👥 Seeding sales executive assignments...' &&
+        mysql -h mysql -P 3306 -u sales_user -psales_password sales_manager < /docker-entrypoint-initdb.d/04-assignments.sql &&
+        echo '📊 Seeding sales data and analytics...' &&
+        mysql -h mysql -P 3306 -u sales_user -psales_password sales_manager < /docker-entrypoint-initdb.d/05-synced-data.sql &&
+        echo '🔍 Verifying data insertion...' &&
+        TENANT_COUNT=\$(mysql -h mysql -P 3306 -u sales_user -psales_password sales_manager -s -N -e 'SELECT COUNT(*) FROM tenants;') &&
+        USER_COUNT=\$(mysql -h mysql -P 3306 -u sales_user -psales_password sales_manager -s -N -e 'SELECT COUNT(*) FROM users;') &&
+        SHOP_COUNT=\$(mysql -h mysql -P 3306 -u sales_user -psales_password sales_manager -s -N -e 'SELECT COUNT(*) FROM shops;') &&
+        ASSIGNMENT_COUNT=\$(mysql -h mysql -P 3306 -u sales_user -psales_password sales_manager -s -N -e 'SELECT COUNT(*) FROM sales_executive_assignments;') &&
+        ORDER_COUNT=\$(mysql -h mysql -P 3306 -u sales_user -psales_password sales_manager -s -N -e 'SELECT COUNT(*) FROM synced_orders;') &&
+        PRODUCT_COUNT=\$(mysql -h mysql -P 3306 -u sales_user -psales_password sales_manager -s -N -e 'SELECT COUNT(*) FROM synced_products;') &&
+        DUE_COUNT=\$(mysql -h mysql -P 3306 -u sales_user -psales_password sales_manager -s -N -e 'SELECT COUNT(*) FROM due_data;') &&
+        echo '📈 Database seeding completed successfully!' &&
+        echo '   - Tenants: '\$TENANT_COUNT &&
+        echo '   - Users: '\$USER_COUNT &&
+        echo '   - Shops: '\$SHOP_COUNT &&
+        echo '   - Assignments: '\$ASSIGNMENT_COUNT &&
+        echo '   - Orders: '\$ORDER_COUNT &&
+        echo '   - Products: '\$PRODUCT_COUNT &&
+        echo '   - Due Data: '\$DUE_COUNT &&
+        echo '🎉 Analytics system is ready for testing!' &&
+        echo '' &&
+        echo 'Test users available:' &&
+        echo '   - SUPERADMIN: +1234567890 (Platform Owner)' &&
+        echo '   - CLIENT_ADMIN: +1111111111 (AquaStar Admin)' &&
+        echo '   - AREA_MANAGER: +1111111112 (AquaStar North Manager)' &&
+        echo '   - SALES_EXECUTIVE: +1111111121 (Alex Thompson)' &&
+        echo '' &&
+        echo 'Analytics endpoints ready for testing with proper user hierarchy!'
+      "
+    networks:
+      - database_network
+    profiles:
+      - seed
+
 
 
 volumes:

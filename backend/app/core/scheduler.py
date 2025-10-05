@@ -85,7 +85,7 @@ class TaskScheduler:
             
             # Initialize services
             self.sync_service = SyncService(db)
-            self.analytics_service = AnalyticsService(db)
+            self.analytics_service = AnalyticsService()
             
             logger.info("Services initialized successfully")
             
