@@ -7,7 +7,7 @@ part of 'executive_analytics_viewmodel.dart';
 // **************************************************************************
 
 String _$getTopTenCustomersHash() =>
-    r'250f43f9e6a72a66e0a6d18a2053d2015ad61518';
+    r'0e202e4f9acc32769a21c04334a1a0f7b0785d30';
 
 /// Copied from Dart SDK
 class _SystemHash {
@@ -155,7 +155,7 @@ class _GetTopTenCustomersProviderElement
 }
 
 String _$getBestSellingProductsHash() =>
-    r'64e3d02fba494e0a04c0967c342c7a77fafaac98';
+    r'c0e4b11c554407c72f51dd886f3ad6f3d206fb9c';
 
 /// See also [getBestSellingProducts].
 @ProviderFor(getBestSellingProducts)
@@ -284,6 +284,135 @@ class _GetBestSellingProductsProviderElement
   @override
   String? get salesExecutiveId =>
       (origin as GetBestSellingProductsProvider).salesExecutiveId;
+}
+
+String _$getSalesReportHash() => r'59970bebeadfa393f3aee66a499c0cd709d0cab8';
+
+/// See also [getSalesReport].
+@ProviderFor(getSalesReport)
+const getSalesReportProvider = GetSalesReportFamily();
+
+/// See also [getSalesReport].
+class GetSalesReportFamily
+    extends Family<AsyncValue<List<Map<String, dynamic>>>> {
+  /// See also [getSalesReport].
+  const GetSalesReportFamily();
+
+  /// See also [getSalesReport].
+  GetSalesReportProvider call({String? salesExecutiveId}) {
+    return GetSalesReportProvider(salesExecutiveId: salesExecutiveId);
+  }
+
+  @override
+  GetSalesReportProvider getProviderOverride(
+    covariant GetSalesReportProvider provider,
+  ) {
+    return call(salesExecutiveId: provider.salesExecutiveId);
+  }
+
+  static const Iterable<ProviderOrFamily>? _dependencies = null;
+
+  @override
+  Iterable<ProviderOrFamily>? get dependencies => _dependencies;
+
+  static const Iterable<ProviderOrFamily>? _allTransitiveDependencies = null;
+
+  @override
+  Iterable<ProviderOrFamily>? get allTransitiveDependencies =>
+      _allTransitiveDependencies;
+
+  @override
+  String? get name => r'getSalesReportProvider';
+}
+
+/// See also [getSalesReport].
+class GetSalesReportProvider
+    extends AutoDisposeFutureProvider<List<Map<String, dynamic>>> {
+  /// See also [getSalesReport].
+  GetSalesReportProvider({String? salesExecutiveId})
+    : this._internal(
+        (ref) => getSalesReport(
+          ref as GetSalesReportRef,
+          salesExecutiveId: salesExecutiveId,
+        ),
+        from: getSalesReportProvider,
+        name: r'getSalesReportProvider',
+        debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
+            ? null
+            : _$getSalesReportHash,
+        dependencies: GetSalesReportFamily._dependencies,
+        allTransitiveDependencies:
+            GetSalesReportFamily._allTransitiveDependencies,
+        salesExecutiveId: salesExecutiveId,
+      );
+
+  GetSalesReportProvider._internal(
+    super._createNotifier, {
+    required super.name,
+    required super.dependencies,
+    required super.allTransitiveDependencies,
+    required super.debugGetCreateSourceHash,
+    required super.from,
+    required this.salesExecutiveId,
+  }) : super.internal();
+
+  final String? salesExecutiveId;
+
+  @override
+  Override overrideWith(
+    FutureOr<List<Map<String, dynamic>>> Function(GetSalesReportRef provider)
+    create,
+  ) {
+    return ProviderOverride(
+      origin: this,
+      override: GetSalesReportProvider._internal(
+        (ref) => create(ref as GetSalesReportRef),
+        from: from,
+        name: null,
+        dependencies: null,
+        allTransitiveDependencies: null,
+        debugGetCreateSourceHash: null,
+        salesExecutiveId: salesExecutiveId,
+      ),
+    );
+  }
+
+  @override
+  AutoDisposeFutureProviderElement<List<Map<String, dynamic>>> createElement() {
+    return _GetSalesReportProviderElement(this);
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return other is GetSalesReportProvider &&
+        other.salesExecutiveId == salesExecutiveId;
+  }
+
+  @override
+  int get hashCode {
+    var hash = _SystemHash.combine(0, runtimeType.hashCode);
+    hash = _SystemHash.combine(hash, salesExecutiveId.hashCode);
+
+    return _SystemHash.finish(hash);
+  }
+}
+
+@Deprecated('Will be removed in 3.0. Use Ref instead')
+// ignore: unused_element
+mixin GetSalesReportRef
+    on AutoDisposeFutureProviderRef<List<Map<String, dynamic>>> {
+  /// The parameter `salesExecutiveId` of this provider.
+  String? get salesExecutiveId;
+}
+
+class _GetSalesReportProviderElement
+    extends AutoDisposeFutureProviderElement<List<Map<String, dynamic>>>
+    with GetSalesReportRef {
+  _GetSalesReportProviderElement(super.provider);
+
+  @override
+  String? get salesExecutiveId =>
+      (origin as GetSalesReportProvider).salesExecutiveId;
 }
 
 // ignore_for_file: type=lint

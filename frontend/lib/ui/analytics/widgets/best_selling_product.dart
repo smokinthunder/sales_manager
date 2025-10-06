@@ -29,7 +29,7 @@ class BestSellingProduct extends StatelessWidget {
           padding: const EdgeInsets.symmetric(vertical: 20.0),
           child: Text("Best Selling Products", style: textTheme.bodyLarge),
         ),
-        Row(
+        Column(
           children: [
             SizedBox(
               width: width * 0.4,

@@ -169,7 +169,7 @@ services:
         echo '📁 Ensuring database exists...' &&
         mysql -h mysql -P 3306 -u sales_user -psales_password -e 'CREATE DATABASE IF NOT EXISTS sales_manager;' &&
         echo '🏗️ Running database initialization...' &&
-        mysql -h mysql -P 3306 -u sales_user -psales_password sales_manager < /docker-entrypoint-initdb.d/01-init.sql &&
+        # mysql -h mysql -P 3306 -u sales_user -psales_password sales_manager < /docker-entrypoint-initdb.d/01-init.sql &&
         echo '👥 Seeding users and tenants...' &&
         mysql -h mysql -P 3306 -u sales_user -psales_password sales_manager < /docker-entrypoint-initdb.d/02-users.sql &&
         echo '🏪 Seeding shops...' &&

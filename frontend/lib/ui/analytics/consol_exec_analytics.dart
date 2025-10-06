@@ -139,7 +139,7 @@ class _ConsolidatedAnalyticsScreenState
                     child: Text("Find Analytics"),
                   ),
                 ),
-                if (!showTopTen)
+                if (showTopTen)
                   ref
                       .watch(
                         getTopTenCustomersProvider(
@@ -155,50 +155,56 @@ class _ConsolidatedAnalyticsScreenState
                         data: (data) => TopTenCustomers(customers: data),
                       ),
 
-                if (showTopTen)
-                  TopTenCustomers(
-                    customers: [
-                      "Acme Corp",
-                      "Beta Traders",
-                      "Gamma Industries",
-                      "Delta Enterprises",
-                      "Epsilon Ltd",
-                      "Zeta Solutions",
-                      "Eta Distributors",
-                      "Theta Group",
-                      "Iota Holdings",
-                      "Kappa Partners",
-                    ],
-                  ),
                 if (showBestSelling)
-                  BestSellingProduct(
-                    productList: [
-                      ProductSaleMap("ELBOW SOCKET 90", 60, Color(0xff3977e6)),
-                      ProductSaleMap(
-                        "RAIN WATER CHAMBER",
-                        30,
-                        Color(0xfff3a100),
+                  ref
+                      .watch(
+                        getBestSellingProductsProvider(
+                          salesExecutiveId: selectedExecutive,
+                        ),
+                      )
+                      .when(
+                        loading: () =>
+                            Center(child: CircularProgressIndicator()),
+                        error: (error, stackTrace) =>
+                            Center(child: Text('Error: $error')),
+                        data: (data) => BestSellingProduct(
+                          productList: data
+                              .map(
+                                (e) => ProductSaleMap(
+                                  e['product_name'] as String,
+                                  (e['percentage'] as num).toDouble(),
+                                  e['color'] as Color,
+                                ),
+                              )
+                              .toList(),
+                        ),
                       ),
-                      ProductSaleMap("RAIN WATER PIPES", 10, Color(0xff449f40)),
-                    ],
-                  ),
                 if (showSalesReport)
-                  SalesReport(
-                    salesData: const [
-                      SalesReportDataMap('Jan', 5),
-                      SalesReportDataMap('Feb', 7.5),
-                      SalesReportDataMap('Mar', 10),
-                      SalesReportDataMap('Apr', 8),
-                      SalesReportDataMap('May', 15),
-                      SalesReportDataMap('Jun', 10),
-                      SalesReportDataMap('Jul', 8),
-                      SalesReportDataMap('Aug', 4),
-                      SalesReportDataMap('Sep', 5),
-                      SalesReportDataMap('Oct', 8),
-                      SalesReportDataMap('Nov', 10),
-                      SalesReportDataMap('Dec', 4),
-                    ],
-                  ),
+                  ref
+                      .watch(
+                        getSalesReportProvider(
+                          salesExecutiveId: selectedExecutive,
+                        ),
+                      )
+                      .when(
+                        data: (data) {
+                          return SalesReport(
+                            salesData: data
+                                .map(
+                                  (e) => SalesReportDataMap(
+                                    e['month_name'] as String,
+                                    (e['sale_point'] as num).toDouble(),
+                                  ),
+                                )
+                                .toList(),
+                          );
+                        },
+                        error: (error, stackTrace) =>
+                            Center(child: Text('Error: $error')),
+                        loading: () =>
+                            Center(child: CircularProgressIndicator()),
+                      ),
+
                 TextButton(
                   onPressed: () {
                     //TODO

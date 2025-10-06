@@ -1,6 +1,8 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:sales_manager/data/repositories/analytics/analytics_remote_repository.dart';
+import 'package:sales_manager/ui/analytics/viewmodels/fill_missing_months.dart';
+import 'package:sales_manager/utils/color_gen.dart';
 import 'package:sales_manager/utils/result.dart';
 
 part 'executive_analytics_viewmodel.g.dart';
@@ -10,9 +12,10 @@ Future<List<String>> getTopTenCustomers(
   Ref ref, {
   String? salesExecutiveId,
 }) async {
+  if (salesExecutiveId != null) salesExecutiveId = salesExecutiveId.toString();
   final repository = ref.read(analyticsRemoteRepositoryProvider);
   final result = await repository.getExecutiveTopCustomers(
-    salesExecutiveId: salesExecutiveId.toString(),
+    salesExecutiveId: salesExecutiveId,
   );
   switch (result) {
     case Ok():
@@ -35,15 +38,24 @@ Future<List<Map<String, dynamic>>> getBestSellingProducts(
   Ref ref, {
   String? salesExecutiveId,
 }) async {
+  if (salesExecutiveId != null) salesExecutiveId = salesExecutiveId.toString();
   final repository = ref.read(analyticsRemoteRepositoryProvider);
   final result = await repository.getExecutiveBestSellingProducts(
-    salesExecutiveId: salesExecutiveId.toString(),
+    salesExecutiveId: salesExecutiveId,
   );
   switch (result) {
     case Ok():
       final rawdata = result.value;
-      rawdata.sort((a, b) => b['percentage'].compareTo(a['percentage']));
-      return rawdata;
+      final List<Map<String, dynamic>> list = rawdata
+          .map(
+            (map) => {
+              'product_name': map['product_name'],
+              'percentage': map['percentage'],
+              'color': colorFromSimpleHash(map['product_name']),
+            },
+          )
+          .toList();
+      return list;
     case Error():
       return [];
   }
@@ -56,13 +68,14 @@ Future<List<Map<String, dynamic>>> getSalesReport(
 }) async {
   final repository = ref.read(analyticsRemoteRepositoryProvider);
   final result = await repository.getExecutiveSalesReport(
-    salesExecutiveId: salesExecutiveId.toString(),
+    salesExecutiveId: salesExecutiveId,
+   
   );
   switch (result) {
     case Ok():
       final rawdata = result.value;
-      rawdata.sort((a, b) => b['total_sales'].compareTo(a['total_sales']));
-      return rawdata;
+      final filledData = fillMissingMonths(rawdata);
+      return filledData;
     case Error():
       return [];
   }
