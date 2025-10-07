@@ -7,7 +7,7 @@ part of 'outstanding_viewmodel.dart';
 // **************************************************************************
 
 String _$allOutstandingPaymentsHash() =>
-    r'17d0d86b4ac86d0c497a8fdafc1ad3173c7ce6a6';
+    r'eb17ba1f4c6d3aac50cae9d18d2bdaeebbcfa270';
 
 /// Copied from Dart SDK
 class _SystemHash {
@@ -79,7 +79,7 @@ class AllOutstandingPaymentsFamily
 ///
 /// Copied from [allOutstandingPayments].
 class AllOutstandingPaymentsProvider
-    extends FutureProvider<List<OutstandingPaymentItem>> {
+    extends AutoDisposeFutureProvider<List<OutstandingPaymentItem>> {
   /// Main provider that fetches all outstanding payments from the repository
   ///
   /// Copied from [allOutstandingPayments].
@@ -134,7 +134,8 @@ class AllOutstandingPaymentsProvider
   }
 
   @override
-  FutureProviderElement<List<OutstandingPaymentItem>> createElement() {
+  AutoDisposeFutureProviderElement<List<OutstandingPaymentItem>>
+  createElement() {
     return _AllOutstandingPaymentsProviderElement(this);
   }
 
@@ -156,13 +157,13 @@ class AllOutstandingPaymentsProvider
 @Deprecated('Will be removed in 3.0. Use Ref instead')
 // ignore: unused_element
 mixin AllOutstandingPaymentsRef
-    on FutureProviderRef<List<OutstandingPaymentItem>> {
+    on AutoDisposeFutureProviderRef<List<OutstandingPaymentItem>> {
   /// The parameter `executiveId` of this provider.
   String? get executiveId;
 }
 
 class _AllOutstandingPaymentsProviderElement
-    extends FutureProviderElement<List<OutstandingPaymentItem>>
+    extends AutoDisposeFutureProviderElement<List<OutstandingPaymentItem>>
     with AllOutstandingPaymentsRef {
   _AllOutstandingPaymentsProviderElement(super.provider);
 
@@ -172,14 +173,14 @@ class _AllOutstandingPaymentsProviderElement
 }
 
 String _$getAllSalesExecutivesHash() =>
-    r'dfa6e906777fac048d24bd8bd03cb51f1824b21e';
+    r'f5262c1d379f837dac167a152fdc23ade8cd803e';
 
 /// Provider for sales executives (for area managers)
 ///
 /// Copied from [getAllSalesExecutives].
 @ProviderFor(getAllSalesExecutives)
 final getAllSalesExecutivesProvider =
-    FutureProvider<List<Map<String, dynamic>>>.internal(
+    AutoDisposeFutureProvider<List<Map<String, dynamic>>>.internal(
       getAllSalesExecutives,
       name: r'getAllSalesExecutivesProvider',
       debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
@@ -192,9 +193,9 @@ final getAllSalesExecutivesProvider =
 @Deprecated('Will be removed in 3.0. Use Ref instead')
 // ignore: unused_element
 typedef GetAllSalesExecutivesRef =
-    FutureProviderRef<List<Map<String, dynamic>>>;
+    AutoDisposeFutureProviderRef<List<Map<String, dynamic>>>;
 String _$getOutstandingPaymentsByStatusAndExecutiveHash() =>
-    r'bf4eedbcc57a3c00474a37721f3a8e55bbc0181c';
+    r'7292a2b9b17c6c745e9e5d2919ffeff9abb39142';
 
 /// Provider for filtered outstanding payments by status and executive
 ///
@@ -252,7 +253,7 @@ class GetOutstandingPaymentsByStatusAndExecutiveFamily
 ///
 /// Copied from [getOutstandingPaymentsByStatusAndExecutive].
 class GetOutstandingPaymentsByStatusAndExecutiveProvider
-    extends FutureProvider<List<List<String>>> {
+    extends AutoDisposeFutureProvider<List<List<String>>> {
   /// Provider for filtered outstanding payments by status and executive
   ///
   /// Copied from [getOutstandingPaymentsByStatusAndExecutive].
@@ -316,7 +317,7 @@ class GetOutstandingPaymentsByStatusAndExecutiveProvider
   }
 
   @override
-  FutureProviderElement<List<List<String>>> createElement() {
+  AutoDisposeFutureProviderElement<List<List<String>>> createElement() {
     return _GetOutstandingPaymentsByStatusAndExecutiveProviderElement(this);
   }
 
@@ -340,7 +341,7 @@ class GetOutstandingPaymentsByStatusAndExecutiveProvider
 @Deprecated('Will be removed in 3.0. Use Ref instead')
 // ignore: unused_element
 mixin GetOutstandingPaymentsByStatusAndExecutiveRef
-    on FutureProviderRef<List<List<String>>> {
+    on AutoDisposeFutureProviderRef<List<List<String>>> {
   /// The parameter `status` of this provider.
   CreditType get status;
 
@@ -349,7 +350,7 @@ mixin GetOutstandingPaymentsByStatusAndExecutiveRef
 }
 
 class _GetOutstandingPaymentsByStatusAndExecutiveProviderElement
-    extends FutureProviderElement<List<List<String>>>
+    extends AutoDisposeFutureProviderElement<List<List<String>>>
     with GetOutstandingPaymentsByStatusAndExecutiveRef {
   _GetOutstandingPaymentsByStatusAndExecutiveProviderElement(super.provider);
 
