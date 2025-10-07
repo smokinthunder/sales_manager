@@ -1969,6 +1969,44 @@ class DueDataUpdate(BaseModel):
     updated_by: Optional[int] = None
 
 
+class NotificationResponse(BaseModel):
+    """Response model for notification data."""
+    id: int
+    sender_id: int
+    receiver_id: int
+    subject: str
+    notification_type: str
+    related_data: Optional[Dict[str, Any]] = None
+    is_confirmed: bool
+    tenant_id: str
+    created_at: datetime
+    updated_at: datetime
+    created_by: Optional[int] = None
+    updated_by: Optional[int] = None
+    sender_name: Optional[str] = None
+    receiver_name: Optional[str] = None
+
+
+class NotificationCreate(BaseModel):
+    """Model for creating notifications."""
+    sender_id: int
+    receiver_id: int
+    subject: str
+    notification_type: str
+    related_data: Optional[Dict[str, Any]] = None
+    is_confirmed: bool = False
+    created_by: Optional[int] = None
+    updated_by: Optional[int] = None
+
+
+class NotificationUpdate(BaseModel):
+    """Model for updating notifications."""
+    subject: Optional[str] = None
+    is_confirmed: Optional[bool] = None
+    related_data: Optional[Dict[str, Any]] = None
+    updated_by: Optional[int] = None
+
+
 @app.post("/api/due-data/{tenant_id}")
 async def create_due_data(tenant_id: str, data: DueDataCreate, db=Depends(get_db)):
     """Create a new due data record."""
@@ -3261,6 +3299,321 @@ async def create_executive_shop_assignment(assignment_data: dict, db=Depends(get
         db.rollback()
         logger.error(f"Error creating executive shop assignment: {e}")
         raise HTTPException(status_code=500, detail=f"Failed to create assignment: {str(e)}")
+
+
+# Notification Management Endpoints
+
+@app.get("/api/notifications/{tenant_id}", response_model=List[NotificationResponse])
+async def get_notifications(
+    tenant_id: str,
+    receiver_id: Optional[int] = None,
+    notification_type: Optional[str] = None,
+    is_confirmed: Optional[bool] = None,
+    db=Depends(get_db)
+):
+    """Get notifications for a specific tenant with optional filtering"""
+    try:
+        # Build query with optional filters
+        where_conditions = ["n.tenant_id = :tenant_id"]
+        params = {"tenant_id": tenant_id}
+        
+        if receiver_id:
+            where_conditions.append("n.receiver_id = :receiver_id")
+            params["receiver_id"] = receiver_id
+            
+        if notification_type:
+            where_conditions.append("n.notification_type = :notification_type")
+            params["notification_type"] = notification_type
+        
+        if is_confirmed is not None:
+            where_conditions.append("n.is_confirmed = :is_confirmed")
+            params["is_confirmed"] = is_confirmed
+        
+        where_clause = " AND ".join(where_conditions)
+        
+        query = text(f"""
+            SELECT n.id, n.sender_id, n.receiver_id, n.subject, n.notification_type, 
+                   n.related_data, n.is_confirmed, n.tenant_id, n.created_at, n.updated_at,
+                   n.created_by, n.updated_by,
+                   s.name as sender_name, r.name as receiver_name
+            FROM notifications n
+            LEFT JOIN users s ON n.sender_id = s.id
+            LEFT JOIN users r ON n.receiver_id = r.id
+            WHERE {where_clause}
+            ORDER BY n.created_at DESC
+        """)
+        
+        result = db.execute(query, params)
+        notifications = []
+        
+        for row in result:
+            # Handle JSON data safely
+            related_data = None
+            if row[5]:  # related_data column
+                try:
+                    import json
+                    related_data = json.loads(row[5]) if isinstance(row[5], str) else row[5]
+                except:
+                    related_data = row[5]
+            
+            notifications.append(NotificationResponse(
+                id=row[0],
+                sender_id=row[1],
+                receiver_id=row[2],
+                subject=row[3],
+                notification_type=row[4],
+                related_data=related_data,
+                is_confirmed=row[6],
+                tenant_id=row[7],
+                created_at=row[8],
+                updated_at=row[9],
+                created_by=row[10],
+                updated_by=row[11],
+                sender_name=row[12],
+                receiver_name=row[13]
+            ))
+        
+        return notifications
+    except SQLAlchemyError as e:
+        logger.error(f"Database error: {e}")
+        raise HTTPException(status_code=500, detail="Database error")
+    except Exception as e:
+        logger.error(f"Unexpected error: {e}")
+        raise HTTPException(status_code=500, detail="Internal server error")
+
+
+@app.get("/api/notifications/{tenant_id}/{notification_id}", response_model=NotificationResponse)
+async def get_notification(tenant_id: str, notification_id: str, db=Depends(get_db)):
+    """Get a specific notification by tenant and notification_id"""
+    try:
+        query = text("""
+            SELECT n.id, n.sender_id, n.receiver_id, n.subject, n.notification_type, 
+                   n.related_data, n.is_confirmed, n.tenant_id, n.created_at, n.updated_at,
+                   n.created_by, n.updated_by,
+                   s.name as sender_name, r.name as receiver_name
+            FROM notifications n
+            LEFT JOIN users s ON n.sender_id = s.id
+            LEFT JOIN users r ON n.receiver_id = r.id
+            WHERE n.tenant_id = :tenant_id AND n.id = :notification_id
+        """)
+        
+        result = db.execute(query, {"tenant_id": tenant_id, "notification_id": notification_id})
+        row = result.fetchone()
+        
+        if not row:
+            raise HTTPException(status_code=404, detail="Notification not found")
+        
+        # Handle JSON data safely
+        related_data = None
+        if row[5]:  # related_data column
+            try:
+                import json
+                related_data = json.loads(row[5]) if isinstance(row[5], str) else row[5]
+            except:
+                related_data = row[5]
+        
+        return NotificationResponse(
+            id=row[0],
+            sender_id=row[1],
+            receiver_id=row[2],
+            subject=row[3],
+            notification_type=row[4],
+            related_data=related_data,
+            is_confirmed=row[6],
+            tenant_id=row[7],
+            created_at=row[8],
+            updated_at=row[9],
+            created_by=row[10],
+            updated_by=row[11],
+            sender_name=row[12],
+            receiver_name=row[13]
+        )
+    except HTTPException:
+        raise
+    except SQLAlchemyError as e:
+        logger.error(f"Database error: {e}")
+        raise HTTPException(status_code=500, detail="Database error")
+    except Exception as e:
+        logger.error(f"Unexpected error: {e}")
+        raise HTTPException(status_code=500, detail="Internal server error")
+
+
+@app.post("/api/notifications/{tenant_id}", response_model=NotificationResponse)
+async def create_notification(tenant_id: str, notification_data: NotificationCreate, db=Depends(get_db)):
+    """Create a new notification for a specific tenant"""
+    try:
+        # Validate sender and receiver exist and belong to tenant
+        user_check = text("""
+            SELECT id, name FROM users 
+            WHERE id IN (:sender_id, :receiver_id) AND tenant_id = :tenant_id
+        """)
+        
+        users = db.execute(user_check, {
+            "sender_id": notification_data.sender_id,
+            "receiver_id": notification_data.receiver_id,
+            "tenant_id": tenant_id
+        }).fetchall()
+        
+        if len(users) != 2:
+            raise HTTPException(status_code=400, detail="Invalid sender or receiver")
+        
+        # Prepare related_data for insertion
+        related_data_json = None
+        if notification_data.related_data:
+            import json
+            related_data_json = json.dumps(notification_data.related_data)
+        
+        # Insert new notification
+        insert_query = text("""
+            INSERT INTO notifications (sender_id, receiver_id, subject, notification_type, 
+                                     related_data, is_confirmed, tenant_id, created_at, updated_at, 
+                                     created_by, updated_by)
+            VALUES (:sender_id, :receiver_id, :subject, :notification_type, 
+                    :related_data, :is_confirmed, :tenant_id, NOW(), NOW(), 
+                    :created_by, :updated_by)
+        """)
+        
+        result = db.execute(insert_query, {
+            "sender_id": notification_data.sender_id,
+            "receiver_id": notification_data.receiver_id,
+            "subject": notification_data.subject,
+            "notification_type": notification_data.notification_type,
+            "related_data": related_data_json,
+            "is_confirmed": notification_data.is_confirmed,
+            "tenant_id": tenant_id,
+            "created_by": notification_data.created_by,
+            "updated_by": notification_data.updated_by
+        })
+        
+        db.commit()
+        
+        # Return the created notification
+        notification_id = result.lastrowid
+        return await get_notification(tenant_id, str(notification_id), db)
+        
+    except HTTPException:
+        db.rollback()
+        raise
+    except SQLAlchemyError as e:
+        db.rollback()
+        logger.error(f"Database error: {e}")
+        raise HTTPException(status_code=500, detail="Database error")
+    except Exception as e:
+        db.rollback()
+        logger.error(f"Unexpected error: {e}")
+        raise HTTPException(status_code=500, detail="Internal server error")
+
+
+@app.put("/api/notifications/{tenant_id}/{notification_id}", response_model=NotificationResponse)
+async def update_notification(tenant_id: str, notification_id: str, notification_data: NotificationUpdate, db=Depends(get_db)):
+    """Update an existing notification"""
+    try:
+        # Check if notification exists
+        existing_query = text("""
+            SELECT id FROM notifications 
+            WHERE tenant_id = :tenant_id AND id = :notification_id
+        """)
+        
+        existing = db.execute(existing_query, {
+            "tenant_id": tenant_id,
+            "notification_id": notification_id
+        }).fetchone()
+        
+        if not existing:
+            raise HTTPException(status_code=404, detail="Notification not found")
+        
+        # Build update query dynamically
+        update_fields = []
+        params = {"tenant_id": tenant_id, "notification_id": notification_id}
+        
+        if notification_data.subject is not None:
+            update_fields.append("subject = :subject")
+            params["subject"] = notification_data.subject
+        
+        if notification_data.is_confirmed is not None:
+            update_fields.append("is_confirmed = :is_confirmed")
+            params["is_confirmed"] = notification_data.is_confirmed
+        
+        if notification_data.related_data is not None:
+            update_fields.append("related_data = :related_data")
+            import json
+            params["related_data"] = json.dumps(notification_data.related_data)
+        
+        # Always update audit fields
+        update_fields.append("updated_at = NOW()")
+        if notification_data.updated_by is not None:
+            update_fields.append("updated_by = :updated_by")
+            params["updated_by"] = notification_data.updated_by
+        
+        if not update_fields:
+            # No fields to update, return existing notification
+            return await get_notification(tenant_id, notification_id, db)
+        
+        update_query = text(f"""
+            UPDATE notifications 
+            SET {', '.join(update_fields)}
+            WHERE tenant_id = :tenant_id AND id = :notification_id
+        """)
+        
+        db.execute(update_query, params)
+        db.commit()
+        
+        # Return the updated notification
+        return await get_notification(tenant_id, notification_id, db)
+        
+    except HTTPException:
+        db.rollback()
+        raise
+    except SQLAlchemyError as e:
+        db.rollback()
+        logger.error(f"Database error: {e}")
+        raise HTTPException(status_code=500, detail="Database error")
+    except Exception as e:
+        db.rollback()
+        logger.error(f"Unexpected error: {e}")
+        raise HTTPException(status_code=500, detail="Internal server error")
+
+
+@app.delete("/api/notifications/{tenant_id}/{notification_id}")
+async def delete_notification(tenant_id: str, notification_id: str, db=Depends(get_db)):
+    """Delete a notification"""
+    try:
+        # Check if notification exists
+        existing_query = text("""
+            SELECT id FROM notifications 
+            WHERE tenant_id = :tenant_id AND id = :notification_id
+        """)
+        
+        existing = db.execute(existing_query, {
+            "tenant_id": tenant_id,
+            "notification_id": notification_id
+        }).fetchone()
+        
+        if not existing:
+            raise HTTPException(status_code=404, detail="Notification not found")
+        
+        # Delete notification
+        delete_query = text("""
+            DELETE FROM notifications 
+            WHERE tenant_id = :tenant_id AND id = :notification_id
+        """)
+        
+        db.execute(delete_query, {"tenant_id": tenant_id, "notification_id": notification_id})
+        db.commit()
+        
+        return {"message": "Notification deleted successfully"}
+        
+    except HTTPException:
+        db.rollback()
+        raise
+    except SQLAlchemyError as e:
+        db.rollback()
+        logger.error(f"Database error: {e}")
+        raise HTTPException(status_code=500, detail="Database error")
+    except Exception as e:
+        db.rollback()
+        logger.error(f"Unexpected error: {e}")
+        raise HTTPException(status_code=500, detail="Internal server error")
 
 
 if __name__ == "__main__":

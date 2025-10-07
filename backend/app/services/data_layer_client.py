@@ -1152,6 +1152,133 @@ class DataLayerClient:
             Assignment creation result
         """
         return await self._make_request("POST", "/api/assignments/executive-shop", json=assignment_data)
+    
+    # Notification methods
+    async def get_notifications(
+        self, 
+        tenant_id: str, 
+        receiver_id: Optional[str] = None,
+        notification_type: Optional[str] = None,
+        is_confirmed: Optional[bool] = None,
+        limit: Optional[int] = None,
+        offset: Optional[int] = None
+    ) -> List[Dict[str, Any]]:
+        """
+        Get notifications from the Data Layer.
+        
+        Args:
+            tenant_id: Tenant identifier
+            receiver_id: Filter by receiver user ID
+            notification_type: Filter by notification type
+            is_confirmed: Filter by confirmation status
+            limit: Maximum number of results
+            offset: Number of results to skip
+            
+        Returns:
+            List of notification dictionaries
+        """
+        params = {}
+        if receiver_id:
+            params["receiver_id"] = receiver_id
+        if notification_type:
+            params["notification_type"] = notification_type
+        if is_confirmed is not None:
+            params["is_confirmed"] = str(is_confirmed).lower()
+        if limit:
+            params["limit"] = limit
+        if offset:
+            params["offset"] = offset
+            
+        return await self._make_request("GET", f"/api/notifications/{tenant_id}", params=params)
+    
+    async def get_notification(self, tenant_id: str, notification_id: str) -> Optional[Dict[str, Any]]:
+        """
+        Get a specific notification by ID.
+        
+        Args:
+            tenant_id: Tenant identifier
+            notification_id: Notification identifier
+            
+        Returns:
+            Notification dictionary or None if not found
+        """
+        try:
+            return await self._make_request("GET", f"/api/notifications/{tenant_id}/{notification_id}")
+        except HTTPException as e:
+            if e.status_code == 404:
+                return None
+            raise
+    
+    async def create_notification(self, notification_data: Dict[str, Any], tenant_id: str) -> Dict[str, Any]:
+        """
+        Create a new notification.
+        
+        Args:
+            notification_data: Notification data
+            tenant_id: Tenant identifier
+            
+        Returns:
+            Created notification data
+        """
+        return await self._make_request("POST", f"/api/notifications/{tenant_id}", json=notification_data)
+    
+    async def update_notification(
+        self, 
+        notification_id: str, 
+        notification_data: Dict[str, Any], 
+        tenant_id: str
+    ) -> Dict[str, Any]:
+        """
+        Update a notification.
+        
+        Args:
+            notification_id: Notification identifier
+            notification_data: Updated notification data
+            tenant_id: Tenant identifier
+            
+        Returns:
+            Updated notification data
+        """
+        return await self._make_request("PUT", f"/api/notifications/{tenant_id}/{notification_id}", json=notification_data)
+
+    async def get(self, endpoint: str, **kwargs) -> Dict[str, Any]:
+        """
+        Generic GET method for backward compatibility.
+        
+        Args:
+            endpoint: API endpoint path
+            **kwargs: Additional parameters (params, headers, etc.)
+            
+        Returns:
+            Response data from the Data Layer
+        """
+        return await self._make_request("GET", endpoint, **kwargs)
+
+    async def put(self, endpoint: str, **kwargs) -> Dict[str, Any]:
+        """
+        Generic PUT method for backward compatibility.
+        
+        Args:
+            endpoint: API endpoint path
+            **kwargs: Additional parameters (json, headers, etc.)
+            
+        Returns:
+            Response data from the Data Layer
+        """
+        return await self._make_request("PUT", endpoint, **kwargs)
+
+    async def post(self, endpoint: str, **kwargs) -> Dict[str, Any]:
+        """
+        Generic POST method for backward compatibility.
+        
+        Args:
+            endpoint: API endpoint path
+            **kwargs: Additional parameters (json, headers, etc.)
+            
+        Returns:
+            Response data from the Data Layer
+        """
+        return await self._make_request("POST", endpoint, **kwargs)
 
 
 # Global instance

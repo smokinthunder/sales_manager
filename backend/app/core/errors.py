@@ -50,6 +50,20 @@ class ValidationError(BaseError):
         super().__init__(message, details, 422)
 
 
+class NotificationNotFoundError(BaseError):
+    """Raised when a notification is not found."""
+    
+    def __init__(self, message: str = "Notification not found", details: Optional[Dict[str, Any]] = None):
+        super().__init__(message, details, 404)
+
+
+class InvalidNotificationDataError(BaseError):
+    """Raised when notification data is invalid."""
+    
+    def __init__(self, message: str = "Invalid notification data", details: Optional[Dict[str, Any]] = None):
+        super().__init__(message, details, 400)
+
+
 class NotFoundError(BaseError):
     """Raised when a requested resource is not found."""
     

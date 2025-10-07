@@ -9,6 +9,7 @@ from typing import Any, Dict, List, Optional
 from datetime import datetime
 from fastapi import HTTPException, status
 from app.services.data_layer_client import get_data_layer_client
+from app.services.notification_service import get_notification_service
 from app.domain.models.shop import ShopCreate, ShopUpdate, ShopRead, ShopStatus
 from app.domain.models.sync_data import SyncedShopDataRead
 from app.core.errors import (
@@ -29,6 +30,13 @@ class ShopService:
     def __init__(self, data_layer_client=None):
         """Initialize shop service with data layer client."""
         self.client = data_layer_client
+        self.notification_service = None
+
+    async def _get_notification_service(self):
+        """Get Notification Service."""
+        if not self.notification_service:
+            self.notification_service = await get_notification_service()
+        return self.notification_service
 
     # ------------------ CRUD Methods ------------------
 
@@ -108,9 +116,9 @@ class ShopService:
         shop_data: ShopCreate, 
         tenant_id: str, 
         current_user: Dict[str, Any]
-    ) -> ShopRead:
+    ) -> Dict[str, Any]:
         """
-        Create a new shop.
+        Create a new shop with approval workflow.
         
         Args:
             shop_data: Shop creation data
@@ -118,37 +126,79 @@ class ShopService:
             current_user: Current authenticated user
             
         Returns:
-            Created shop record
+            Created shop record or notification data for approval
             
         Raises:
             ShopAlreadyExistsError: If shop with same ID/code exists
             InsufficientPermissionsError: If user lacks create permissions
             InvalidShopDataError: If shop data is invalid
         """
-        self._check_tenant_access(tenant_id, current_user, allowed_roles=["client_admin", "superadmin"])
+        # Check if approval is needed
+        user_role = current_user.get("role")
         
-        # Validate shop data
-        self._validate_shop_data(shop_data)
+        # Area managers, client admins, and superadmins can create shops directly
+        if user_role in ["area_manager", "client_admin", "superadmin"]:
+            self._check_tenant_access(tenant_id, current_user, allowed_roles=["area_manager", "client_admin", "superadmin"])
+            
+            # Validate shop data
+            self._validate_shop_data(shop_data)
+            
+            # Get data layer client
+            client = self.client or await get_data_layer_client()
+            
+            # Prepare payload with audit fields (tenant_id comes from URL parameter)
+            payload = shop_data.model_dump()
+            payload.update({
+                "created_at": datetime.utcnow().isoformat(),
+                "updated_at": datetime.utcnow().isoformat(),
+                "created_by": current_user.get("id"),
+                "updated_by": current_user.get("id"),
+            })
+            
+            try:
+                shop = await client.create_shop(payload, tenant_id)
+                return {
+                    "status": "completed",
+                    "message": "Shop created successfully",
+                    "notification_id": None,
+                    "approval_required": False,
+                    "shop": ShopRead(**shop).model_dump()
+                }
+            except HTTPException as e:
+                if e.status_code == 409:
+                    raise ShopAlreadyExistsError(shop_data.shop_id)
+                raise
         
-        # Get data layer client
-        client = self.client or await get_data_layer_client()
+        # Sales executives need approval for shop creation
+        if user_role == "sales_executive":
+            # Validate shop data
+            self._validate_shop_data(shop_data)
+            
+            # Create notification for approval
+            notification_service = await self._get_notification_service()
+            
+            notification = await notification_service.create_customer_creation_notification(
+                shop_data.model_dump(), current_user, tenant_id
+            )
+            
+            if notification:
+                return {
+                    "status": "pending_approval",
+                    "message": "Shop creation request submitted for approval",
+                    "notification_id": notification.get("id"),
+                    "approval_required": True,
+                    "shop": None
+                }
+            else:
+                # This shouldn't happen for sales executives
+                raise InsufficientPermissionsError(
+                    message="Unable to create approval notification for shop creation"
+                )
         
-        # Prepare payload with audit fields (tenant_id comes from URL parameter)
-        payload = shop_data.model_dump()
-        payload.update({
-            "created_at": datetime.utcnow().isoformat(),
-            "updated_at": datetime.utcnow().isoformat(),
-            "created_by": current_user.get("id"),
-            "updated_by": current_user.get("id"),
-        })
-        
-        try:
-            shop = await client.create_shop(payload, tenant_id)
-            return ShopRead(**shop)
-        except HTTPException as e:
-            if e.status_code == 409:
-                raise ShopAlreadyExistsError(shop_data.shop_id)
-            raise
+        # Default case - insufficient permissions
+        raise InsufficientPermissionsError(
+            message="Insufficient permissions to create shops"
+        )
 
     async def update_shop_by_shop_id(
         self, 

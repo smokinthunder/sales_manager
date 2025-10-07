@@ -437,6 +437,31 @@ ALTER TABLE synced_products ADD INDEX idx_sales_executive (sales_executive_id);
 ALTER TABLE synced_products ADD CONSTRAINT fk_synced_products_sales_executive 
     FOREIGN KEY (sales_executive_id) REFERENCES users(id) ON DELETE SET NULL;
 
+-- Create notifications table for approval workflow
+CREATE TABLE IF NOT EXISTS notifications (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    sender_id INT NOT NULL,
+    receiver_id INT NOT NULL,
+    subject VARCHAR(255) NOT NULL,
+    notification_type ENUM('profile_update', 'customer_creation') NOT NULL,
+    related_data JSON,
+    is_confirmed BOOLEAN DEFAULT FALSE,
+    tenant_id VARCHAR(50) NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    created_by INT,
+    updated_by INT,
+    INDEX idx_receiver_status (receiver_id, is_confirmed),
+    INDEX idx_sender (sender_id),
+    INDEX idx_tenant_type (tenant_id, notification_type),
+    INDEX idx_type_status (notification_type, is_confirmed),
+    INDEX idx_created_at (created_at),
+    FOREIGN KEY (sender_id) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (receiver_id) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE SET NULL,
+    FOREIGN KEY (updated_by) REFERENCES users(id) ON DELETE SET NULL
+);
+
 -- Create indexes for performance
 CREATE INDEX idx_users_tenant_role ON users(tenant_id, role);
 CREATE INDEX idx_territories_tenant ON territories(tenant_id);
@@ -444,4 +469,4 @@ CREATE INDEX idx_shops_tenant_territory ON shops(tenant_id, territory_id);
 CREATE INDEX idx_routes_tenant_week ON routes(tenant_id, week_start_date);
 CREATE INDEX idx_visits_tenant_date ON visits(tenant_id, checkin_time);
 CREATE INDEX idx_sales_executive_assignments_tenant ON sales_executive_assignments(tenant_id);
-CREATE INDEX idx_sales_executive_assignments_territory ON sales_executive_assignments(territory_id);
+CREATE INDEX idx_sales_executive_assignments_territory ON sales_executive_associations(territory_id);

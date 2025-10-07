@@ -89,3 +89,28 @@ UPDATE territories SET area_manager_id = 12 WHERE territory_id = 'MR-DOWNTOWN';
 UPDATE territories SET area_manager_id = 13 WHERE territory_id = 'MR-UPTOWN';
 UPDATE territories SET area_manager_id = 14 WHERE territory_id = 'MR-MIDTOWN';
 
+-- Insert test notifications for demonstration
+INSERT INTO notifications (sender_id, receiver_id, subject, notification_type, related_data, is_confirmed, tenant_id, created_by, updated_by) VALUES
+-- Profile update notifications (from sales executives to area managers)
+(5, 2, 'Profile Update Request from Alex Thompson', 'profile_update', 
+ '{"user_id": 5, "update_data": {"name": "Alexander Thompson", "email": "alexander.thompson@aquastar.com"}, "sender_name": "Alex Thompson", "sender_role": "sales_executive"}', 
+ FALSE, 'AQUASTAR', 5, 5),
+
+(6, 2, 'Profile Update Request from Maria Garcia', 'profile_update', 
+ '{"user_id": 6, "update_data": {"email": "maria.garcia.updated@aquastar.com"}, "sender_name": "Maria Garcia", "sender_role": "sales_executive"}', 
+ FALSE, 'AQUASTAR', 6, 6),
+
+-- Customer creation notifications (from sales executives to area managers)
+(7, 3, 'New Customer Creation Request from David Lee', 'customer_creation',
+ '{"shop_data": {"shop_id": "AQ-SHOP-001", "name": "New Corner Store", "address": "123 Main St", "phone": "+1555123456", "contact_person": "John Doe", "territory_id": "AQ-SOUTH"}, "sender_name": "David Lee", "sender_role": "sales_executive"}',
+ FALSE, 'AQUASTAR', 7, 7),
+
+(11, 8, 'New Customer Creation Request from Bob White', 'customer_creation',
+ '{"shop_data": {"shop_id": "FF-SHOP-001", "name": "Fresh Market Plus", "address": "456 Oak Ave", "phone": "+1555789012", "contact_person": "Jane Smith", "territory_id": "FF-METRO"}, "sender_name": "Bob White", "sender_role": "sales_executive"}',
+ FALSE, 'FRESHFOOD', 11, 11),
+
+-- Already confirmed notification example
+(16, 12, 'Profile Update Request from Kate Davis', 'profile_update',
+ '{"user_id": 16, "update_data": {"name": "Katherine Davis"}, "sender_name": "Kate Davis", "sender_role": "sales_executive"}',
+ TRUE, 'METRO', 16, 12);
+

@@ -18,7 +18,7 @@ from app.core.errors import (
     ApprovalRequiredError
 )
 from app.services.data_layer_client import get_data_layer_client
-from app.services.approval_service import get_approval_service
+from app.services.notification_service import get_notification_service
 from app.domain.models.user import UserCreate, UserUpdate, UserRead
 
 logger = logging.getLogger(__name__)
@@ -29,13 +29,13 @@ class UserService:
     
     def __init__(self):
         self.data_layer = None
-        self.approval_service = None
+        self.notification_service = None
     
-    async def _get_approval_service(self):
-        """Get Approval Service."""
-        if not self.approval_service:
-            self.approval_service = await get_approval_service()
-        return self.approval_service
+    async def _get_notification_service(self):
+        """Get Notification Service."""
+        if not self.notification_service:
+            self.notification_service = await get_notification_service()
+        return self.notification_service
     
     async def _get_data_layer(self):
         """Get Data Layer client."""
@@ -326,29 +326,12 @@ class UserService:
                 "user": updated_user
             }
         
-        # For sales_executive and area_manager, approval is required
-        if current_user.get("role") in ["sales_executive", "area_manager"]:
-            # Create approval request instead of direct update
-            approval_service = await self._get_approval_service()
-            approval_request = await approval_service.create_profile_update_request(
-                user_id, user_data, current_user, tenant_id
-            )
+        # For sales_executive and area_manager updating their own profile, create notification for approval
+        if (current_user.get("role") in ["sales_executive"] and 
+            str(current_user.get("id")) == str(user_id)):
             
-            logger.info(
-                f"Profile update approval request created: user {user_id}, requested by {current_user.get('id')}"
-            )
-            
-            return {
-                "status": "pending_approval",
-                "message": "Profile update request submitted for approval",
-                "request_id": approval_request.get("id"),
-                "approval_required": True,
-                "user": None
-            }
-        
-        # For self-updates, approval is required
-        if str(current_user.get("id")) == str(user_id):
-            approval_service = await get_approval_service()
+            # Create notification for approval
+            notification_service = await self._get_notification_service()
             
             # Convert UserUpdate to dict safely
             update_dict = {}
@@ -360,56 +343,59 @@ class UserService:
                 update_dict["role"] = user_data.role
             if user_data.status is not None:
                 update_dict["status"] = user_data.status
+            if user_data.territory_id is not None:
+                update_dict["territory_id"] = user_data.territory_id
             
-            # Create approval request
-            approval_request = await approval_service.create_profile_update_request(
-                user_id, update_dict, current_user
+            notification = await notification_service.create_profile_update_notification(
+                user_id, update_dict, current_user, tenant_id
             )
             
-            if approval_request.get("status") == "auto_approved":
-                # Superadmin updates are auto-approved
-                # TODO: Implement actual update in Data Layer
-                updated_user = {**existing_user}
-                
-                # Update fields if provided
-                if user_data.name is not None:
-                    updated_user["name"] = user_data.name
-                if user_data.email is not None:
-                    updated_user["email"] = user_data.email
-                
-                updated_user["updated_at"] = datetime.utcnow().isoformat()
-                updated_user["updated_by"] = current_user.get("id")
-                
+            if notification:
                 logger.info(
-                    f"User profile auto-updated (superadmin): user {user_id}, updated by {current_user.get('id')}"
-                )
-                
-                return {
-                    "status": "completed",
-                    "message": "Profile updated successfully",
-                    "request_id": None,
-                    "approval_required": False,
-                    "user": updated_user
-                }
-            else:
-                # Approval request created
-                logger.info(
-                    f"Profile update request created, waiting for approval for user {user_id}, status: {approval_request.get('status')}"
+                    f"Profile update notification created: user {user_id}, notification {notification.get('id')}"
                 )
                 
                 return {
                     "status": "pending_approval",
-                    "message": "Profile update request submitted and pending approval",
-                    "request_id": approval_request.get("id"),
+                    "message": "Profile update request submitted for approval",
+                    "notification_id": notification.get("id"),
                     "approval_required": True,
                     "user": None
                 }
+            else:
+                # No approval needed (should not happen for sales_executive)
+                updated_user = await data_layer.update_user(user_id, user_data, tenant_id, current_user.get("id"))
+                
+                return {
+                    "status": "completed",
+                    "message": "Profile updated successfully",
+                    "notification_id": None,
+                    "approval_required": False,
+                    "user": updated_user
+                }
         
-        # This should not happen, but just in case
+        # Area managers can update their own profile without approval
+        if (current_user.get("role") == "area_manager" and 
+            str(current_user.get("id")) == str(user_id)):
+            updated_user = await data_layer.update_user(user_id, user_data, tenant_id, current_user.get("id"))
+            
+            logger.info(
+                f"Area manager profile updated directly: user {user_id}, updated by {current_user.get('id')}"
+            )
+            
+            return {
+                "status": "completed",
+                "message": "Profile updated successfully",
+                "notification_id": None,
+                "approval_required": False,
+                "user": updated_user
+            }
+        
+        # Default case - should not reach here with current logic
         raise InsufficientPermissionsError(
-            message="Insufficient permissions to update this user"
+            message="Unable to determine update permissions"
         )
-    
+
     async def delete_user(self, user_id: str, tenant_id: str, current_user: Dict[str, Any]) -> None:
         """
         Delete user (hard delete - completely removes from database).

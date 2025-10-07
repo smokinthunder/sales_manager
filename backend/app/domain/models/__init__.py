@@ -32,6 +32,10 @@ from .outstanding import (
     DueData, DueDataCreate, DueDataUpdate, DueDataRead, OutstandingSummary, OutstandingFilters,
     OutstandingStatus
 )
+from .notification import (
+    Notification, NotificationCreate, NotificationUpdate, NotificationRead, 
+    NotificationConfirm, NotificationType
+)
 from .sync_data import (
     SyncedShopData, SyncedShopDataCreate, SyncedShopDataUpdate, SyncedShopDataRead,
     SyncedOrder, SyncedOrderCreate, SyncedOrderUpdate, SyncedOrderRead,
@@ -76,6 +80,10 @@ __all__ = [
     # Outstanding management
     "DueData", "DueDataCreate", "DueDataUpdate", "DueDataRead", "OutstandingSummary", "OutstandingFilters",
     "OutstandingStatus",
+    
+    # Notification management
+    "Notification", "NotificationCreate", "NotificationUpdate", "NotificationRead", 
+    "NotificationConfirm", "NotificationType",
     
     # Sync data management
     "SyncedShopData", "SyncedShopDataCreate", "SyncedShopDataUpdate", "SyncedShopDataRead",
