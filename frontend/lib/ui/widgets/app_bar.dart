@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:sales_manager/config/assets.dart';
 import 'package:sales_manager/config/providers/current_user_notifier.dart';
+import 'package:sales_manager/config/providers/notification_notifier.dart';
 import 'package:sales_manager/routing/route_paths.dart';
 import 'package:sales_manager/ui/core/colors.dart';
 
@@ -88,17 +89,52 @@ class CustomAppBar extends ConsumerWidget implements PreferredSizeWidget {
                   ),
                 ),
                 const SizedBox(width: 16),
-                TextButton(
-                  onPressed: () {
-                    //TODO: handle notification or do we navigate to notification screen
-                    context.push(RoutePaths.notifications);
+                Consumer(
+                  builder: (context, ref, child) {
+                    final notificationState = ref.watch(notificationNotifierProvider);
+                    final pendingCount = notificationState.pendingCount;
+
+                    return Stack(
+                      children: [
+                        TextButton(
+                          onPressed: () {
+                            context.push(RoutePaths.notifications);
+                          },
+                          style: textButtonStyle,
+                          child: Icon(
+                            Icons.notifications_none_rounded,
+                            color: Colors.white,
+                            size: 24,
+                          ),
+                        ),
+                        if (pendingCount > 0)
+                          Positioned(
+                            right: 0,
+                            top: 0,
+                            child: Container(
+                              padding: const EdgeInsets.all(2),
+                              decoration: BoxDecoration(
+                                color: Colors.red,
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                              constraints: const BoxConstraints(
+                                minWidth: 16,
+                                minHeight: 16,
+                              ),
+                              child: Text(
+                                '$pendingCount',
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                                textAlign: TextAlign.center,
+                              ),
+                            ),
+                          ),
+                      ],
+                    );
                   },
-                  style: textButtonStyle,
-                  child: Icon(
-                    Icons.notifications_none_rounded,
-                    color: Colors.white,
-                    size: 24,
-                  ),
                 ),
               ],
             ),
