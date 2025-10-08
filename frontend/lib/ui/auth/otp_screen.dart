@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:sales_manager/config/providers/login_message_provider.dart';
 import 'package:sales_manager/ui/auth/viewmodel/auth_viewmodel.dart';
@@ -17,6 +18,61 @@ class _OtpVerificationScreenState extends ConsumerState<OtpVerificationScreen> {
     6,
     (index) => TextEditingController(),
   );
+  final List<FocusNode> focusNodes = List.generate(6, (index) => FocusNode());
+
+  @override
+  void dispose() {
+    for (var controller in otpControllers) {
+      controller.dispose();
+    }
+    for (var node in focusNodes) {
+      node.dispose();
+    }
+    super.dispose();
+  }
+
+  void _onOtpChanged(String value, int index) {
+    if (value.length > 1) {
+      // Handle paste operation
+      _handlePaste(value, index);
+    } else if (value.isNotEmpty) {
+      // Move to next field
+      if (index < 5) {
+        focusNodes[index + 1].requestFocus();
+      }
+    }
+  }
+
+  void _handlePaste(String pastedText, int startIndex) {
+    // Remove non-numeric characters
+    String numericOnly = pastedText.replaceAll(RegExp(r'[^0-9]'), '');
+    
+    // Fill the OTP fields starting from the current index
+    for (int i = 0; i < numericOnly.length && (startIndex + i) < 6; i++) {
+      otpControllers[startIndex + i].text = numericOnly[i];
+    }
+    
+    // Move focus to the next empty field or the last field
+    int nextIndex = (startIndex + numericOnly.length).clamp(0, 5);
+    if (nextIndex < 6) {
+      focusNodes[nextIndex].requestFocus();
+    }
+  }
+
+  void _onKeyEvent(KeyEvent event, int index) {
+    if (event is KeyDownEvent) {
+      if (event.logicalKey == LogicalKeyboardKey.backspace) {
+        if (otpControllers[index].text.isEmpty && index > 0) {
+          // Move to previous field and clear it
+          focusNodes[index - 1].requestFocus();
+          otpControllers[index - 1].clear();
+        } else if (otpControllers[index].text.isNotEmpty) {
+          // Clear current field
+          otpControllers[index].clear();
+        }
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -79,22 +135,25 @@ class _OtpVerificationScreenState extends ConsumerState<OtpVerificationScreen> {
                           children: List.generate(6, (index) {
                             return SizedBox(
                               width: 55,
-                              child: TextField(
-                                controller: otpControllers[index],
-                                textAlign: TextAlign.center,
-                                keyboardType: TextInputType.number,
-                                maxLength: 1,
-                                decoration: InputDecoration(
-                                  counterText: "",
-                                  border: OutlineInputBorder(
-                                    borderRadius: BorderRadius.circular(8),
+                              child: KeyboardListener(
+                                focusNode: FocusNode(),
+                                onKeyEvent: (event) => _onKeyEvent(event, index),
+                                child: TextField(
+                                  controller: otpControllers[index],
+                                  focusNode: focusNodes[index],
+                                  textAlign: TextAlign.center,
+                                  keyboardType: TextInputType.number,
+                                  inputFormatters: [
+                                    FilteringTextInputFormatter.digitsOnly,
+                                  ],
+                                  decoration: InputDecoration(
+                                    counterText: "",
+                                    border: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(8),
+                                    ),
                                   ),
+                                  onChanged: (value) => _onOtpChanged(value, index),
                                 ),
-                                onChanged: (value) {
-                                  if (value.isNotEmpty && index < 5) {
-                                    FocusScope.of(context).nextFocus();
-                                  }
-                                },
                               ),
                             );
                           }),
