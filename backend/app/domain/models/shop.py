@@ -118,3 +118,13 @@ class ShopRead(ShopBase):
     updated_at: datetime = Field(..., description="Last update timestamp")
     created_by: Optional[int] = Field(None, description="User who created the shop")
     updated_by: Optional[int] = Field(None, description="User who last updated the shop")
+
+
+class ShopCreateResponse(BasePydanticModel):
+    """Response model for shop creation that handles both direct creation and approval workflow."""
+    
+    status: str = Field(..., description="Creation status: 'completed' or 'pending_approval'")
+    message: str = Field(..., description="Human-readable message about the creation result")
+    notification_id: Optional[int] = Field(None, description="Notification ID if approval is required")
+    approval_required: bool = Field(..., description="Whether approval is required")
+    shop: Optional[ShopRead] = Field(None, description="Created shop data (only if completed)")

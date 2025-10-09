@@ -705,10 +705,10 @@ async def create_shop(tenant_id: str, shop_data: ShopCreate, db=Depends(get_db))
         
         # Insert new shop
         insert_query = text("""
-            INSERT INTO shops (shop_id, name, status, address, phone, contact_person, 
+            INSERT INTO shops (shop_id, name, code, status, address, phone, contact_person, 
                              latitude, longitude, territory_id, tenant_id, created_at, updated_at, 
                              created_by, updated_by)
-            VALUES (:shop_id, :name, :status, :address, :phone, :contact_person, 
+            VALUES (:shop_id, :name, :code, :status, :address, :phone, :contact_person, 
                     :latitude, :longitude, :territory_id, :tenant_id, :created_at, :updated_at, 
                     :created_by, :updated_by)
         """)
@@ -716,6 +716,7 @@ async def create_shop(tenant_id: str, shop_data: ShopCreate, db=Depends(get_db))
         db.execute(insert_query, {
             "shop_id": shop_data.shop_id,
             "name": shop_data.name,
+            "code": shop_data.shop_id,  # Use shop_id as code for now
             "status": shop_data.status,
             "address": shop_data.address,
             "phone": shop_data.phone,

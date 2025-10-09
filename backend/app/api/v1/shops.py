@@ -17,7 +17,7 @@ from app.core.errors import (
 )
 from app.services.shop_service import get_shop_service, ShopService
 from app.services.analytics_service import AnalyticsService
-from app.domain.models.shop import ShopCreate, ShopUpdate, ShopRead, ShopStatus
+from app.domain.models.shop import ShopCreate, ShopUpdate, ShopRead, ShopStatus, ShopCreateResponse
 from app.domain.models.sync_data import SyncedShopDataRead
 import logging
 
@@ -26,7 +26,7 @@ logger = logging.getLogger(__name__)
 router = APIRouter()
 
 
-@router.post("/", response_model=ShopRead, status_code=201)
+@router.post("/", response_model=ShopCreateResponse, status_code=201)
 async def create_shop(
     shop_data: ShopCreate,
     tenant_id: str = Query(..., description="Tenant identifier (required)"),

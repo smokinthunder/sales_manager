@@ -1,9 +1,40 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:sales_manager/data/services/remote/remote_shop_service.dart';
 import 'package:sales_manager/routing/route_paths.dart';
+import 'package:sales_manager/utils/result.dart';
+import 'package:sales_manager/utils/show_snackbar.dart';
 
-class AddNewShopScreen extends StatelessWidget {
+class AddNewShopScreen extends ConsumerStatefulWidget {
   const AddNewShopScreen({super.key});
+
+  @override
+  ConsumerState<AddNewShopScreen> createState() => _AddNewShopScreenState();
+}
+
+class _AddNewShopScreenState extends ConsumerState<AddNewShopScreen> {
+  final _formKey = GlobalKey<FormState>();
+  final _shopService = RemoteShopService();
+  
+  // Form controllers
+  final _shopIdController = TextEditingController();
+  final _shopNameController = TextEditingController();
+  final _addressController = TextEditingController();
+  final _phoneController = TextEditingController();
+  final _contactPersonController = TextEditingController();
+  
+  bool _isLoading = false;
+
+  @override
+  void dispose() {
+    _shopIdController.dispose();
+    _shopNameController.dispose();
+    _addressController.dispose();
+    _phoneController.dispose();
+    _contactPersonController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -26,156 +57,154 @@ class AddNewShopScreen extends StatelessWidget {
           children: [
             SingleChildScrollView(
               padding: const EdgeInsets.all(16).copyWith(bottom: 80),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    "Enter your customer details",
-                    style: textTheme.labelLarge?.copyWith(
-                      color: colorScheme.onSurface,
+              child: Form(
+                key: _formKey,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      "Enter shop details",
+                      style: textTheme.labelLarge?.copyWith(
+                        color: colorScheme.onSurface,
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 4),
-
-                  const SizedBox(height: 16),
-
-                  // Shop Name
-                  Align(
-                    alignment: Alignment.centerRight,
-                    child: Text(
-                      "All fields are required.",
+                    const SizedBox(height: 4),
+                    Text(
+                      "All fields marked with * are required.",
                       style: textTheme.labelMedium?.copyWith(
                         color: colorScheme.error,
                       ),
                     ),
-                  ),
-                  Text("Use the above thing or do it like below"),
-                  TextField(
-                    decoration: InputDecoration(
-                      errorText: "All fields are required",
-                      labelText: "Shop Name",
-                      hintText: "Enter shop name",
-                    ),
-                  ),
-                  const SizedBox(height: 16),
+                    const SizedBox(height: 24),
 
-                  // Shop Address
-                  TextField(
-                    decoration: InputDecoration(
-                      labelText: "Shop Address",
-                      hintText: "Enter shop address",
+                    // Shop ID
+                    TextFormField(
+                      controller: _shopIdController,
+                      decoration: InputDecoration(
+                        labelText: "Shop ID *",
+                        hintText: "Enter unique shop ID (e.g., SH001)",
+                        border: OutlineInputBorder(),
+                      ),
+                      validator: (value) {
+                        if (value == null || value.trim().isEmpty) {
+                          return 'Shop ID is required';
+                        }
+                        if (value.trim().length < 3) {
+                          return 'Shop ID must be at least 3 characters';
+                        }
+                        return null;
+                      },
                     ),
-                  ),
-                  const SizedBox(height: 16),
+                    const SizedBox(height: 16),
 
-                  // Pin Code
-                  TextField(
-                    decoration: InputDecoration(
-                      labelText: "Pin Code",
-                      hintText: "Enter shop address pin code",
+                    // Shop Name
+                    TextFormField(
+                      controller: _shopNameController,
+                      decoration: InputDecoration(
+                        labelText: "Shop Name *",
+                        hintText: "Enter shop name",
+                        border: OutlineInputBorder(),
+                      ),
+                      validator: (value) {
+                        if (value == null || value.trim().isEmpty) {
+                          return 'Shop name is required';
+                        }
+                        return null;
+                      },
                     ),
-                    keyboardType: TextInputType.number,
-                  ),
-                  const SizedBox(height: 16),
+                    const SizedBox(height: 16),
 
-                  // Contact Number
-                  TextField(
-                    decoration: InputDecoration(
-                      labelText: "Contact Number",
-                      hintText: "Enter your mobile number",
+                    // Shop Address
+                    TextFormField(
+                      controller: _addressController,
+                      decoration: InputDecoration(
+                        labelText: "Shop Address *",
+                        hintText: "Enter shop address",
+                        border: OutlineInputBorder(),
+                      ),
+                      maxLines: 2,
+                      validator: (value) {
+                        if (value == null || value.trim().isEmpty) {
+                          return 'Shop address is required';
+                        }
+                        return null;
+                      },
                     ),
-                    keyboardType: TextInputType.phone,
-                  ),
-                  const SizedBox(height: 16),
+                    const SizedBox(height: 16),
 
-                  // Email
-                  TextField(
-                    decoration: InputDecoration(
-                      labelText: "Email",
-                      hintText: "Enter shop email address",
+                    // Contact Number
+                    TextFormField(
+                      controller: _phoneController,
+                      decoration: InputDecoration(
+                        labelText: "Contact Number *",
+                        hintText: "Enter contact phone number",
+                        border: OutlineInputBorder(),
+                        prefixText: "+",
+                      ),
+                      keyboardType: TextInputType.phone,
+                      validator: (value) {
+                        if (value == null || value.trim().isEmpty) {
+                          return 'Contact number is required';
+                        }
+                        if (value.trim().length < 10) {
+                          return 'Contact number must be at least 10 digits';
+                        }
+                        return null;
+                      },
                     ),
-                    keyboardType: TextInputType.emailAddress,
-                  ),
-                  const SizedBox(height: 16),
+                    const SizedBox(height: 16),
 
-                  // Aadhaar Number
-                  TextField(
-                    decoration: InputDecoration(
-                      labelText: "Aadhaar Number",
-                      hintText: "Enter aadhaar number",
+                    // Contact Person
+                    TextFormField(
+                      controller: _contactPersonController,
+                      decoration: InputDecoration(
+                        labelText: "Contact Person *",
+                        hintText: "Enter contact person name",
+                        border: OutlineInputBorder(),
+                      ),
+                      validator: (value) {
+                        if (value == null || value.trim().isEmpty) {
+                          return 'Contact person is required';
+                        }
+                        return null;
+                      },
                     ),
-                    keyboardType: TextInputType.number,
-                  ),
-                  const SizedBox(height: 16),
-
-                  // PAN Number
-                  TextField(
-                    decoration: InputDecoration(
-                      labelText: "PAN Number",
-                      hintText: "Enter PAN number",
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-
-                  // Location
-                  TextField(
-                    decoration: InputDecoration(
-                      labelText: "Location",
-                      hintText: "Enter shop location",
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-
-                  // Area
-                  TextField(
-                    decoration: InputDecoration(
-                      labelText: "Area",
-                      hintText: "Enter shop area",
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-
-                  // GST
-                  TextField(
-                    decoration: InputDecoration(
-                      labelText: "GST",
-                      hintText: "Enter your GST number",
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-
-                  // Shop Logo
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
+                    const SizedBox(height: 24),
+                    
+                    // Info card
+                    Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: colorScheme.primaryContainer.withValues(alpha: 0.3),
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(
+                          color: colorScheme.primary.withValues(alpha: 0.3),
+                        ),
+                      ),
+                      child: Row(
                         children: [
-                          Text(
-                            "Shop Logo",
-                            textAlign: TextAlign.left,
-                            style: textTheme.bodySmall?.copyWith(
-                              color: colorScheme.onSecondary,
-                            ),
+                          Icon(
+                            Icons.info_outline,
+                            color: colorScheme.primary,
+                            size: 20,
                           ),
-                          Text(
-                            "Upload shop logo",
-                            style: textTheme.bodySmall?.copyWith(
-                              color: colorScheme.tertiary,
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Text(
+                              "Shop creation may require approval based on your role.",
+                              style: textTheme.bodySmall?.copyWith(
+                                color: colorScheme.primary,
+                              ),
                             ),
                           ),
                         ],
                       ),
-                      IconButton(
-                        icon: const Icon(Icons.file_upload_outlined),
-                        onPressed: () {},
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 24),
-                ],
+                    ),
+                  ],
+                ),
               ),
             ),
+            
             // Create Button
             Container(
               padding: const EdgeInsets.all(20),
@@ -183,16 +212,126 @@ class AddNewShopScreen extends StatelessWidget {
               child: SizedBox(
                 width: double.infinity,
                 child: ElevatedButton(
-                  onPressed: () {
-                    //TODO: write proper code
-                    context.go(RoutePaths.addShopSuccess);
-                  },
-                  child: const Text("Create New Customer"),
+                  onPressed: _isLoading ? null : _handleCreateShop,
+                  child: _isLoading
+                      ? Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            SizedBox(
+                              width: 20,
+                              height: 20,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                color: colorScheme.onPrimary,
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            const Text("Creating..."),
+                          ],
+                        )
+                      : const Text("Create Shop"),
                 ),
               ),
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  Future<void> _handleCreateShop() async {
+    if (!_formKey.currentState!.validate()) {
+      return;
+    }
+
+    setState(() {
+      _isLoading = true;
+    });
+
+    try {
+      final result = await _shopService.createShop(
+        shopId: _shopIdController.text.trim(),
+        name: _shopNameController.text.trim(),
+        status: 'active',
+        address: _addressController.text.trim(),
+        phone: '+${_phoneController.text.trim()}',
+        contactPerson: _contactPersonController.text.trim(),
+        latitude: 0.0, // TODO: Get actual location
+        longitude: 0.0, // TODO: Get actual location
+        territoryId: '', // TODO: Get from user's territory or allow selection
+      );
+
+      if (!mounted) return;
+
+      switch (result) {
+        case Ok():
+          final response = result.value.data;
+          final approvalRequired = response?['approval_required'] as bool?;
+          final shop = response?['shop'] as Map<String, dynamic>?;
+          
+          if (approvalRequired == true) {
+            // Show approval pending screen/message
+            _showApprovalPendingDialog();
+          } else if (shop != null) {
+            // Shop created successfully
+            showSnackBar(
+              context,
+              'Shop "${_shopNameController.text.trim()}" created successfully!',
+              false,
+            );
+            context.go(RoutePaths.addShopSuccess);
+          }
+          break;
+          
+        case Error():
+          showSnackBar(
+            context,
+            'Failed to create shop: ${result.error}',
+            true,
+          );
+          break;
+      }
+    } catch (e) {
+      if (mounted) {
+        showSnackBar(
+          context,
+          'An unexpected error occurred: $e',
+          true,
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
+    }
+  }
+
+  void _showApprovalPendingDialog() {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => AlertDialog(
+        icon: Icon(
+          Icons.hourglass_empty,
+          color: Theme.of(context).colorScheme.primary,
+          size: 48,
+        ),
+        title: const Text('Approval Required'),
+        content: Text(
+          'Your shop creation request has been submitted and is pending approval from your area manager.\n\nYou will receive a notification once it\'s approved.',
+          textAlign: TextAlign.center,
+        ),
+        actions: [
+          ElevatedButton(
+            onPressed: () {
+              Navigator.of(context).pop();
+              context.go(RoutePaths.home);
+            },
+            child: const Text('OK'),
+          ),
+        ],
       ),
     );
   }
