@@ -181,7 +181,7 @@ class NotificationNotifier extends _$NotificationNotifier {
 
 /// Provider for easy access to pending notification count
 @riverpod
-int pendingNotificationCount(PendingNotificationCountRef ref) {
+int pendingNotificationCount(Ref ref) {
   final notificationState = ref.watch(notificationNotifierProvider);
   return notificationState.pendingCount;
 }

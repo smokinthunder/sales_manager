@@ -5,7 +5,7 @@ import 'package:sales_manager/utils/result.dart';
 
 part 'notification_remote_repository.g.dart';
 
-@Riverpod(keepAlive: true)
+@riverpod
 NotificationRemoteRepository notificationRemoteRepository(Ref<NotificationRemoteRepository> ref) {
   return NotificationRemoteRepository();
 }
