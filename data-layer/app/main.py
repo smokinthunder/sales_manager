@@ -2109,35 +2109,35 @@ async def get_due_data(
         params = {"tenant_id": tenant_id}
         
         if sales_executive_id:
-            where_conditions.append("sales_executive_id = :sales_executive_id")
+            where_conditions.append("d.sales_executive_id = :sales_executive_id")
             params["sales_executive_id"] = sales_executive_id
         
         if territory_id:
-            where_conditions.append("territory_id = :territory_id")
+            where_conditions.append("d.territory_id = :territory_id")
             params["territory_id"] = territory_id
         
         if status:
-            where_conditions.append("status = :status")
+            where_conditions.append("d.status = :status")
             params["status"] = status
         
         if start_date:
-            where_conditions.append("due_date >= :start_date")
+            where_conditions.append("d.due_date >= :start_date")
             params["start_date"] = start_date
         
         if end_date:
-            where_conditions.append("due_date <= :end_date")
+            where_conditions.append("d.due_date <= :end_date")
             params["end_date"] = end_date
         
         if shop_search:
-            where_conditions.append("shop_name LIKE :shop_search")
+            where_conditions.append("d.shop_name LIKE :shop_search")
             params["shop_search"] = f"%{shop_search}%"
         
         if min_amount:
-            where_conditions.append("amount >= :min_amount")
+            where_conditions.append("d.amount >= :min_amount")
             params["min_amount"] = min_amount
         
         if max_amount:
-            where_conditions.append("amount <= :max_amount")
+            where_conditions.append("d.amount <= :max_amount")
             params["max_amount"] = max_amount
         
         where_clause = " AND ".join(where_conditions)
@@ -2168,7 +2168,7 @@ async def get_due_data(
                 COALESCE(t.name, '') as territory_name
             FROM due_data d
             LEFT JOIN users u ON d.sales_executive_id = u.id AND d.tenant_id = u.tenant_id
-            LEFT JOIN territories t ON d.territory_id = t.territory_id AND d.tenant_id = t.tenant_id
+            LEFT JOIN territories t ON d.territory_id = t.id AND d.tenant_id = t.tenant_id
             WHERE {where_clause}
             ORDER BY d.due_date, d.created_at DESC
         """)
@@ -2257,7 +2257,7 @@ async def get_due_data_by_id(tenant_id: str, due_data_id: int, db=Depends(get_db
             SELECT d.*, u.name as sales_executive_name, t.name as territory_name
             FROM due_data d
             LEFT JOIN users u ON d.sales_executive_id = u.id AND d.tenant_id = u.tenant_id
-            LEFT JOIN territories t ON d.territory_id = t.territory_id AND d.tenant_id = t.tenant_id
+            LEFT JOIN territories t ON d.territory_id = t.id AND d.tenant_id = t.tenant_id
             WHERE d.id = :id AND d.tenant_id = :tenant_id
         """)
         
@@ -2376,7 +2376,7 @@ async def update_due_data(tenant_id: str, due_data_id: int, data: DueDataUpdate,
                 SELECT d.*, u.name as sales_executive_name, t.name as territory_name
                 FROM due_data d
                 LEFT JOIN users u ON d.sales_executive_id = u.id AND d.tenant_id = u.tenant_id
-                LEFT JOIN territories t ON d.territory_id = t.territory_id AND d.tenant_id = t.tenant_id
+                LEFT JOIN territories t ON d.territory_id = t.id AND d.tenant_id = t.tenant_id
                 WHERE d.id = :id AND d.tenant_id = :tenant_id
             """),
             {"id": due_data_id, "tenant_id": tenant_id}
