@@ -41,7 +41,7 @@ class ApiEndpoints {
   // Notification Apis
   static final String _notificationApi = "${_apiUrl}notifications/";
   static final String notifications = _notificationApi;
-  static final String notificationConfirm = "$_notificationApi{}}/confirm"; // {} will be replaced with notification ID
+  static final String notificationConfirm = "$_notificationApi{}/confirm"; // {} will be replaced with notification ID
 
   // Analytics Apis
   static final String _analyticsApi = "${_apiUrl}analytics/";
