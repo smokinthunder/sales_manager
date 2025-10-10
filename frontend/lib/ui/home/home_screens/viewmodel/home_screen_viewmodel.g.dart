@@ -120,6 +120,44 @@ final getAllSalesExecutivesProvider =
 // ignore: unused_element
 typedef GetAllSalesExecutivesRef =
     AutoDisposeFutureProviderRef<List<Map<String, dynamic>>>;
+String _$getMyExecutivesCountHash() =>
+    r'6dbbc66afc6fe1c2804cd9063eae1c21db94d72f';
+
+/// See also [getMyExecutivesCount].
+@ProviderFor(getMyExecutivesCount)
+final getMyExecutivesCountProvider = AutoDisposeFutureProvider<int>.internal(
+  getMyExecutivesCount,
+  name: r'getMyExecutivesCountProvider',
+  debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
+      ? null
+      : _$getMyExecutivesCountHash,
+  dependencies: null,
+  allTransitiveDependencies: null,
+);
+
+@Deprecated('Will be removed in 3.0. Use Ref instead')
+// ignore: unused_element
+typedef GetMyExecutivesCountRef = AutoDisposeFutureProviderRef<int>;
+String _$getMySalesExecutivesHash() =>
+    r'42b22abfe704abc32e7db8912d25c18c2663742c';
+
+/// See also [getMySalesExecutives].
+@ProviderFor(getMySalesExecutives)
+final getMySalesExecutivesProvider =
+    AutoDisposeFutureProvider<List<Map<String, dynamic>>>.internal(
+      getMySalesExecutives,
+      name: r'getMySalesExecutivesProvider',
+      debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
+          ? null
+          : _$getMySalesExecutivesHash,
+      dependencies: null,
+      allTransitiveDependencies: null,
+    );
+
+@Deprecated('Will be removed in 3.0. Use Ref instead')
+// ignore: unused_element
+typedef GetMySalesExecutivesRef =
+    AutoDisposeFutureProviderRef<List<Map<String, dynamic>>>;
 String _$routeCardViewModelHash() =>
     r'9c88b8a447ea9509b15cfdfc7cb387fce9072917';
 

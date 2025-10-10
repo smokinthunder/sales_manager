@@ -64,7 +64,7 @@ class _ConsolidatedAnalyticsScreenState
                         Padding(
                           padding: const EdgeInsets.all(8.0),
                           child: ref
-                              .watch(getAllSalesExecutivesProvider)
+                              .watch(getMySalesExecutivesProvider)
                               .when(
                                 loading: () => const CustomDropDownMenu(
                                   tinyTitle: true,
