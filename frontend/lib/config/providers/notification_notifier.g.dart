@@ -7,7 +7,7 @@ part of 'notification_notifier.dart';
 // **************************************************************************
 
 String _$pendingNotificationCountHash() =>
-    r'867685a7e9f5c12a4b8f28325a056d19e81bb522';
+    r'58005964a791343dd805ae2b5888952591712f48';
 
 /// Provider for easy access to pending notification count
 ///
@@ -27,12 +27,15 @@ final pendingNotificationCountProvider = AutoDisposeProvider<int>.internal(
 // ignore: unused_element
 typedef PendingNotificationCountRef = AutoDisposeProviderRef<int>;
 String _$notificationNotifierHash() =>
-    r'f7728db8549a501508e651d2613d5161ae1ac3e4';
+    r'50925f77046bde31621fe7b9f7adf9cfdd75a8f0';
 
 /// See also [NotificationNotifier].
 @ProviderFor(NotificationNotifier)
 final notificationNotifierProvider =
-    NotifierProvider<NotificationNotifier, NotificationState>.internal(
+    AutoDisposeNotifierProvider<
+      NotificationNotifier,
+      NotificationState
+    >.internal(
       NotificationNotifier.new,
       name: r'notificationNotifierProvider',
       debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
@@ -42,6 +45,6 @@ final notificationNotifierProvider =
       allTransitiveDependencies: null,
     );
 
-typedef _$NotificationNotifier = Notifier<NotificationState>;
+typedef _$NotificationNotifier = AutoDisposeNotifier<NotificationState>;
 // ignore_for_file: type=lint
 // ignore_for_file: subtype_of_sealed_class, invalid_use_of_internal_member, invalid_use_of_visible_for_testing_member, deprecated_member_use_from_same_package

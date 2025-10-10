@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:sales_manager/config/providers/current_user_notifier.dart';
 import 'package:sales_manager/data/services/remote/remote_shop_service.dart';
 import 'package:sales_manager/routing/route_paths.dart';
 import 'package:sales_manager/utils/result.dart';
@@ -249,6 +250,7 @@ class _AddNewShopScreenState extends ConsumerState<AddNewShopScreen> {
     });
 
     try {
+      final currentUser = ref.read(currentUserNotifierProvider);
       final result = await _shopService.createShop(
         shopId: _shopIdController.text.trim(),
         name: _shopNameController.text.trim(),
@@ -258,7 +260,7 @@ class _AddNewShopScreenState extends ConsumerState<AddNewShopScreen> {
         contactPerson: _contactPersonController.text.trim(),
         latitude: 0.0, // TODO: Get actual location
         longitude: 0.0, // TODO: Get actual location
-        territoryId: '', // TODO: Get from user's territory or allow selection
+        territoryId: currentUser?.territoryId ?? '', // Get from user's territory
       );
 
       if (!mounted) return;

@@ -39,7 +39,7 @@ class NotificationState {
   }
 }
 
-@Riverpod(keepAlive: true)
+@riverpod
 class NotificationNotifier extends _$NotificationNotifier {
   Timer? _refreshTimer;
   static const Duration _refreshInterval = Duration(minutes: 1);

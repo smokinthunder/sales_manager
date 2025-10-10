@@ -10,12 +10,13 @@ import 'package:sales_manager/ui/home/create_target.dart';
 import 'package:sales_manager/ui/home/home_screens/home.dart';
 import 'package:sales_manager/ui/home/messages.dart';
 import 'package:sales_manager/ui/home/not_visiting.dart';
-import 'package:sales_manager/ui/home/notification.dart';
+// import 'package:sales_manager/ui/home/notification.dart';
 import 'package:sales_manager/ui/home/pending_requests.dart';
 import 'package:sales_manager/ui/home/shop_details.dart';
 import 'package:sales_manager/ui/home/top_customers.dart';
 import 'package:sales_manager/ui/home/add_shop/wait_for_approval.dart';
 import 'package:sales_manager/ui/home/view_history.dart';
+import 'package:sales_manager/ui/notification/notification_screen_new.dart';
 import 'package:sales_manager/ui/outstanding/outstanding.dart';
 import 'package:sales_manager/ui/profile/profile.dart';
 
