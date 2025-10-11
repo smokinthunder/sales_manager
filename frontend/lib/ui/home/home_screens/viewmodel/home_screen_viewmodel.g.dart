@@ -138,6 +138,24 @@ final getMyExecutivesCountProvider = AutoDisposeFutureProvider<int>.internal(
 @Deprecated('Will be removed in 3.0. Use Ref instead')
 // ignore: unused_element
 typedef GetMyExecutivesCountRef = AutoDisposeFutureProviderRef<int>;
+String _$getMyCustomersCountHash() =>
+    r'e06d739fdbbeaa82b78601df96196e2d416fbdce';
+
+/// See also [getMyCustomersCount].
+@ProviderFor(getMyCustomersCount)
+final getMyCustomersCountProvider = AutoDisposeFutureProvider<int>.internal(
+  getMyCustomersCount,
+  name: r'getMyCustomersCountProvider',
+  debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
+      ? null
+      : _$getMyCustomersCountHash,
+  dependencies: null,
+  allTransitiveDependencies: null,
+);
+
+@Deprecated('Will be removed in 3.0. Use Ref instead')
+// ignore: unused_element
+typedef GetMyCustomersCountRef = AutoDisposeFutureProviderRef<int>;
 String _$getMySalesExecutivesHash() =>
     r'42b22abfe704abc32e7db8912d25c18c2663742c';
 

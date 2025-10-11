@@ -49,7 +49,18 @@ class _ExecutiveHomeState extends ConsumerState<ExecutiveHome> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text("Total Customers : 58", style: textTheme.headlineSmall),
+              ref
+                  .watch(getMyCustomersCountProvider)
+                  .when(
+                    loading: () =>
+                        Text("...Loading", style: textTheme.headlineSmall),
+                    error: (error, stackTrace) =>
+                        Text("Error $error", style: textTheme.headlineSmall),
+                    data: (count) => Text(
+                      "Total Customers : $count",
+                      style: textTheme.headlineSmall,
+                    ),
+                  ),
               TextButton(
                 onPressed: () {
                   context.push(RoutePaths.addShop);

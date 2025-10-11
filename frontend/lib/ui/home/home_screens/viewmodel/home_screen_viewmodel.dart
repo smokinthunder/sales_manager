@@ -218,6 +218,28 @@ Future<int> getMyExecutivesCount(Ref ref) async {
 }
 
 @riverpod
+Future<int> getMyCustomersCount(Ref ref) async {
+  final res = await ref.watch(shopRemoteRepositoryProvider).getShops();
+  final myTerritoryId = ref.watch(currentUserNotifierProvider)?.territoryId;
+
+  switch (res) {
+    case Ok():
+      final rawData = res.value;
+      final filteredData = myTerritoryId != null
+          ? rawData
+                .where(
+                  (item) => item['territory_id']?.toString() == myTerritoryId,
+                )
+                .toList()
+          : rawData;
+      return filteredData.length;
+    case Error():
+      print(res.error.toString());
+      return 0;
+  }
+}
+
+@riverpod
 Future<List<Map<String, dynamic>>> getMySalesExecutives(Ref ref) async {
   final res = await ref
       .watch(userRemoteRepositoryProvider)
