@@ -58,6 +58,44 @@ class UserUpdate(BaseModel):
     territory_id: Optional[str] = None
     updated_by: Optional[int] = None
 
+# Email Authentication Models
+class UserAuthCreate(BaseModel):
+    user_id: int
+    email: str
+    password_hash: str
+    created_by: Optional[int] = None
+    updated_by: Optional[int] = None
+
+class UserAuthResponse(BaseModel):
+    id: int
+    user_id: int
+    email: str
+    last_login: Optional[datetime] = None
+    login_attempts: int
+    locked_until: Optional[datetime] = None
+    tenant_id: str
+    created_at: datetime
+    updated_at: datetime
+
+class UserAuthUpdate(BaseModel):
+    email: Optional[str] = None
+    password_hash: Optional[str] = None
+    reset_token: Optional[str] = None
+    reset_token_expires: Optional[datetime] = None
+    last_login: Optional[datetime] = None
+    login_attempts: Optional[int] = None
+    locked_until: Optional[datetime] = None
+    updated_by: Optional[int] = None
+
+class PasswordResetRequest(BaseModel):
+    email: str
+    reset_token: str
+    reset_token_expires: datetime
+
+class PasswordResetVerify(BaseModel):
+    reset_token: str
+    new_password_hash: str
+
 class UserResponse(BaseModel):
     id: int
     phone: str
@@ -3300,6 +3338,432 @@ async def create_executive_shop_assignment(assignment_data: dict, db=Depends(get
         db.rollback()
         logger.error(f"Error creating executive shop assignment: {e}")
         raise HTTPException(status_code=500, detail=f"Failed to create assignment: {str(e)}")
+
+
+# Email Authentication Endpoints
+
+@app.post("/api/user-auth/{tenant_id}", response_model=UserAuthResponse)
+async def create_user_auth(tenant_id: str, auth_data: UserAuthCreate, db=Depends(get_db)):
+    """Create email authentication record for a user"""
+    try:
+        # Verify user exists and belongs to tenant
+        user_check = text("""
+            SELECT id, role FROM users 
+            WHERE id = :user_id AND tenant_id = :tenant_id 
+            AND role IN ('client_admin', 'superadmin')
+        """)
+        
+        user_result = db.execute(user_check, {
+            "user_id": auth_data.user_id,
+            "tenant_id": tenant_id
+        }).fetchone()
+        
+        if not user_result:
+            raise HTTPException(status_code=404, detail="User not found or not eligible for email authentication")
+        
+        # Check if email already exists for this tenant
+        email_check = text("""
+            SELECT id FROM user_auth 
+            WHERE email = :email AND tenant_id = :tenant_id
+        """)
+        
+        existing_email = db.execute(email_check, {
+            "email": auth_data.email,
+            "tenant_id": tenant_id
+        }).fetchone()
+        
+        if existing_email:
+            raise HTTPException(status_code=409, detail="Email already exists for this tenant")
+        
+        # Check if user already has auth record
+        auth_check = text("""
+            SELECT id FROM user_auth 
+            WHERE user_id = :user_id
+        """)
+        
+        existing_auth = db.execute(auth_check, {
+            "user_id": auth_data.user_id
+        }).fetchone()
+        
+        if existing_auth:
+            raise HTTPException(status_code=409, detail="User already has authentication record")
+        
+        # Create auth record
+        insert_query = text("""
+            INSERT INTO user_auth (user_id, email, password_hash, tenant_id, created_at, updated_at, created_by, updated_by)
+            VALUES (:user_id, :email, :password_hash, :tenant_id, NOW(), NOW(), :created_by, :updated_by)
+        """)
+        
+        result = db.execute(insert_query, {
+            "user_id": auth_data.user_id,
+            "email": auth_data.email,
+            "password_hash": auth_data.password_hash,
+            "tenant_id": tenant_id,
+            "created_by": auth_data.created_by,
+            "updated_by": auth_data.updated_by
+        })
+        
+        db.commit()
+        
+        # Get the created auth record
+        auth_id = result.lastrowid
+        select_query = text("""
+            SELECT id, user_id, email, last_login, login_attempts, locked_until, tenant_id, created_at, updated_at
+            FROM user_auth 
+            WHERE id = :auth_id
+        """)
+        
+        auth_result = db.execute(select_query, {"auth_id": auth_id})
+        auth_row = auth_result.fetchone()
+        
+        return UserAuthResponse(
+            id=auth_row[0],
+            user_id=auth_row[1],
+            email=auth_row[2],
+            last_login=auth_row[3],
+            login_attempts=auth_row[4],
+            locked_until=auth_row[5],
+            tenant_id=auth_row[6],
+            created_at=auth_row[7],
+            updated_at=auth_row[8]
+        )
+        
+    except HTTPException:
+        db.rollback()
+        raise
+    except SQLAlchemyError as e:
+        db.rollback()
+        logger.error(f"Database error: {e}")
+        raise HTTPException(status_code=500, detail="Database error")
+    except Exception as e:
+        db.rollback()
+        logger.error(f"Unexpected error: {e}")
+        raise HTTPException(status_code=500, detail="Internal server error")
+
+
+@app.get("/api/user-auth/{tenant_id}/by-email")
+async def get_user_auth_by_email(tenant_id: str, email: str = Query(...), db=Depends(get_db)):
+    """Get user authentication record by email"""
+    try:
+        query = text("""
+            SELECT ua.id, ua.user_id, ua.email, ua.password_hash, ua.last_login, 
+                   ua.login_attempts, ua.locked_until, ua.tenant_id, ua.created_at, ua.updated_at,
+                   u.name, u.role, u.status
+            FROM user_auth ua
+            INNER JOIN users u ON ua.user_id = u.id
+            WHERE ua.email = :email AND ua.tenant_id = :tenant_id
+        """)
+        
+        result = db.execute(query, {"email": email, "tenant_id": tenant_id})
+        row = result.fetchone()
+        
+        if not row:
+            raise HTTPException(status_code=404, detail="User authentication record not found")
+        
+        return {
+            "id": row[0],
+            "user_id": row[1],
+            "email": row[2],
+            "password_hash": row[3],
+            "last_login": row[4],
+            "login_attempts": row[5],
+            "locked_until": row[6],
+            "tenant_id": row[7],
+            "created_at": row[8],
+            "updated_at": row[9],
+            "user_name": row[10],
+            "user_role": row[11],
+            "user_status": row[12]
+        }
+        
+    except HTTPException:
+        raise
+    except SQLAlchemyError as e:
+        logger.error(f"Database error: {e}")
+        raise HTTPException(status_code=500, detail="Database error")
+    except Exception as e:
+        logger.error(f"Unexpected error: {e}")
+        raise HTTPException(status_code=500, detail="Internal server error")
+
+
+@app.put("/api/user-auth/{tenant_id}/{user_id}")
+async def update_user_auth(tenant_id: str, user_id: str, auth_data: UserAuthUpdate, db=Depends(get_db)):
+    """Update user authentication record"""
+    try:
+        # Check if auth record exists
+        check_query = text("""
+            SELECT id FROM user_auth 
+            WHERE user_id = :user_id AND tenant_id = :tenant_id
+        """)
+        
+        existing_auth = db.execute(check_query, {
+            "user_id": user_id,
+            "tenant_id": tenant_id
+        }).fetchone()
+        
+        if not existing_auth:
+            raise HTTPException(status_code=404, detail="User authentication record not found")
+        
+        # Build dynamic UPDATE query based on provided fields
+        update_fields = []
+        params = {"user_id": user_id, "tenant_id": tenant_id}
+        
+        if auth_data.email is not None:
+            # Check email uniqueness within tenant
+            email_check = text("""
+                SELECT id FROM user_auth 
+                WHERE email = :email AND tenant_id = :tenant_id AND user_id != :user_id
+            """)
+            
+            existing_email = db.execute(email_check, {
+                "email": auth_data.email,
+                "tenant_id": tenant_id,
+                "user_id": user_id
+            }).fetchone()
+            
+            if existing_email:
+                raise HTTPException(status_code=409, detail="Email already exists for this tenant")
+            
+            update_fields.append("email = :email")
+            params["email"] = auth_data.email
+        
+        if auth_data.password_hash is not None:
+            update_fields.append("password_hash = :password_hash")
+            params["password_hash"] = auth_data.password_hash
+        
+        if auth_data.reset_token is not None:
+            update_fields.append("reset_token = :reset_token")
+            params["reset_token"] = auth_data.reset_token
+        
+        if auth_data.reset_token_expires is not None:
+            update_fields.append("reset_token_expires = :reset_token_expires")
+            params["reset_token_expires"] = auth_data.reset_token_expires
+        
+        if auth_data.last_login is not None:
+            update_fields.append("last_login = :last_login")
+            params["last_login"] = auth_data.last_login
+        
+        if auth_data.login_attempts is not None:
+            update_fields.append("login_attempts = :login_attempts")
+            params["login_attempts"] = auth_data.login_attempts
+        
+        if auth_data.locked_until is not None:
+            update_fields.append("locked_until = :locked_until")
+            params["locked_until"] = auth_data.locked_until
+        
+        if not update_fields:
+            raise HTTPException(status_code=400, detail="No fields to update")
+        
+        # Add timestamp and updated_by
+        update_fields.append("updated_at = NOW()")
+        if auth_data.updated_by is not None:
+            update_fields.append("updated_by = :updated_by")
+            params["updated_by"] = auth_data.updated_by
+        
+        update_query = text(f"""
+            UPDATE user_auth 
+            SET {', '.join(update_fields)}
+            WHERE user_id = :user_id AND tenant_id = :tenant_id
+        """)
+        
+        result = db.execute(update_query, params)
+        db.commit()
+        
+        if result.rowcount == 0:
+            raise HTTPException(status_code=500, detail="Failed to update user authentication")
+        
+        # Get the updated auth record
+        select_query = text("""
+            SELECT id, user_id, email, last_login, login_attempts, locked_until, tenant_id, created_at, updated_at
+            FROM user_auth 
+            WHERE user_id = :user_id AND tenant_id = :tenant_id
+        """)
+        
+        auth_result = db.execute(select_query, {"user_id": user_id, "tenant_id": tenant_id})
+        auth_row = auth_result.fetchone()
+        
+        return UserAuthResponse(
+            id=auth_row[0],
+            user_id=auth_row[1],
+            email=auth_row[2],
+            last_login=auth_row[3],
+            login_attempts=auth_row[4],
+            locked_until=auth_row[5],
+            tenant_id=auth_row[6],
+            created_at=auth_row[7],
+            updated_at=auth_row[8]
+        )
+        
+    except HTTPException:
+        db.rollback()
+        raise
+    except SQLAlchemyError as e:
+        db.rollback()
+        logger.error(f"Database error: {e}")
+        raise HTTPException(status_code=500, detail="Database error")
+    except Exception as e:
+        db.rollback()
+        logger.error(f"Unexpected error: {e}")
+        raise HTTPException(status_code=500, detail="Internal server error")
+
+
+@app.post("/api/user-auth/{tenant_id}/reset-token")
+async def create_reset_token(tenant_id: str, reset_data: PasswordResetRequest, db=Depends(get_db)):
+    """Generate password reset token for user"""
+    try:
+        # Find user by email
+        user_query = text("""
+            SELECT ua.user_id FROM user_auth ua
+            INNER JOIN users u ON ua.user_id = u.id
+            WHERE ua.email = :email AND ua.tenant_id = :tenant_id AND u.status = 'active'
+        """)
+        
+        user_result = db.execute(user_query, {
+            "email": reset_data.email,
+            "tenant_id": tenant_id
+        }).fetchone()
+        
+        if not user_result:
+            raise HTTPException(status_code=404, detail="User not found or inactive")
+        
+        # Update with reset token
+        update_query = text("""
+            UPDATE user_auth 
+            SET reset_token = :reset_token, reset_token_expires = :reset_token_expires, updated_at = NOW()
+            WHERE email = :email AND tenant_id = :tenant_id
+        """)
+        
+        db.execute(update_query, {
+            "reset_token": reset_data.reset_token,
+            "reset_token_expires": reset_data.reset_token_expires,
+            "email": reset_data.email,
+            "tenant_id": tenant_id
+        })
+        
+        db.commit()
+        
+        return {
+            "message": "Password reset token generated successfully",
+            "email": reset_data.email,
+            "token_expires": reset_data.reset_token_expires
+        }
+        
+    except HTTPException:
+        db.rollback()
+        raise
+    except SQLAlchemyError as e:
+        db.rollback()
+        logger.error(f"Database error: {e}")
+        raise HTTPException(status_code=500, detail="Database error")
+    except Exception as e:
+        db.rollback()
+        logger.error(f"Unexpected error: {e}")
+        raise HTTPException(status_code=500, detail="Internal server error")
+
+
+@app.post("/api/user-auth/{tenant_id}/verify-reset")
+async def verify_reset_token(tenant_id: str, reset_data: PasswordResetVerify, db=Depends(get_db)):
+    """Verify reset token and update password"""
+    try:
+        # Verify reset token
+        verify_query = text("""
+            SELECT ua.user_id, ua.email FROM user_auth ua
+            INNER JOIN users u ON ua.user_id = u.id
+            WHERE ua.reset_token = :reset_token 
+            AND ua.tenant_id = :tenant_id 
+            AND ua.reset_token_expires > NOW()
+            AND u.status = 'active'
+        """)
+        
+        verify_result = db.execute(verify_query, {
+            "reset_token": reset_data.reset_token,
+            "tenant_id": tenant_id
+        }).fetchone()
+        
+        if not verify_result:
+            raise HTTPException(status_code=400, detail="Invalid or expired reset token")
+        
+        # Update password and clear reset token
+        update_query = text("""
+            UPDATE user_auth 
+            SET password_hash = :new_password_hash, 
+                reset_token = NULL, 
+                reset_token_expires = NULL,
+                login_attempts = 0,
+                locked_until = NULL,
+                updated_at = NOW()
+            WHERE reset_token = :reset_token AND tenant_id = :tenant_id
+        """)
+        
+        db.execute(update_query, {
+            "new_password_hash": reset_data.new_password_hash,
+            "reset_token": reset_data.reset_token,
+            "tenant_id": tenant_id
+        })
+        
+        db.commit()
+        
+        return {
+            "message": "Password reset successfully",
+            "user_id": verify_result[0],
+            "email": verify_result[1]
+        }
+        
+    except HTTPException:
+        db.rollback()
+        raise
+    except SQLAlchemyError as e:
+        db.rollback()
+        logger.error(f"Database error: {e}")
+        raise HTTPException(status_code=500, detail="Database error")
+    except Exception as e:
+        db.rollback()
+        logger.error(f"Unexpected error: {e}")
+        raise HTTPException(status_code=500, detail="Internal server error")
+
+
+@app.get("/api/users/{tenant_id}/by-email")
+async def get_user_by_email(tenant_id: str, email: str = Query(...), db=Depends(get_db)):
+    """Get user information by email (for authentication purposes)"""
+    try:
+        query = text("""
+            SELECT u.id, u.phone, u.name, u.email, u.role, u.status, u.tenant_id, 
+                   u.territory_id, u.created_at, u.updated_at, u.created_by, u.updated_by
+            FROM users u
+            LEFT JOIN user_auth ua ON u.id = ua.user_id
+            WHERE (u.email = :email OR ua.email = :email) 
+            AND u.tenant_id = :tenant_id
+        """)
+        
+        result = db.execute(query, {"email": email, "tenant_id": tenant_id})
+        row = result.fetchone()
+        
+        if not row:
+            raise HTTPException(status_code=404, detail="User not found")
+        
+        return UserResponse(
+            id=row[0],
+            phone=row[1],
+            name=row[2],
+            email=row[3],
+            role=row[4],
+            status=row[5],
+            tenant_id=row[6],
+            territory_id=row[7],
+            created_at=row[8],
+            updated_at=row[9],
+            created_by=row[10],
+            updated_by=row[11]
+        )
+        
+    except HTTPException:
+        raise
+    except SQLAlchemyError as e:
+        logger.error(f"Database error: {e}")
+        raise HTTPException(status_code=500, detail="Database error")
+    except Exception as e:
+        logger.error(f"Unexpected error: {e}")
+        raise HTTPException(status_code=500, detail="Internal server error")
 
 
 # Notification Management Endpoints

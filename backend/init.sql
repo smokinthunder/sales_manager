@@ -1,5 +1,6 @@
 -- Sales Manager Database Initialization Script
 -- This script creates the initial database schema for the application
+-- Includes dual authentication system: Email/Password for admin users, OTP for sales users
 
 -- Create database if not exists
 CREATE DATABASE IF NOT EXISTS sales_manager;
@@ -361,10 +362,49 @@ INSERT INTO tenants (name, code, status, max_users, created_by)
 VALUES ('Platform Owner', 'PLATFORM', 'active', 1000, 1)
 ON DUPLICATE KEY UPDATE name = VALUES(name);
 
+-- Insert sample tenants for development
+INSERT INTO tenants (name, code, status, max_users, created_by) VALUES
+('AquaStar Foods', 'AQUASTAR', 'active', 100, 1),
+('Fresh Food Co', 'FRESHFOOD', 'active', 150, 1),
+('Metro Mart', 'METRO', 'active', 200, 1),
+('Sample Tenant 1', 'tenant1', 'active', 50, 1)
+ON DUPLICATE KEY UPDATE name = VALUES(name);
+
 -- Insert default superadmin user
 INSERT INTO users (phone, name, email, role, status, tenant_id, created_by) 
 VALUES ('+1234567890', 'System Administrator', 'admin@platform.com', 'superadmin', 'active', 'PLATFORM', 1)
 ON DUPLICATE KEY UPDATE name = VALUES(name);
+
+-- Insert sample admin users for each tenant
+INSERT INTO users (phone, name, email, role, status, tenant_id, created_by) VALUES
+('+1111111111', 'John Smith', 'admin@aquastar.com', 'client_admin', 'active', 'AQUASTAR', 1),
+('+2222222222', 'Tom Anderson', 'tom.anderson@freshfood.com', 'client_admin', 'active', 'FRESHFOOD', 1),
+('+3333333333', 'Mark Johnson', 'mark.johnson@metro.com', 'client_admin', 'active', 'METRO', 1),
+('+9999999999', 'Super Administrator', 'superadmin@salesmanager.com', 'superadmin', 'active', 'tenant1', 1)
+ON DUPLICATE KEY UPDATE name = VALUES(name), email = VALUES(email);
+
+-- Insert email authentication records for admin users
+-- Default password: "Aquastar123!" for all admin users (should be changed after first login)
+-- Password hash for "Aquastar123!" using bcrypt with 12 rounds
+INSERT INTO user_auth (user_id, email, password_hash, tenant_id, created_by, updated_by)
+SELECT 
+    u.id,
+    u.email,
+    '$2b$12$R7Ck0FScqhGU7tQFHSE/3ud59IQkboS22lNayccGm6KJOv3sVGUzK',  -- bcrypt hash for "Aquastar123!"
+    u.tenant_id,
+    1,  -- created_by superadmin
+    1   -- updated_by superadmin
+FROM users u
+WHERE u.role IN ('client_admin', 'superadmin')
+AND u.email IS NOT NULL
+AND NOT EXISTS (
+    SELECT 1 FROM user_auth ua WHERE ua.user_id = u.id
+)
+AND u.status = 'active'
+ON DUPLICATE KEY UPDATE 
+    email = VALUES(email),
+    password_hash = VALUES(password_hash),
+    updated_at = CURRENT_TIMESTAMP;
 
 -- Create due_data table for outstanding payments
 CREATE TABLE IF NOT EXISTS due_data (
@@ -462,11 +502,69 @@ CREATE TABLE IF NOT EXISTS notifications (
     FOREIGN KEY (updated_by) REFERENCES users(id) ON DELETE SET NULL
 );
 
+-- Create user_auth table for email/password authentication
+-- Provides email/password authentication for client_admin and superadmin users
+-- while maintaining OTP authentication for sales_executive and area_manager users
+CREATE TABLE IF NOT EXISTS user_auth (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT NOT NULL,
+    email VARCHAR(255) NOT NULL,
+    password_hash VARCHAR(255) NOT NULL,
+    reset_token VARCHAR(255) NULL,
+    reset_token_expires TIMESTAMP NULL,
+    last_login TIMESTAMP NULL,
+    login_attempts INT DEFAULT 0,
+    locked_until TIMESTAMP NULL,
+    tenant_id VARCHAR(50) NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    created_by INT,
+    updated_by INT,
+    
+    -- Indexes for performance
+    INDEX idx_user_id (user_id),
+    INDEX idx_email_tenant (email, tenant_id),
+    INDEX idx_reset_token (reset_token),
+    INDEX idx_tenant_email (tenant_id, email),
+    
+    -- Foreign key constraints
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (tenant_id) REFERENCES tenants(code) ON DELETE CASCADE,
+    FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE SET NULL,
+    FOREIGN KEY (updated_by) REFERENCES users(id) ON DELETE SET NULL,
+    
+    -- Unique constraints for email per tenant
+    UNIQUE KEY unique_tenant_email (tenant_id, email),
+    UNIQUE KEY unique_user_auth (user_id)
+);
+
+-- Create user_auth_audit table for authentication logging
+CREATE TABLE IF NOT EXISTS user_auth_audit (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    user_auth_id INT NOT NULL,
+    action ENUM('login_attempt', 'login_success', 'login_failed', 'password_reset_requested', 'password_reset_completed', 'password_changed') NOT NULL,
+    ip_address VARCHAR(45),
+    user_agent TEXT,
+    additional_data JSON,
+    tenant_id VARCHAR(50) NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    
+    INDEX idx_user_auth_id (user_auth_id),
+    INDEX idx_action (action),
+    INDEX idx_tenant_created (tenant_id, created_at),
+    
+    FOREIGN KEY (user_auth_id) REFERENCES user_auth(id) ON DELETE CASCADE
+);
+
 -- Create indexes for performance
-CREATE INDEX idx_users_tenant_role ON users(tenant_id, role);
-CREATE INDEX idx_territories_tenant ON territories(tenant_id);
-CREATE INDEX idx_shops_tenant_territory ON shops(tenant_id, territory_id);
-CREATE INDEX idx_routes_tenant_week ON routes(tenant_id, week_start_date);
-CREATE INDEX idx_visits_tenant_date ON visits(tenant_id, checkin_time);
-CREATE INDEX idx_sales_executive_assignments_tenant ON sales_executive_assignments(tenant_id);
-CREATE INDEX idx_sales_executive_assignments_territory ON sales_executive_associations(territory_id);
+CREATE INDEX IF NOT EXISTS idx_users_tenant_role ON users(tenant_id, role);
+CREATE INDEX IF NOT EXISTS idx_territories_tenant ON territories(tenant_id);
+CREATE INDEX IF NOT EXISTS idx_shops_tenant_territory ON shops(tenant_id, territory_id);
+CREATE INDEX IF NOT EXISTS idx_routes_tenant_week ON routes(tenant_id, week_start_date);
+CREATE INDEX IF NOT EXISTS idx_visits_tenant_date ON visits(tenant_id, checkin_time);
+CREATE INDEX IF NOT EXISTS idx_sales_executive_assignments_tenant ON sales_executive_assignments(tenant_id);
+
+-- Additional indexes for email authentication
+CREATE INDEX IF NOT EXISTS idx_user_auth_tenant_email ON user_auth(tenant_id, email);
+CREATE INDEX IF NOT EXISTS idx_user_auth_reset_token ON user_auth(reset_token);
+CREATE INDEX IF NOT EXISTS idx_user_auth_audit_tenant_action ON user_auth_audit(tenant_id, action, created_at);

@@ -8,7 +8,7 @@ and OTP generation for the application.
 from datetime import datetime, timedelta
 from typing import Optional, Union, Any, Dict
 from jose import JWTError, jwt
-from passlib.context import CryptContext
+import bcrypt
 import secrets
 import structlog
 
@@ -16,9 +16,6 @@ from app.core.config import settings
 from app.core.errors import AuthenticationError
 
 logger = structlog.get_logger(__name__)
-
-# Password hashing context
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 
 def create_access_token(
@@ -98,7 +95,14 @@ def verify_password(plain_password: str, hashed_password: str) -> bool:
     Returns:
         bool: True if password matches, False otherwise
     """
-    return pwd_context.verify(plain_password, hashed_password)
+    try:
+        # Ensure password is under 72 bytes for bcrypt
+        if len(plain_password.encode('utf-8')) > 72:
+            plain_password = plain_password[:72]
+        return bcrypt.checkpw(plain_password.encode('utf-8'), hashed_password.encode('utf-8'))
+    except Exception as e:
+        logger.warning("Password verification failed", error=str(e))
+        return False
 
 
 def get_password_hash(password: str) -> str:
@@ -111,7 +115,16 @@ def get_password_hash(password: str) -> str:
     Returns:
         str: Hashed password
     """
-    return pwd_context.hash(password)
+    try:
+        # Ensure password is under 72 bytes for bcrypt
+        if len(password.encode('utf-8')) > 72:
+            password = password[:72]
+        salt = bcrypt.gensalt()
+        hashed = bcrypt.hashpw(password.encode('utf-8'), salt)
+        return hashed.decode('utf-8')
+    except Exception as e:
+        logger.error("Password hashing failed", error=str(e))
+        raise
 
 
 def generate_otp(length: int = 6) -> str:

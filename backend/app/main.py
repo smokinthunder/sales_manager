@@ -419,8 +419,10 @@ async def scheduler_status():
 
 # Import and include API routers
 from app.api.v1 import users_router, auth_router, territories_router, routes_router, shops_router, sync_router, analytics_router, outstanding_router, notifications_router
+from app.api.v1.email_auth import router as email_auth_router
 
 app.include_router(auth_router, prefix="/api/v1/auth", tags=["authentication"])
+app.include_router(email_auth_router, prefix="/api/v1/auth/email", tags=["email-authentication"])
 app.include_router(users_router, prefix="/api/v1/users", tags=["users"])
 app.include_router(territories_router, prefix="/api/v1/territories", tags=["territories"])
 app.include_router(routes_router, prefix="/api/v1/routes", tags=["routes"])
