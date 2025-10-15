@@ -19,6 +19,8 @@ from app.core.errors import (
 )
 from app.services.data_layer_client import get_data_layer_client
 from app.core.security import create_access_token, create_refresh_token, get_password_hash, verify_password
+from app.core.redis_client import get_redis_client
+from app.core.config import settings
 from app.domain.models.user import AuthResponse, TokenRefreshResponse
 
 logger = structlog.get_logger(__name__)
@@ -52,6 +54,7 @@ class EmailAuthService:
         Raises:
             AuthenticationError: If authentication fails
         """
+        logger.info("DEBUG: EMAIL AUTH METHOD CALLED - TESTING VERSION")
         try:
             data_layer_client = await get_data_layer_client()
             
@@ -107,6 +110,22 @@ class EmailAuthService:
                 subject=str(auth_data["user_id"]),
                 tenant_id=tenant_id
             )
+            
+            # Store refresh token in Redis
+            logger.info("DEBUG: About to store refresh token in Redis")
+            try:
+                redis_client = await get_redis_client()
+                refresh_key = f"refresh_token:{auth_data['user_id']}:{tenant_id}"
+                logger.info(f"Storing refresh token in Redis with key: {refresh_key}")
+                await redis_client.set(
+                    refresh_key, 
+                    refresh_token, 
+                    expire=7 * 24 * 60 * 60  # 7 days in seconds
+                )
+                logger.info(f"Refresh token stored successfully for user {auth_data['user_id']}")
+            except Exception as redis_error:
+                logger.error(f"Failed to store refresh token in Redis: {redis_error}")
+                # Don't fail authentication if Redis fails, just log the error
             
             logger.info("Email authentication successful", email=email, tenant_id=tenant_id, user_id=auth_data["user_id"])
             
