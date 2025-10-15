@@ -24,6 +24,12 @@ class _AddNewShopScreenState extends ConsumerState<AddNewShopScreen> {
   final _addressController = TextEditingController();
   final _phoneController = TextEditingController();
   final _contactPersonController = TextEditingController();
+  final _pinCodeController = TextEditingController();
+  final _emailController = TextEditingController();
+  final _aadhaarNumberController = TextEditingController();
+  final _panNumberController = TextEditingController();
+  final _locationNameController = TextEditingController();
+  final _gstNumberController = TextEditingController();
   
   bool _isLoading = false;
 
@@ -34,6 +40,12 @@ class _AddNewShopScreenState extends ConsumerState<AddNewShopScreen> {
     _addressController.dispose();
     _phoneController.dispose();
     _contactPersonController.dispose();
+    _pinCodeController.dispose();
+    _emailController.dispose();
+    _aadhaarNumberController.dispose();
+    _panNumberController.dispose();
+    _locationNameController.dispose();
+    _gstNumberController.dispose();
     super.dispose();
   }
 
@@ -170,6 +182,80 @@ class _AddNewShopScreenState extends ConsumerState<AddNewShopScreen> {
                         return null;
                       },
                     ),
+                    const SizedBox(height: 16),
+
+                    // Pin Code
+                    TextFormField(
+                      controller: _pinCodeController,
+                      decoration: InputDecoration(
+                        labelText: "Pin Code",
+                        hintText: "Enter pin code",
+                        border: OutlineInputBorder(),
+                      ),
+                      keyboardType: TextInputType.number,
+                    ),
+                    const SizedBox(height: 16),
+
+                    // Email
+                    TextFormField(
+                      controller: _emailController,
+                      decoration: InputDecoration(
+                        labelText: "Email",
+                        hintText: "Enter email address",
+                        border: OutlineInputBorder(),
+                      ),
+                      keyboardType: TextInputType.emailAddress,
+                    ),
+                    const SizedBox(height: 16),
+
+                    // Aadhaar Number
+                    TextFormField(
+                      controller: _aadhaarNumberController,
+                      decoration: InputDecoration(
+                        labelText: "Aadhaar Number",
+                        hintText: "Enter 12-digit Aadhaar number",
+                        border: OutlineInputBorder(),
+                      ),
+                      keyboardType: TextInputType.number,
+                      maxLength: 12,
+                    ),
+                    const SizedBox(height: 16),
+
+                    // PAN Number
+                    TextFormField(
+                      controller: _panNumberController,
+                      decoration: InputDecoration(
+                        labelText: "PAN Number",
+                        hintText: "Enter PAN number",
+                        border: OutlineInputBorder(),
+                      ),
+                      textCapitalization: TextCapitalization.characters,
+                      maxLength: 10,
+                    ),
+                    const SizedBox(height: 16),
+
+                    // Location Name
+                    TextFormField(
+                      controller: _locationNameController,
+                      decoration: InputDecoration(
+                        labelText: "Location Name",
+                        hintText: "Enter location name",
+                        border: OutlineInputBorder(),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+
+                    // GST Number
+                    TextFormField(
+                      controller: _gstNumberController,
+                      decoration: InputDecoration(
+                        labelText: "GST Number",
+                        hintText: "Enter GST number",
+                        border: OutlineInputBorder(),
+                      ),
+                      textCapitalization: TextCapitalization.characters,
+                      maxLength: 15,
+                    ),
                     const SizedBox(height: 24),
                     
                     // Info card
@@ -261,6 +347,12 @@ class _AddNewShopScreenState extends ConsumerState<AddNewShopScreen> {
         latitude: 0.0, // TODO: Get actual location
         longitude: 0.0, // TODO: Get actual location
         territoryId: currentUser?.territoryId ?? '', // Get from user's territory
+        pinCode: _pinCodeController.text.trim().isNotEmpty ? _pinCodeController.text.trim() : null,
+        email: _emailController.text.trim().isNotEmpty ? _emailController.text.trim() : null,
+        aadhaarNumber: _aadhaarNumberController.text.trim().isNotEmpty ? _aadhaarNumberController.text.trim() : null,
+        panNumber: _panNumberController.text.trim().isNotEmpty ? _panNumberController.text.trim() : null,
+        locationName: _locationNameController.text.trim().isNotEmpty ? _locationNameController.text.trim() : null,
+        gstNumber: _gstNumberController.text.trim().isNotEmpty ? _gstNumberController.text.trim() : null,
       );
 
       if (!mounted) return;

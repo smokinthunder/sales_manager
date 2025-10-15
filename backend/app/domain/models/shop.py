@@ -36,6 +36,12 @@ class Shop(BaseEntity):
     latitude: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
     longitude: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
     territory_id: Mapped[Optional[str]] = mapped_column(String(20), nullable=True)
+    pin_code: Mapped[Optional[str]] = mapped_column(String(10), nullable=True)
+    email: Mapped[Optional[str]] = mapped_column(String(100), nullable=True)
+    aadhaar_number: Mapped[Optional[str]] = mapped_column(String(12), nullable=True)
+    pan_number: Mapped[Optional[str]] = mapped_column(String(10), nullable=True)
+    location_name: Mapped[Optional[str]] = mapped_column(String(100), nullable=True)
+    gst_number: Mapped[Optional[str]] = mapped_column(String(15), nullable=True)
     tenant_id: Mapped[str] = mapped_column(String(50), nullable=False, index=True)
     
     # Sync fields for client data synchronization
@@ -89,6 +95,12 @@ class ShopBase(BasePydanticModel):
     latitude: Optional[float] = Field(None, description="Geographic latitude")
     longitude: Optional[float] = Field(None, description="Geographic longitude")
     territory_id: Optional[str] = Field(None, description="Territory ID")
+    pin_code: Optional[str] = Field(None, description="Pin code")
+    email: Optional[str] = Field(None, description="Email address")
+    aadhaar_number: Optional[str] = Field(None, description="Aadhaar number")
+    pan_number: Optional[str] = Field(None, description="PAN number")
+    location_name: Optional[str] = Field(None, description="Location name")
+    gst_number: Optional[str] = Field(None, description="GST number")
 
 
 class ShopCreate(ShopBase):
@@ -107,6 +119,12 @@ class ShopUpdate(BasePydanticModel):
     latitude: Optional[float] = Field(None, description="Geographic latitude")
     longitude: Optional[float] = Field(None, description="Geographic longitude")
     territory_id: Optional[str] = Field(None, description="Territory ID")
+    pin_code: Optional[str] = Field(None, description="Pin code")
+    email: Optional[str] = Field(None, description="Email address")
+    aadhaar_number: Optional[str] = Field(None, description="Aadhaar number")
+    pan_number: Optional[str] = Field(None, description="PAN number")
+    location_name: Optional[str] = Field(None, description="Location name")
+    gst_number: Optional[str] = Field(None, description="GST number")
 
 
 class ShopRead(ShopBase):

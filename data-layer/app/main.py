@@ -120,6 +120,12 @@ class ShopCreate(BaseModel):
     latitude: Optional[float] = None
     longitude: Optional[float] = None
     territory_id: Optional[str] = None
+    pin_code: Optional[str] = None
+    email: Optional[str] = None
+    aadhaar_number: Optional[str] = None
+    pan_number: Optional[str] = None
+    location_name: Optional[str] = None
+    gst_number: Optional[str] = None
     created_at: str
     updated_at: str
     created_by: Optional[int] = None
@@ -134,6 +140,12 @@ class ShopUpdate(BaseModel):
     latitude: Optional[float] = None
     longitude: Optional[float] = None
     territory_id: Optional[str] = None
+    pin_code: Optional[str] = None
+    email: Optional[str] = None
+    aadhaar_number: Optional[str] = None
+    pan_number: Optional[str] = None
+    location_name: Optional[str] = None
+    gst_number: Optional[str] = None
     updated_at: str
     updated_by: Optional[int] = None
 
@@ -148,6 +160,12 @@ class ShopResponse(BaseModel):
     latitude: Optional[float] = None
     longitude: Optional[float] = None
     territory_id: Optional[str] = None
+    pin_code: Optional[str] = None
+    email: Optional[str] = None
+    aadhaar_number: Optional[str] = None
+    pan_number: Optional[str] = None
+    location_name: Optional[str] = None
+    gst_number: Optional[str] = None
     tenant_id: str
     created_at: datetime
     updated_at: datetime
@@ -668,7 +686,8 @@ async def get_shop(tenant_id: str, shop_id: str, db=Depends(get_db)):
     try:
         query = text("""
             SELECT id, shop_id, name, status, address, phone, contact_person, 
-                   latitude, longitude, territory_id, tenant_id, created_at, updated_at, 
+                   latitude, longitude, territory_id, pin_code, email, aadhaar_number,
+                   pan_number, location_name, gst_number, tenant_id, created_at, updated_at, 
                    created_by, updated_by
             FROM shops 
             WHERE tenant_id = :tenant_id AND shop_id = :shop_id
@@ -691,11 +710,17 @@ async def get_shop(tenant_id: str, shop_id: str, db=Depends(get_db)):
             latitude=row[7],
             longitude=row[8],
             territory_id=row[9],
-            tenant_id=row[10],
-            created_at=row[11],
-            updated_at=row[12],
-            created_by=row[13],
-            updated_by=row[14]
+            pin_code=row[10],
+            email=row[11],
+            aadhaar_number=row[12],
+            pan_number=row[13],
+            location_name=row[14],
+            gst_number=row[15],
+            tenant_id=row[16],
+            created_at=row[17],
+            updated_at=row[18],
+            created_by=row[19],
+            updated_by=row[20]
         )
     except HTTPException:
         raise
@@ -744,10 +769,12 @@ async def create_shop(tenant_id: str, shop_data: ShopCreate, db=Depends(get_db))
         # Insert new shop
         insert_query = text("""
             INSERT INTO shops (shop_id, name, code, status, address, phone, contact_person, 
-                             latitude, longitude, territory_id, tenant_id, created_at, updated_at, 
+                             latitude, longitude, territory_id, pin_code, email, aadhaar_number,
+                             pan_number, location_name, gst_number, tenant_id, created_at, updated_at, 
                              created_by, updated_by)
             VALUES (:shop_id, :name, :code, :status, :address, :phone, :contact_person, 
-                    :latitude, :longitude, :territory_id, :tenant_id, :created_at, :updated_at, 
+                    :latitude, :longitude, :territory_id, :pin_code, :email, :aadhaar_number,
+                    :pan_number, :location_name, :gst_number, :tenant_id, :created_at, :updated_at, 
                     :created_by, :updated_by)
         """)
         
@@ -762,6 +789,12 @@ async def create_shop(tenant_id: str, shop_data: ShopCreate, db=Depends(get_db))
             "latitude": shop_data.latitude,
             "longitude": shop_data.longitude,
             "territory_id": shop_data.territory_id,
+            "pin_code": shop_data.pin_code,
+            "email": shop_data.email,
+            "aadhaar_number": shop_data.aadhaar_number,
+            "pan_number": shop_data.pan_number,
+            "location_name": shop_data.location_name,
+            "gst_number": shop_data.gst_number,
             "tenant_id": tenant_id,  # Use URL parameter, not request body
             "created_at": shop_data.created_at,
             "updated_at": shop_data.updated_at,

@@ -24,6 +24,12 @@ class ShopRemoteRepository {
     required double latitude,
     required double longitude,
     required String territoryId,
+    String? pinCode,
+    String? email,
+    String? aadhaarNumber,
+    String? panNumber,
+    String? locationName,
+    String? gstNumber,
   }) async => await remoteShopService.createShop(
     shopId: shopId,
     name: name,
@@ -34,6 +40,12 @@ class ShopRemoteRepository {
     latitude: latitude,
     longitude: longitude,
     territoryId: territoryId,
+    pinCode: pinCode,
+    email: email,
+    aadhaarNumber: aadhaarNumber,
+    panNumber: panNumber,
+    locationName: locationName,
+    gstNumber: gstNumber,
   );
 
   Future<Result<List<Map<String, dynamic>>>> getShops({

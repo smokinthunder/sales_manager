@@ -56,6 +56,12 @@ async def create_shop(
     - latitude: Geographic latitude
     - longitude: Geographic longitude
     - territory_id: Territory ID for assignment
+    - pin_code: Pin code
+    - email: Email address
+    - aadhaar_number: Aadhaar number
+    - pan_number: PAN number
+    - location_name: Location name
+    - gst_number: GST number
     
     **Security:**
     - Requires authentication
