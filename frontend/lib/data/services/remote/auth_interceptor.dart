@@ -25,7 +25,6 @@ class AuthInterceptor extends Interceptor {
 
     if (isExpired) {
       final refreshToken = await _localAuth.getRefreshToken();
-
       if (refreshToken == null) {
         // No refresh token — force logout
         await _localAuth.clearTokens();
@@ -38,18 +37,17 @@ class AuthInterceptor extends Interceptor {
 
       try {
         // Create a fresh Dio instance WITHOUT AuthInterceptor to avoid infinite loop
-        final freshDio = Dio();
-        final authService = RemoteAuthService();
+        // final freshDio = Dio();
+        final authService = RemoteAuthService(useInterceptor: false);
         // Replace the dio instance to bypass interceptor
-        authService.dio = freshDio;
-
-        final result = await authService.refreshTocken(refreshToken);
+        final result = await authService.refreshToken(refreshToken);
 
         switch (result) {
           case Ok(value: final response):
             final newAccessToken = response.data?['access_token'];
+            final newRefreshToken =
+                response.data?['refresh_token']; // Handle token rotation
             final expiresIn = response.data?['expires_in'] ?? 900;
-
             if (newAccessToken == null) {
               await _localAuth.clearTokens();
               return _rejectUnauthorized(
@@ -59,11 +57,19 @@ class AuthInterceptor extends Interceptor {
               );
             }
 
-            // Save the new access token (refresh token may be rotated)
-            await _localAuth.updateAccessToken(
-              accessToken: newAccessToken,
-              expiresIn: expiresIn,
-            );
+            // Save the new tokens (refresh token rotation support)
+            if (newRefreshToken != null) {
+              await _localAuth.saveTokens(
+                accessToken: newAccessToken,
+                refreshToken: newRefreshToken,
+                expiresIn: expiresIn,
+              );
+            } else {
+              await _localAuth.updateAccessToken(
+                accessToken: newAccessToken,
+                expiresIn: expiresIn,
+              );
+            }
 
             // Update the original request with the new token
             options.headers['Authorization'] = 'Bearer $newAccessToken';
@@ -126,7 +132,8 @@ class AuthInterceptor extends Interceptor {
       ApiEndpoints.verifyOtp,
       ApiEndpoints.refreshToken,
       ApiEndpoints.logout,
-    ].contains(path);
+      // Add email authentication endpoints
+    ].any((endpoint) => path.contains(endpoint));
   }
 
   // Utility to reject request with 401

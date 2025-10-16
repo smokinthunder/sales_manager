@@ -30,7 +30,6 @@ class LocalAuthService {
     await _storage.write(
       key: 'expires_at',
       value: expiryTime.toIso8601String(),
-      
     );
   }
 
@@ -49,10 +48,14 @@ class LocalAuthService {
     return expiresAtStr != null ? DateTime.parse(expiresAtStr) : null;
   }
 
-  /// Checks if the access token had expired
+  /// Checks if the access token had expired or will expire soon (with 30s buffer)
   Future<bool> isAccessTokenExpired() async {
     final expiryTime = await getExpiryTime();
-    return expiryTime == null || DateTime.now().isAfter(expiryTime);
+    if (expiryTime == null) return true;
+
+    // Add 30-second buffer to refresh token before it actually expires
+    final bufferTime = DateTime.now().add(Duration( seconds: 30));
+    return bufferTime.isAfter(expiryTime);
   }
 
   /// Clear all tokens (logout)
