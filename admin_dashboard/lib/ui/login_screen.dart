@@ -1,16 +1,18 @@
+import 'package:admin_dashboard/config/assets.dart';
 import 'package:admin_dashboard/routing/routes.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-class LoginScreen extends StatefulWidget {
+class LoginScreen extends ConsumerStatefulWidget {
   const LoginScreen({super.key});
 
   @override
-  State<LoginScreen> createState() => _LoginScreenState();
+  ConsumerState<LoginScreen> createState() => _LoginScreenState();
 }
 
-class _LoginScreenState extends State<LoginScreen> {
-  var isObscured = true;
+class _LoginScreenState extends ConsumerState<LoginScreen> {
+  bool isObscured = true;
   @override
   Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
@@ -30,10 +32,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Image.asset(
-                          'assets/images/company_logo.png',
-                          width: 340,
-                        ),
+                        Image.asset(Assets.logo, width: 340),
                         Text(
                           "Welcome !!!",
                           style: textTheme.headlineLarge?.copyWith(
@@ -144,12 +143,8 @@ class _LoginScreenState extends State<LoginScreen> {
                   ),
                 ),
                 Spacer(),
-
                 if (width > 1054)
-                  Image.asset(
-                    'assets/images/login_pattern.png',
-                    fit: BoxFit.fitHeight,
-                  ),
+                  Image.asset(Assets.loginPattern, fit: BoxFit.fitHeight),
               ],
             ),
           ],
