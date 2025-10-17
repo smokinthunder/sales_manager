@@ -193,9 +193,6 @@ class _SafePaginatedCardGridState extends State<SafePaginatedCardGrid> {
             children: [
               // Grid
               SizedBox(
-                height:
-                    widget.rowsPerPage * widget.cardHeight +
-                    (widget.rowsPerPage - 1) * widget.spacing,
                 child: Padding(
                   padding: EdgeInsets.all(widget.spacing / 2),
                   child: Wrap(
