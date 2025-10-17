@@ -42,6 +42,9 @@ dependencies:
   url_launcher: ^6.3.2
   syncfusion_flutter_gauges: ^31.1.20
   material_symbols_icons: ^4.2873.0
+  flutter_secure_storage: ^9.2.4
+  dio: ^5.9.0
+  flutter_dotenv: ^6.0.0
 
 dev_dependencies:
   flutter_test:

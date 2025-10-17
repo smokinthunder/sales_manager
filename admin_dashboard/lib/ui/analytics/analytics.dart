@@ -160,6 +160,7 @@ class _SafePaginatedCardGridState extends State<SafePaginatedCardGrid> {
       ),
       child: LayoutBuilder(
         builder: (context, constraints) {
+          //Remove this logic if you want fixed number of
           final availableWidth = constraints.maxWidth;
 
           // Calculate cards per row
@@ -188,10 +189,31 @@ class _SafePaginatedCardGridState extends State<SafePaginatedCardGrid> {
           final pageCards = widget.cards.sublist(start, end);
 
           final visiblePages = getVisiblePages(totalPages, currentPage);
-
           return Column(
             children: [
               // Grid
+              // SizedBox(
+              //   // height: gridHeight.clamp(0.0, double.infinity),
+              //   child: GridView.builder(
+              //     padding: EdgeInsets.all(widget.spacing / 2),
+              //     physics: const NeverScrollableScrollPhysics(),
+              //     shrinkWrap: true,
+              //     itemCount: pageCards.length,
+              //     gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+              //       crossAxisCount: cardsPerRow,
+              //       crossAxisSpacing: widget.spacing,
+              //       mainAxisSpacing: widget.spacing,
+              //       childAspectRatio: widget.cardWidth / widget.cardHeight,
+              //     ),
+              //     itemBuilder: (context, index) {
+              //       return SizedBox(
+              //         width: widget.cardWidth,
+              //         height: widget.cardHeight,
+              //         child: pageCards[index],
+              //       );
+              //     },
+              //   ),
+              // ),
               SizedBox(
                 child: Padding(
                   padding: EdgeInsets.all(widget.spacing / 2),
@@ -210,7 +232,6 @@ class _SafePaginatedCardGridState extends State<SafePaginatedCardGrid> {
                   ),
                 ),
               ),
-
               const SizedBox(height: 20),
 
               // Pagination controls
