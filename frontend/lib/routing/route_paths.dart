@@ -23,4 +23,8 @@ abstract class RoutePaths {
   static const pendingRequests = '/pending_requests';
   static const createTarget = '/create_target';
   static const superAdminDashboard = '/super_admin/dashboard';
+  static const cart = '/cart';
+  static const create_order = '/create_order';
+  static const order_history = '/order_history';
+  static const select_products = '/select_products';
 }

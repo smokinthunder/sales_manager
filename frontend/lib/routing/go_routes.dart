@@ -16,6 +16,10 @@ import 'package:sales_manager/ui/home/shop_details.dart';
 import 'package:sales_manager/ui/home/top_customers.dart';
 import 'package:sales_manager/ui/home/add_shop/wait_for_approval.dart';
 import 'package:sales_manager/ui/home/view_history.dart';
+import 'package:sales_manager/ui/orders/cart_screen.dart';
+import 'package:sales_manager/ui/orders/create_order_screen.dart';
+import 'package:sales_manager/ui/orders/order_history_screen.dart';
+import 'package:sales_manager/ui/orders/select_product_screen.dart';
 import 'package:sales_manager/ui/outstanding/outstanding.dart';
 import 'package:sales_manager/ui/profile/profile.dart';
 
@@ -90,6 +94,19 @@ abstract class ExecutiveRoutes {
     GoRoute(
       path: RoutePaths.createTarget,
       builder: (c, s) => const CreateTargetScreen(),
+    ),
+    GoRoute(
+      path: RoutePaths.select_products,
+      builder: (c, s) => const SelectProductScreen(),
+    ),
+    GoRoute(path: RoutePaths.cart, builder: (c, s) => const CartScreen()),
+    GoRoute(
+      path: RoutePaths.create_order,
+      builder: (c, s) => const CreateOrderScreen(),
+    ),
+    GoRoute(
+      path: RoutePaths.order_history,
+      builder: (c, s) => const OrderHistoryScreen(),
     ),
   ];
 }

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
+import 'package:sales_manager/config/assets.dart';
 import 'package:sales_manager/config/providers/login_message_provider.dart';
 import 'package:sales_manager/domain/models/shops/shop.dart';
 import 'package:sales_manager/utils/show_snackbar.dart';
@@ -38,6 +39,11 @@ class _ExecutiveHomeState extends ConsumerState<ExecutiveHome> {
   Widget build(BuildContext context) {
     var theme = Theme.of(context);
     var textTheme = theme.textTheme;
+    final buttonStyle = TextButton.styleFrom(
+      padding: EdgeInsets.zero,
+      minimumSize: Size(0, 0),
+      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+    );
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16),
       child: Column(
@@ -48,32 +54,40 @@ class _ExecutiveHomeState extends ConsumerState<ExecutiveHome> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text("Total Customers : 58", style: textTheme.headlineSmall),
-              TextButton(
-                onPressed: () {
-                  context.push(RoutePaths.addShop);
-                },
-                child: Text(
-                  "Add new customer",
-                  style: textTheme.bodyMedium?.copyWith(
-                    color: theme.colorScheme.primary,
+              Column(
+                spacing: 4,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  TextButton(
+                    style: buttonStyle,
+                    onPressed: () {
+                      context.push(RoutePaths.addShop);
+                    },
+                    child: Text(
+                      "Add new customer",
+                      style: textTheme.bodyMedium?.copyWith(
+                        color: theme.colorScheme.primary,
+                      ),
+                    ),
                   ),
-                ),
+                  TextButton(
+                    style: buttonStyle,
+                    onPressed: () {
+                      context.push(RoutePaths.create_order);
+                    },
+                    child: Text(
+                      "Create order",
+                      style: textTheme.bodyMedium?.copyWith(
+                        color: theme.colorScheme.primary,
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ],
           ),
           const SizedBox(height: 40),
 
-          // Today Route
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text("Today's Route", style: textTheme.bodyLarge),
-              Text(
-                DateFormat('dd-MM-yyyy').format(DateTime.now()),
-                style: textTheme.labelLarge,
-              ),
-            ],
-          ),
           const SizedBox(height: 8),
 
           // ExpansionTile for Special Route
@@ -82,83 +96,143 @@ class _ExecutiveHomeState extends ConsumerState<ExecutiveHome> {
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(12),
             ),
-            child: Column(
-              children: [
-                Padding(
-                  padding: const EdgeInsets.all(16.0),
-                  child: Row(
-                    children: const [
-                      Expanded(
-                        child: _InputField(label: "Location", value: "Kochi"),
+            child: Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text("Today's Route", style: textTheme.bodyLarge),
+                      Text(
+                        DateFormat('dd-MM-yyyy').format(DateTime.now()),
+                        style: textTheme.labelLarge,
                       ),
-                      SizedBox(width: 10),
-                      Expanded(
-                        child: _InputField(label: "Area", value: "Kalamassery"),
+                      SizedBox(height: 4),
+                      Text("kochi, Kalamassery", style: textTheme.labelLarge),
+                    ],
+                  ),
+                  Spacer(),
+
+                  Image.asset(Assets.todayRouteImage, height: 40, width: 40),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(height: 8),
+          Card(
+            color: theme.colorScheme.onPrimary,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text("Special Route", style: textTheme.bodyLarge),
+
+                      SizedBox(height: 4),
+                      Text(
+                        "No special route assigned",
+                        style: textTheme.labelLarge,
                       ),
                     ],
                   ),
-                ),
-                ExpansionTile(
-                  shape: RoundedRectangleBorder(),
-                  title: Text(
-                    "Special route",
-
-                    style: textTheme.bodyMedium?.copyWith(
-                      color: theme.colorScheme.primary,
-                    ),
-                  ),
-                  initiallyExpanded: isSpecialRouteExpanded,
-                  onExpansionChanged: (val) {
-                    setState(() => isSpecialRouteExpanded = val);
-                  },
-                  children: [
-                    Padding(
-                      padding: const EdgeInsets.all(12.0),
-                      child: Column(
-                        children: [
-                          Row(
-                            children: const [
-                              Expanded(
-                                child: _InputField(
-                                  label: "Shop Name",
-                                  value: "New India Traders",
-                                ),
-                              ),
-                              SizedBox(width: 10),
-                              Expanded(
-                                child: _InputField(
-                                  label: "Location",
-                                  value: "Kalamassery",
-                                ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 10),
-                          Row(
-                            children: const [
-                              Expanded(
-                                child: _InputField(
-                                  label: "Area",
-                                  value: "Manalimukku",
-                                ),
-                              ),
-                              SizedBox(width: 10),
-                              Expanded(
-                                child: _InputField(
-                                  label: "Contact No",
-                                  value: "+91 9821241890",
-                                ),
-                              ),
-                            ],
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-              ],
+                  Spacer(),
+                  Image.asset(Assets.specialRouteImage, height: 46, width: 46),
+                ],
+              ),
             ),
           ),
+
+          //TODO: Clean up the commented code below or use it
+          // Card(
+          //   color: theme.colorScheme.onPrimary,
+          //   shape: RoundedRectangleBorder(
+          //     borderRadius: BorderRadius.circular(12),
+          //   ),
+          //   child: Column(
+          //     children: [
+          //       Padding(
+          //         padding: const EdgeInsets.all(16.0),
+          //         child: Row(
+          //           children: const [
+          //             Expanded(
+          //               child: _InputField(label: "Location", value: "Kochi"),
+          //             ),
+          //             SizedBox(width: 10),
+          //             Expanded(
+          //               child: _InputField(label: "Area", value: "Kalamassery"),
+          //             ),
+          //           ],
+          //         ),
+          //       ),
+          //       ExpansionTile(
+          //         shape: RoundedRectangleBorder(),
+          //         title: Text(
+          //           "Special route",
+
+          //           style: textTheme.bodyMedium?.copyWith(
+          //             color: theme.colorScheme.primary,
+          //           ),
+          //         ),
+          //         initiallyExpanded: isSpecialRouteExpanded,
+          //         onExpansionChanged: (val) {
+          //           setState(() => isSpecialRouteExpanded = val);
+          //         },
+          //         children: [
+          //           Padding(
+          //             padding: const EdgeInsets.all(12.0),
+          //             child: Column(
+          //               children: [
+          //                 Row(
+          //                   children: const [
+          //                     Expanded(
+          //                       child: _InputField(
+          //                         label: "Shop Name",
+          //                         value: "New India Traders",
+          //                       ),
+          //                     ),
+          //                     SizedBox(width: 10),
+          //                     Expanded(
+          //                       child: _InputField(
+          //                         label: "Location",
+          //                         value: "Kalamassery",
+          //                       ),
+          //                     ),
+          //                   ],
+          //                 ),
+          //                 const SizedBox(height: 10),
+          //                 Row(
+          //                   children: const [
+          //                     Expanded(
+          //                       child: _InputField(
+          //                         label: "Area",
+          //                         value: "Manalimukku",
+          //                       ),
+          //                     ),
+          //                     SizedBox(width: 10),
+          //                     Expanded(
+          //                       child: _InputField(
+          //                         label: "Contact No",
+          //                         value: "+91 9821241890",
+          //                       ),
+          //                     ),
+          //                   ],
+          //                 ),
+          //               ],
+          //             ),
+          //           ),
+          //         ],
+          //       ),
+          //     ],
+          //   ),
+          // ),
           const SizedBox(height: 16),
 
           // Top Customers
