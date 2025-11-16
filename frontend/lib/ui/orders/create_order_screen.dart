@@ -54,7 +54,7 @@ class _CreateOrderScreenState extends State<CreateOrderScreen> {
                       TextButton(
                         style: buttonStyle,
                         onPressed: () {
-                          context.push(RoutePaths.order_history);
+                          context.push(RoutePaths.orderHistory);
                         },
                         child: Text(
                           "Order History",

@@ -73,7 +73,7 @@ class _ExecutiveHomeState extends ConsumerState<ExecutiveHome> {
                   TextButton(
                     style: buttonStyle,
                     onPressed: () {
-                      context.push(RoutePaths.create_order);
+                      context.push(RoutePaths.createOrder);
                     },
                     child: Text(
                       "Create order",
