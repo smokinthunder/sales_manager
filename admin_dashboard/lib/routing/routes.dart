@@ -37,4 +37,8 @@ abstract class Routes {
 
   //Notifications
   static const String notifications = "/notifications";
+
+  //Order and related Routes
+  static const String order = '/order';
+  static const String viewOrderDetails = '/order/view-order-details';
 }

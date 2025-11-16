@@ -20,6 +20,8 @@ import 'package:admin_dashboard/ui/executive/find_dealers.dart';
 import 'package:admin_dashboard/ui/home_screen_scaffold.dart';
 import 'package:admin_dashboard/ui/login_screen.dart';
 import 'package:admin_dashboard/ui/notifications.dart';
+import 'package:admin_dashboard/ui/orders/orders.dart';
+import 'package:admin_dashboard/ui/orders/view_order_datails.dart';
 import 'package:admin_dashboard/ui/outstanding/invoice.dart';
 import 'package:admin_dashboard/ui/outstanding/more_details.dart';
 import 'package:admin_dashboard/ui/outstanding/outstanding.dart';
@@ -45,6 +47,7 @@ final router = Provider<GoRouter>((ref) {
           ...analyticsRoutes,
           ...areaManagerRoutes,
           ...outStandingRoutes,
+          ...orderRoutes,
 
           GoRoute(
             path: Routes.notifications,
@@ -143,5 +146,16 @@ final analyticsRoutes = [
   GoRoute(
     path: Routes.shopAnalytics,
     builder: (context, state) => const ShopAnalytics(),
+  ),
+];
+
+final orderRoutes = [
+  GoRoute(
+    path: Routes.order,
+    builder: (context, state) => const Orders(),
+  ),
+  GoRoute(
+    path: Routes.viewOrderDetails,
+    builder: (context, state) => const ViewOrderDatails(),
   ),
 ];
