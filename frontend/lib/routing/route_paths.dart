@@ -28,4 +28,5 @@ abstract class RoutePaths {
   static const orderHistory = '/order_history';
   static const selectProducts = '/select_products';
   static const todaysRoute = '/todays_route';
+  static const todaysSpecialRoute = '/todays_special_route';
 }

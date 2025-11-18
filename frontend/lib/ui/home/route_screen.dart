@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/widgets.dart';
 
 class RouteScreen extends StatelessWidget {
-  const RouteScreen({super.key});
+  const RouteScreen({super.key, required this.isSpecial});
+  final bool isSpecial;
 
   @override
   Widget build(BuildContext context) {

@@ -111,7 +111,11 @@ abstract class ExecutiveRoutes {
     ),
     GoRoute(
       path: RoutePaths.todaysRoute,
-      builder: (c, s) => const RouteScreen(),
+      builder: (c, s) => const RouteScreen(isSpecial: false),
+    ),
+    GoRoute(
+      path: RoutePaths.todaysSpecialRoute,
+      builder: (context, state) => const RouteScreen(isSpecial: true),
     ),
   ];
 }

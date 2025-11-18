@@ -186,8 +186,8 @@ class _CreateOrderScreenState extends State<CreateOrderScreen> {
                 width: double.infinity,
                 child: ElevatedButton(
                   onPressed: () {
-                    //TODO: write proper code
-                    context.go(RoutePaths.addShopSuccess);
+                    //TODO:
+                    context.go(RoutePaths.selectProducts);
                   },
                   child: const Text("Continue"),
                 ),
