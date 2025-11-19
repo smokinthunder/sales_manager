@@ -104,28 +104,34 @@ class SelectProductScreen extends StatelessWidget {
                     children: [
                       Text("Add to Cart", style: textTheme.bodyLarge),
                       Spacer(),
-                      Stack(
-                        clipBehavior: Clip.none,
-                        children: [
-                          CircleAvatar(child: Icon(Icons.shopping_cart)),
-                          Positioned(
-                            top: -12,
-                            right: 5,
-                            child: Container(
-                              padding: EdgeInsets.all(4),
-                              decoration: BoxDecoration(
-                                shape: BoxShape.circle,
-                                color: theme.colorScheme.onPrimary,
-                              ),
-                              child: Text(
-                                "2",
-                                style: TextStyle(
-                                  color: theme.colorScheme.primary,
+                      InkWell(
+                        onTap: () {
+                          //TODO
+                          context.go(RoutePaths.cart);
+                        },
+                        child: Stack(
+                          clipBehavior: Clip.none,
+                          children: [
+                            CircleAvatar(child: Icon(Icons.shopping_cart)),
+                            Positioned(
+                              top: -12,
+                              right: 5,
+                              child: Container(
+                                padding: EdgeInsets.all(4),
+                                decoration: BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  color: theme.colorScheme.onPrimary,
+                                ),
+                                child: Text(
+                                  "2",
+                                  style: TextStyle(
+                                    color: theme.colorScheme.primary,
+                                  ),
                                 ),
                               ),
                             ),
-                          ),
-                        ],
+                          ],
+                        ),
                       ),
                     ],
                   ),
@@ -142,7 +148,7 @@ class SelectProductScreen extends StatelessWidget {
                 child: ElevatedButton(
                   onPressed: () {
                     //TODO:
-                    context.go(RoutePaths.selectProducts);
+                    context.go(RoutePaths.cart);
                   },
                   child: const Text("Continue"),
                 ),
