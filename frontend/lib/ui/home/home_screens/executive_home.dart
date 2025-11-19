@@ -91,61 +91,75 @@ class _ExecutiveHomeState extends ConsumerState<ExecutiveHome> {
           const SizedBox(height: 8),
 
           // ExpansionTile for Special Route
-          Card(
-            color: theme.colorScheme.onPrimary,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text("Today's Route", style: textTheme.bodyLarge),
-                      Text(
-                        DateFormat('dd-MM-yyyy').format(DateTime.now()),
-                        style: textTheme.labelLarge,
-                      ),
-                      SizedBox(height: 4),
-                      Text("kochi, Kalamassery", style: textTheme.labelLarge),
-                    ],
-                  ),
-                  Spacer(),
+          InkWell(
+            onTap: () {
+              context.push(RoutePaths.todaysRoute);
+            },
+            child: Card(
+              color: theme.colorScheme.onPrimary,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text("Today's Route", style: textTheme.bodyLarge),
+                        Text(
+                          DateFormat('dd-MM-yyyy').format(DateTime.now()),
+                          style: textTheme.labelLarge,
+                        ),
+                        SizedBox(height: 4),
+                        Text("kochi, Kalamassery", style: textTheme.labelLarge),
+                      ],
+                    ),
+                    Spacer(),
 
-                  Image.asset(Assets.todayRouteImage, height: 40, width: 40),
-                ],
+                    Image.asset(Assets.todayRouteImage, height: 40, width: 40),
+                  ],
+                ),
               ),
             ),
           ),
           const SizedBox(height: 8),
-          Card(
-            color: theme.colorScheme.onPrimary,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text("Special Route", style: textTheme.bodyLarge),
+          InkWell(
+            onTap: () {
+              context.push(RoutePaths.todaysSpecialRoute);
+            },
+            child: Card(
+              color: theme.colorScheme.onPrimary,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text("Special Route", style: textTheme.bodyLarge),
 
-                      SizedBox(height: 4),
-                      Text(
-                        "No special route assigned",
-                        style: textTheme.labelLarge,
-                      ),
-                    ],
-                  ),
-                  Spacer(),
-                  Image.asset(Assets.specialRouteImage, height: 46, width: 46),
-                ],
+                        SizedBox(height: 4),
+                        Text(
+                          "No special route assigned",
+                          style: textTheme.labelLarge,
+                        ),
+                      ],
+                    ),
+                    Spacer(),
+                    Image.asset(
+                      Assets.specialRouteImage,
+                      height: 46,
+                      width: 46,
+                    ),
+                  ],
+                ),
               ),
             ),
           ),

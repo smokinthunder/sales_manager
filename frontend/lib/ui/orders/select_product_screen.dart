@@ -107,7 +107,7 @@ class SelectProductScreen extends StatelessWidget {
                       InkWell(
                         onTap: () {
                           //TODO
-                          context.go(RoutePaths.cart);
+                          context.push(RoutePaths.cart);
                         },
                         child: Stack(
                           clipBehavior: Clip.none,
