@@ -162,7 +162,7 @@ class ShopService:
                     "message": "Shop created successfully",
                     "notification_id": None,
                     "approval_required": False,
-                    "shop": ShopRead(**shop).model_dump()
+                    "shop": shop  # Don't wrap with ShopRead here
                 }
             except HTTPException as e:
                 if e.status_code == 409:

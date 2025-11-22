@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
+import 'package:sales_manager/config/providers/current_user_notifier.dart';
 import 'package:sales_manager/data/repositories/route/route_remote_repository.dart';
 import 'package:sales_manager/data/repositories/shop/shop_remote_repository.dart';
 import 'package:sales_manager/data/repositories/user/user_remote_repository.dart';
@@ -184,6 +185,87 @@ Future<List<Map<String, dynamic>>> getAllSalesExecutives(Ref ref) async {
           for (var key in ['id', 'name']) key: item[key],
         };
       }).toList();
+      return filteredList;
+    case Error():
+      print(res.error.toString());
+      return [];
+  }
+}
+
+@riverpod
+Future<int> getMyExecutivesCount(Ref ref) async {
+  final res = await ref
+      .watch(userRemoteRepositoryProvider)
+      .getUsers(role: UserRole.salesExecutive.backendName);
+  print(res);
+  final myTerritoryId = ref.watch(currentUserNotifierProvider)?.territoryId;
+
+  switch (res) {
+    case Ok():
+      final rawData = res.value;
+      final filteredData = myTerritoryId != null
+          ? rawData
+                .where(
+                  (item) => item['territory_id']?.toString() == myTerritoryId,
+                )
+                .toList()
+          : rawData;
+      return filteredData.length;
+    case Error():
+      print(res.error.toString());
+      return 0;
+  }
+}
+
+@riverpod
+Future<int> getMyCustomersCount(Ref ref) async {
+  final res = await ref.watch(shopRemoteRepositoryProvider).getShops();
+  final myTerritoryId = ref.watch(currentUserNotifierProvider)?.territoryId;
+
+  switch (res) {
+    case Ok():
+      final rawData = res.value;
+      final filteredData = myTerritoryId != null
+          ? rawData
+                .where(
+                  (item) => item['territory_id']?.toString() == myTerritoryId,
+                )
+                .toList()
+          : rawData;
+      return filteredData.length;
+    case Error():
+      print(res.error.toString());
+      return 0;
+  }
+}
+
+@riverpod
+Future<List<Map<String, dynamic>>> getMySalesExecutives(Ref ref) async {
+  final res = await ref
+      .watch(userRemoteRepositoryProvider)
+      .getUsers(role: UserRole.salesExecutive.backendName);
+  print(res);
+  final myTerritoryId = ref.watch(currentUserNotifierProvider)?.territoryId;
+
+  switch (res) {
+    case Ok():
+      final rawData = res.value;
+      final filteredList = myTerritoryId != null
+          ? rawData
+                .where(
+                  (item) => item['territory_id']?.toString() == myTerritoryId,
+                )
+                .map((item) {
+                  return {
+                    for (var key in ['id', 'name']) key: item[key],
+                  };
+                })
+                .toList()
+          : rawData.map((item) {
+              return {
+                for (var key in ['id', 'name']) key: item[key],
+              };
+            }).toList();
       return filteredList;
     case Error():
       print(res.error.toString());

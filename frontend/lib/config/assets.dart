@@ -7,4 +7,6 @@ abstract final class Assets {
   static const imageOnOtp = "assets/images/otp.png";
   static const circleProgress = "assets/images/progress.png";
   static const successGreenTick = "assets/images/success_green_tick.png";
+  static const todayRouteImage = "assets/images/today_route.png";
+  static const specialRouteImage = "assets/images/special_route.png";
 }

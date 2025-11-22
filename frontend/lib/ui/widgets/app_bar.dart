@@ -3,7 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:sales_manager/config/assets.dart';
 import 'package:sales_manager/config/providers/current_user_notifier.dart';
-import 'package:sales_manager/config/providers/notification_notifier.dart';
+import 'package:sales_manager/config/providers/notification_count_notifier.dart';
 import 'package:sales_manager/routing/route_paths.dart';
 import 'package:sales_manager/ui/core/colors.dart';
 
@@ -91,8 +91,7 @@ class CustomAppBar extends ConsumerWidget implements PreferredSizeWidget {
                 const SizedBox(width: 16),
                 Consumer(
                   builder: (context, ref, child) {
-                    final notificationState = ref.watch(notificationNotifierProvider);
-                    final pendingCount = notificationState.pendingCount;
+                    final pendingCount = ref.watch(notificationCountProvider);
 
                     return Stack(
                       children: [

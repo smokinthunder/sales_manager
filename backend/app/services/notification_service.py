@@ -355,7 +355,19 @@ class NotificationService:
         notification = await self.get_notification(notification_id, tenant_id, current_user)
         
         # Check if user can confirm this notification
-        if notification.get("receiver_id") != current_user.get("id"):
+        current_user_id = current_user.get("id")
+        receiver_id = notification.get("receiver_id")
+        
+        # Convert both to int for comparison since database stores as int
+        try:
+            current_user_id_int = int(current_user_id)
+            receiver_id_int = int(receiver_id) if receiver_id else None
+        except (ValueError, TypeError):
+            raise InsufficientPermissionsError(
+                message="Invalid user ID format"
+            )
+        
+        if receiver_id_int != current_user_id_int:
             raise InsufficientPermissionsError(
                 message="You don't have permission to confirm this notification"
             )

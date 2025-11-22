@@ -60,6 +60,7 @@ class AuthViewModel extends _$AuthViewModel {
           role: UserRole.fromBackend(user["role"]),
           location: "",
           status: UserStatus.fromBackend(user["status"]),
+          territoryId: user["territory_id"]?.toString(),
         );
         _currentUserNotifier.addUser(appUser);
         state = AsyncValue.data(appUser);
@@ -84,6 +85,7 @@ class AuthViewModel extends _$AuthViewModel {
             role: UserRole.fromBackend(userData?["role"]),
             location: "",
             status: UserStatus.fromBackend(userData?["status"]),
+            territoryId: userData?["territory_id"]?.toString(),
           );
           _currentUserNotifier.addUser(appUser);
         case Error():

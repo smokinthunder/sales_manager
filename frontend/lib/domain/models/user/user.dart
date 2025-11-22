@@ -11,6 +11,7 @@ class AppUser {
   final String location;
   final UserRole role;
   final UserStatus status;
+  final String? territoryId;
 
   AppUser({
     required this.name,
@@ -21,6 +22,7 @@ class AppUser {
     required this.role,
     required this.location,
     required this.status,
+    this.territoryId,
   });
 
   /// Named constructor for an empty/default user
@@ -34,6 +36,10 @@ class AppUser {
       pictureUrl: "",
       location: "",
       status: UserStatus.active,
+      territoryId: null,
     );
   }
+
+  /// Check if user has a territory assigned
+  bool get hasTerritory => territoryId != null && territoryId!.isNotEmpty;
 }

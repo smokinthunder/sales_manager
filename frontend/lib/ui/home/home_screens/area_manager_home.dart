@@ -459,11 +459,11 @@ class ExecutiveTrackingData {
   });
 }
 
-class HeaderTexts extends StatelessWidget {
+class HeaderTexts extends ConsumerWidget {
   const HeaderTexts({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final buttonStyle = TextButton.styleFrom(
       padding: EdgeInsets.zero,
       minimumSize: Size(0, 0),
@@ -474,7 +474,15 @@ class HeaderTexts extends StatelessWidget {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Text("Total Executive : 12", style: textTheme.headlineSmall),
+        ref.watch(getMyExecutivesCountProvider).when(
+          loading: () => Text("...Loading", style: textTheme.headlineSmall),
+          error: (error, stackTrace) =>
+              Text("Error $error", style: textTheme.headlineSmall),
+          data: (count) => Text(
+            "Total Executive : $count",
+            style: textTheme.headlineSmall,
+          ),
+        ),
         Column(
           spacing: 4,
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -573,7 +581,7 @@ class _CreateRouteCardState extends ConsumerState<CreateRouteCard> {
                 ),
                 Flexible(
                   child: ref
-                      .watch(getAllSalesExecutivesProvider)
+                      .watch(getMySalesExecutivesProvider)
                       .when(
                         loading: () => const CustomDropDownMenu(
                           tinyTitle: true,

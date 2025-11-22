@@ -10,12 +10,18 @@ import 'package:sales_manager/ui/home/create_target.dart';
 import 'package:sales_manager/ui/home/home_screens/home.dart';
 import 'package:sales_manager/ui/home/messages.dart';
 import 'package:sales_manager/ui/home/not_visiting.dart';
-import 'package:sales_manager/ui/home/notification.dart';
+// import 'package:sales_manager/ui/home/notification.dart';
 import 'package:sales_manager/ui/home/pending_requests.dart';
+import 'package:sales_manager/ui/home/route_screen.dart';
 import 'package:sales_manager/ui/home/shop_details.dart';
 import 'package:sales_manager/ui/home/top_customers.dart';
 import 'package:sales_manager/ui/home/add_shop/wait_for_approval.dart';
 import 'package:sales_manager/ui/home/view_history.dart';
+import 'package:sales_manager/ui/notification/notification_screen_new.dart';
+import 'package:sales_manager/ui/orders/cart_screen.dart';
+import 'package:sales_manager/ui/orders/create_order_screen.dart';
+import 'package:sales_manager/ui/orders/order_history_screen.dart';
+import 'package:sales_manager/ui/orders/select_product_screen.dart';
 import 'package:sales_manager/ui/outstanding/outstanding.dart';
 import 'package:sales_manager/ui/profile/profile.dart';
 
@@ -90,6 +96,27 @@ abstract class ExecutiveRoutes {
     GoRoute(
       path: RoutePaths.createTarget,
       builder: (c, s) => const CreateTargetScreen(),
+    ),
+    GoRoute(
+      path: RoutePaths.selectProducts,
+      builder: (c, s) => const SelectProductScreen(),
+    ),
+    GoRoute(path: RoutePaths.cart, builder: (c, s) => const CartScreen()),
+    GoRoute(
+      path: RoutePaths.createOrder,
+      builder: (c, s) => const CreateOrderScreen(),
+    ),
+    GoRoute(
+      path: RoutePaths.orderHistory,
+      builder: (c, s) => const OrderHistoryScreen(),
+    ),
+    GoRoute(
+      path: RoutePaths.todaysRoute,
+      builder: (c, s) => const RouteScreen(isSpecial: false),
+    ),
+    GoRoute(
+      path: RoutePaths.todaysSpecialRoute,
+      builder: (context, state) => const RouteScreen(isSpecial: true),
     ),
   ];
 }

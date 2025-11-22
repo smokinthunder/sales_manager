@@ -10,7 +10,7 @@ class RemoteAuthService {
   final LocalAuthService localAuth = LocalAuthService();
   final tenantId = dotenv.env['TENANT_ID'] ?? "default";
 
-  RemoteAuthService() {
+  RemoteAuthService({bool useInterceptor = true}) {
     dio = Dio();
     dio.interceptors.add(AuthInterceptor(localAuth));
   }
@@ -50,7 +50,7 @@ class RemoteAuthService {
     }
   }
 
-  Future<Result<Response<Map<String, dynamic>>>> refreshTocken(
+  Future<Result<Response<Map<String, dynamic>>>> refreshToken(
     String refreshToken,
   ) async {
     final data = {"refresh_token": refreshToken};
@@ -95,6 +95,4 @@ class RemoteAuthService {
       return Result.error(Exception(e.response?.data['detail'] ?? e.message));
     }
   }
-
-  
 }

@@ -1,21 +1,26 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:sales_manager/routing/route_paths.dart';
+import 'package:sales_manager/ui/notification/notification_viewmodel.dart';
+import 'package:sales_manager/utils/show_snackbar.dart';
 
-class PendingRequests extends StatefulWidget {
+class PendingRequests extends ConsumerStatefulWidget {
   const PendingRequests({super.key});
 
   @override
-  State<PendingRequests> createState() => _PendingRequestsState();
+  ConsumerState<PendingRequests> createState() => _PendingRequestsState();
 }
 
-class _PendingRequestsState extends State<PendingRequests> {
+class _PendingRequestsState extends ConsumerState<PendingRequests> {
   @override
   Widget build(BuildContext context) {
+    final shopCreationNotificationsAsync = ref.watch(shopCreationNotificationsProvider);
+
     return Scaffold(
       appBar: AppBar(
-        title: Text("Pending Request"),
+        title: const Text("Pending Shop Creation Requests"),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios_new),
           onPressed: () {
@@ -26,70 +31,80 @@ class _PendingRequestsState extends State<PendingRequests> {
       ),
       body: Padding(
         padding: const EdgeInsets.all(18.0),
-        child: PaginatedList(
-          items: [
-            ShopArrovalRequest(
-              shopName: "Fresh Mart",
-              executiveName: "John Doe",
-              location: "Downtown",
-              requestTime: DateTime.now().subtract(const Duration(hours: 2)),
+        child: shopCreationNotificationsAsync.when(
+          loading: () => const Center(child: CircularProgressIndicator()),
+          error: (error, stackTrace) => Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Icon(Icons.error_outline, size: 64, color: Colors.red),
+                const SizedBox(height: 16),
+                Text(
+                  'Failed to load shop creation requests',
+                  style: Theme.of(context).textTheme.titleMedium,
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  error.toString(),
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    color: Colors.red,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 16),
+                ElevatedButton(
+                  onPressed: () {
+                    ref.invalidate(shopCreationNotificationsProvider);
+                  },
+                  child: const Text('Retry'),
+                ),
+              ],
             ),
-            ShopArrovalRequest(
-              shopName: "Green Grocers",
-              executiveName: "Jane Smith",
-              location: "Uptown",
-              requestTime: DateTime.now().subtract(
-                const Duration(days: 1, hours: 3),
-              ),
-            ),
-            ShopArrovalRequest(
-              shopName: "Super Foods",
-              executiveName: "Alex Johnson",
-              location: "Midtown",
-              requestTime: DateTime.now().subtract(const Duration(hours: 5)),
-            ),
-            ShopArrovalRequest(
-              shopName: "Daily Needs",
-              executiveName: "Emily Clark",
-              location: "East Side",
-              requestTime: DateTime.now().subtract(const Duration(days: 2)),
-            ),
-            ShopArrovalRequest(
-              shopName: "Market Hub",
-              executiveName: "Michael Lee",
-              location: "West End",
-              requestTime: DateTime.now().subtract(const Duration(hours: 8)),
-            ),
-            ShopArrovalRequest(
-              shopName: "Shop & Save",
-              executiveName: "Sarah Kim",
-              location: "South Town",
-              requestTime: DateTime.now().subtract(
-                const Duration(days: 1, hours: 6),
-              ),
-            ),
-            ShopArrovalRequest(
-              shopName: "Urban Mart",
-              executiveName: "David Brown",
-              location: "Central City",
-              requestTime: DateTime.now().subtract(const Duration(hours: 10)),
-            ),
-          ],
+          ),
+          data: (notifications) {
+            if (notifications.isEmpty) {
+              return const Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(Icons.check_circle_outline, size: 64, color: Colors.green),
+                    SizedBox(height: 16),
+                    Text(
+                      'No pending shop creation requests',
+                      style: TextStyle(fontSize: 16),
+                    ),
+                    SizedBox(height: 8),
+                    Text(
+                      'All shop creation requests have been processed',
+                      style: TextStyle(color: Colors.grey),
+                    ),
+                  ],
+                ),
+              );
+            }
+
+            // Convert notifications to shop approval requests for the existing UI
+            final shopRequests = notifications.map((notification) {
+              return ShopArrovalRequest.fromNotification(notification);
+            }).toList();
+
+            return PaginatedList(items: shopRequests);
+          },
         ),
       ),
     );
   }
 }
 
-class PaginatedList extends StatefulWidget {
+class PaginatedList extends ConsumerStatefulWidget {
   final List<ShopArrovalRequest> items;
   const PaginatedList({super.key, required this.items});
 
   @override
-  State<PaginatedList> createState() => _PaginatedListState();
+  ConsumerState<PaginatedList> createState() => _PaginatedListState();
 }
 
-class _PaginatedListState extends State<PaginatedList> {
+class _PaginatedListState extends ConsumerState<PaginatedList> {
   final int itemsPerPage = 6;
   late final int totalPages;
   late final PageController _pageController;
@@ -152,11 +167,51 @@ class _PaginatedListState extends State<PaginatedList> {
                   },
                   child: RequestCard(
                     requests: pageItems[index],
-                    onApprove: () {
-                      //TODO: implement approve
+                    onApprove: () async {
+                      final success = await ref
+                          .read(notificationConfirmationProvider.notifier)
+                          .confirmNotification(pageItems[index].notificationId, 'approve');
+                      
+                      if (context.mounted) {
+                        if (success) {
+                          showSnackBar(
+                            context,
+                            'Shop creation request approved successfully',
+                            false,
+                          );
+                          // Refresh the data
+                          ref.invalidate(shopCreationNotificationsProvider);
+                        } else {
+                          showSnackBar(
+                            context,
+                            'Failed to approve request. Please try again.',
+                            true,
+                          );
+                        }
+                      }
                     },
-                    onReject: () {
-                      //TODO: implement delete
+                    onReject: () async {
+                      final success = await ref
+                          .read(notificationConfirmationProvider.notifier)
+                          .confirmNotification(pageItems[index].notificationId, 'reject');
+                      
+                      if (context.mounted) {
+                        if (success) {
+                          showSnackBar(
+                            context,
+                            'Shop creation request rejected successfully',
+                            false,
+                          );
+                          // Refresh the data
+                          ref.invalidate(shopCreationNotificationsProvider);
+                        } else {
+                          showSnackBar(
+                            context,
+                            'Failed to reject request. Please try again.',
+                            true,
+                          );
+                        }
+                      }
                     },
                   ),
                 ),
@@ -307,11 +362,29 @@ class ShopArrovalRequest {
   final String executiveName;
   final String location;
   final DateTime requestTime;
+  final String notificationId;
 
   ShopArrovalRequest({
     required this.shopName,
     required this.executiveName,
     required this.location,
     required this.requestTime,
+    required this.notificationId,
   });
+
+  /// Factory constructor to create from notification data
+  factory ShopArrovalRequest.fromNotification(NotificationItem notification) {
+    // Extract shop data from notification's related data or subject
+    final shopName = notification.subject.contains('shop creation') 
+        ? notification.subject.replaceAll('Request for shop creation approval', '').trim()
+        : 'Shop Request';
+    
+    return ShopArrovalRequest(
+      shopName: shopName.isNotEmpty ? shopName : 'New Shop',
+      executiveName: notification.senderName,
+      location: 'Location not specified', // This might need to come from relatedData if available
+      requestTime: notification.createdAt,
+      notificationId: notification.id,
+    );
+  }
 }

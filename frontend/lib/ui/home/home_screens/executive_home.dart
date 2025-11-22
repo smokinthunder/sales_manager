@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
+import 'package:sales_manager/config/assets.dart';
 import 'package:sales_manager/config/providers/login_message_provider.dart';
 import 'package:sales_manager/domain/models/shops/shop.dart';
-import 'package:sales_manager/ui/home/home_screens/viewmodel/home_screen_viewmodel.dart';
 import 'package:sales_manager/utils/show_snackbar.dart';
 import 'package:go_router/go_router.dart';
 import 'package:sales_manager/routing/route_paths.dart';
@@ -39,184 +39,254 @@ class _ExecutiveHomeState extends ConsumerState<ExecutiveHome> {
   Widget build(BuildContext context) {
     var theme = Theme.of(context);
     var textTheme = theme.textTheme;
-
+    final buttonStyle = TextButton.styleFrom(
+      padding: EdgeInsets.zero,
+      minimumSize: Size(0, 0),
+      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+    );
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
-        children: <Widget>[
+        children: [
           // Total Customers
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text("Total Customers : 58", style: textTheme.headlineSmall),
-              TextButton(
-                onPressed: () {
-                  context.push(RoutePaths.addShop);
-                },
-                child: Text(
-                  "Add new customer",
-                  style: textTheme.bodyMedium?.copyWith(
-                    color: theme.colorScheme.primary,
+              Column(
+                spacing: 4,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  TextButton(
+                    style: buttonStyle,
+                    onPressed: () {
+                      context.push(RoutePaths.addShop);
+                    },
+                    child: Text(
+                      "Add new customer",
+                      style: textTheme.bodyMedium?.copyWith(
+                        color: theme.colorScheme.primary,
+                      ),
+                    ),
                   ),
-                ),
+                  TextButton(
+                    style: buttonStyle,
+                    onPressed: () {
+                      context.push(RoutePaths.createOrder);
+                    },
+                    child: Text(
+                      "Create order",
+                      style: textTheme.bodyMedium?.copyWith(
+                        color: theme.colorScheme.primary,
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ],
           ),
           const SizedBox(height: 40),
 
-          // Today Route
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text("Today's Route", style: textTheme.bodyLarge),
-              Text(
-                DateFormat('dd-MM-yyyy').format(DateTime.now()),
-                style: textTheme.labelLarge,
-              ),
-            ],
-          ),
           const SizedBox(height: 8),
 
           // ExpansionTile for Special Route
-          Card(
-            color: theme.colorScheme.onPrimary,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Column(
-              children: [
-                ...ref
-                    .watch(getYourAssignedRoutesProvider)
-                    .when(
-                      loading: () => [
-                        Center(child: CircularProgressIndicator()),
-                      ],
-                      error: (error, stackTrace) => [
-                        Center(child: Text('Error: $error')),
-                      ],
-                      data: (data) {
-                        return List.generate(
-                          data.length,
-                          (index) => Padding(
-                            padding: const EdgeInsets.all(16.0),
-                            child: Row(
-                              children: [
-                                Expanded(
-                                  child: _InputField(
-                                    label: "Shop Name",
-                                    value: data[index]['shop_name'],
-                                  ),
-                                ),
-                                SizedBox(width: 10),
-                                Expanded(
-                                  child: _InputField(
-                                    label: "Route Name",
-                                    value: data[index]['route_name'],
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        );
-                      },
-                    ),
-
-                ExpansionTile(
-                  shape: RoundedRectangleBorder(),
-                  title: Text(
-                    "Special route",
-
-                    style: textTheme.bodyMedium?.copyWith(
-                      color: theme.colorScheme.primary,
-                    ),
-                  ),
-                  initiallyExpanded: isSpecialRouteExpanded,
-                  onExpansionChanged: (val) {
-                    setState(() => isSpecialRouteExpanded = val);
-                  },
+          InkWell(
+            onTap: () {
+              context.push(RoutePaths.todaysRoute);
+            },
+            child: Card(
+              color: theme.colorScheme.onPrimary,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Padding(
-                      padding: const EdgeInsets.all(12.0),
-                      child: Column(
-                        children: [
-                          Row(
-                            children: const [
-                              Expanded(
-                                child: _InputField(
-                                  label: "Shop Name",
-                                  value: "New India Traders",
-                                ),
-                              ),
-                              SizedBox(width: 10),
-                              Expanded(
-                                child: _InputField(
-                                  label: "Location",
-                                  value: "Kalamassery",
-                                ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 10),
-                          Row(
-                            children: const [
-                              Expanded(
-                                child: _InputField(
-                                  label: "Area",
-                                  value: "Manalimukku",
-                                ),
-                              ),
-                              SizedBox(width: 10),
-                              Expanded(
-                                child: _InputField(
-                                  label: "Contact No",
-                                  value: "+91 9821241890",
-                                ),
-                              ),
-                            ],
-                          ),
-                        ],
-                      ),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text("Today's Route", style: textTheme.bodyLarge),
+                        Text(
+                          DateFormat('dd-MM-yyyy').format(DateTime.now()),
+                          style: textTheme.labelLarge,
+                        ),
+                        SizedBox(height: 4),
+                        Text("kochi, Kalamassery", style: textTheme.labelLarge),
+                      ],
+                    ),
+                    Spacer(),
+
+                    Image.asset(Assets.todayRouteImage, height: 40, width: 40),
+                  ],
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(height: 8),
+          InkWell(
+            onTap: () {
+              context.push(RoutePaths.todaysSpecialRoute);
+            },
+            child: Card(
+              color: theme.colorScheme.onPrimary,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text("Special Route", style: textTheme.bodyLarge),
+
+                        SizedBox(height: 4),
+                        Text(
+                          "No special route assigned",
+                          style: textTheme.labelLarge,
+                        ),
+                      ],
+                    ),
+                    Spacer(),
+                    Image.asset(
+                      Assets.specialRouteImage,
+                      height: 46,
+                      width: 46,
                     ),
                   ],
                 ),
-              ],
+              ),
             ),
           ),
+
+          //TODO: Clean up the commented code below or use it
+          // Card(
+          //   color: theme.colorScheme.onPrimary,
+          //   shape: RoundedRectangleBorder(
+          //     borderRadius: BorderRadius.circular(12),
+          //   ),
+          //   child: Column(
+          //     children: [
+          //       Padding(
+          //         padding: const EdgeInsets.all(16.0),
+          //         child: Row(
+          //           children: const [
+          //             Expanded(
+          //               child: _InputField(label: "Location", value: "Kochi"),
+          //             ),
+          //             SizedBox(width: 10),
+          //             Expanded(
+          //               child: _InputField(label: "Area", value: "Kalamassery"),
+          //             ),
+          //           ],
+          //         ),
+          //       ),
+          //       ExpansionTile(
+          //         shape: RoundedRectangleBorder(),
+          //         title: Text(
+          //           "Special route",
+
+          //           style: textTheme.bodyMedium?.copyWith(
+          //             color: theme.colorScheme.primary,
+          //           ),
+          //         ),
+          //         initiallyExpanded: isSpecialRouteExpanded,
+          //         onExpansionChanged: (val) {
+          //           setState(() => isSpecialRouteExpanded = val);
+          //         },
+          //         children: [
+          //           Padding(
+          //             padding: const EdgeInsets.all(12.0),
+          //             child: Column(
+          //               children: [
+          //                 Row(
+          //                   children: const [
+          //                     Expanded(
+          //                       child: _InputField(
+          //                         label: "Shop Name",
+          //                         value: "New India Traders",
+          //                       ),
+          //                     ),
+          //                     SizedBox(width: 10),
+          //                     Expanded(
+          //                       child: _InputField(
+          //                         label: "Location",
+          //                         value: "Kalamassery",
+          //                       ),
+          //                     ),
+          //                   ],
+          //                 ),
+          //                 const SizedBox(height: 10),
+          //                 Row(
+          //                   children: const [
+          //                     Expanded(
+          //                       child: _InputField(
+          //                         label: "Area",
+          //                         value: "Manalimukku",
+          //                       ),
+          //                     ),
+          //                     SizedBox(width: 10),
+          //                     Expanded(
+          //                       child: _InputField(
+          //                         label: "Contact No",
+          //                         value: "+91 9821241890",
+          //                       ),
+          //                     ),
+          //                   ],
+          //                 ),
+          //               ],
+          //             ),
+          //           ),
+          //         ],
+          //       ),
+          //     ],
+          //   ),
+          // ),
           const SizedBox(height: 16),
 
           // Top Customers
           Text("Top Customers", style: Theme.of(context).textTheme.bodyLarge),
           const SizedBox(height: 12),
 
-          ref
-              .watch(getTopFourShopsProvider)
-              .when(
-                data: (shops) {
-                  if (shops.isEmpty) {
-                    return const Text("No top customers available.");
-                  }
-                  return GridView.count(
-                    shrinkWrap: true,
-                    physics: const NeverScrollableScrollPhysics(),
-                    crossAxisCount: 2,
-                    crossAxisSpacing: 12,
-                    childAspectRatio: 1.2,
-                    mainAxisSpacing: 12,
-                    children: shops.map((shop) {
-                      return _CustomerCard(
-                        name: shop['name'] ?? "Unknown",
-                        location: shop['territory_id'] ?? "Unknown",
-                        phone: shop['phone'] ?? "Unknown",
-                        value: "2100",
-                      );
-                    }).toList(),
-                  );
-                },
-                loading: () => const Center(child: CircularProgressIndicator()),
-                error: (error, stack) => Center(child: Text('Error: $error')),
+          GridView.count(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            crossAxisCount: 2,
+            crossAxisSpacing: 12,
+            childAspectRatio: 1.2,
+            mainAxisSpacing: 12,
+            children: const [
+              _CustomerCard(
+                name: "S K Steels",
+                location: "Kochi",
+                phone: "+91 8432518902",
+                value: "2500",
               ),
-
+              _CustomerCard(
+                name: "M K Enterprises",
+                location: "Ernakulam",
+                phone: "+91 8432518902",
+                value: "2400",
+              ),
+              _CustomerCard(
+                name: "Athira Metals",
+                location: "Aluva",
+                phone: "+91 8432518902",
+                value: "2300",
+              ),
+              _CustomerCard(
+                name: "SAM Traders",
+                location: "Vyttila",
+                phone: "+91 8432518902",
+                value: "1200",
+              ),
+            ],
+          ),
           const SizedBox(height: 10),
           InkWell(
             onTap: () {
@@ -309,8 +379,7 @@ class _CustomerCard extends StatelessWidget {
               Text(location, style: Theme.of(context).textTheme.bodySmall),
               SizedBox(height: 4),
               Text(phone, style: Theme.of(context).textTheme.bodySmall),
-              // const SizedBox(height: 30),
-              Spacer(),
+              const SizedBox(height: 30),
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [

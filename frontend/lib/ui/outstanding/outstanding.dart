@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:sales_manager/config/providers/current_user_notifier.dart';
 import 'package:sales_manager/domain/models/user/user_role.dart';
 import 'package:sales_manager/ui/outstanding/outstanding_viewmodel.dart';
+import 'package:sales_manager/ui/home/home_screens/viewmodel/home_screen_viewmodel.dart';
 import 'package:sales_manager/ui/widgets/drop_down_menu.dart';
 
 class ExecutiveOutStanding extends ConsumerStatefulWidget {
@@ -52,7 +53,7 @@ class _ExecutiveOutStandingState extends ConsumerState<ExecutiveOutStanding> {
               Flexible(
                 flex: 5,
                 child: (userType == UserRole.areaManager)
-                    ? ref.watch(getAllSalesExecutivesProvider).when(
+                    ? ref.watch(getMySalesExecutivesProvider).when(
                         data: (executives) => CustomDropDownMenu<String>(
                           hintText: selectedExecutiveName ?? "Select Executive",
                           dropdownMenuEntries: executives

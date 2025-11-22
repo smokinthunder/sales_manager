@@ -25,6 +25,12 @@ class RemoteShopService {
     required double latitude,
     required double longitude,
     required String territoryId,
+    String? pinCode,
+    String? email,
+    String? aadhaarNumber,
+    String? panNumber,
+    String? locationName,
+    String? gstNumber,
   }) async {
     final queryParameters = {"tenant_id": tenantId};
     final data = {
@@ -38,6 +44,15 @@ class RemoteShopService {
       "longitude": longitude,
       "territory_id": territoryId,
     };
+    
+    // Add optional fields if provided
+    if (pinCode != null && pinCode.isNotEmpty) data["pin_code"] = pinCode;
+    if (email != null && email.isNotEmpty) data["email"] = email;
+    if (aadhaarNumber != null && aadhaarNumber.isNotEmpty) data["aadhaar_number"] = aadhaarNumber;
+    if (panNumber != null && panNumber.isNotEmpty) data["pan_number"] = panNumber;
+    if (locationName != null && locationName.isNotEmpty) data["location_name"] = locationName;
+    if (gstNumber != null && gstNumber.isNotEmpty) data["gst_number"] = gstNumber;
+    
     try {
       Response<Map<String, dynamic>> response = await dio.post(
         ApiEndpoints.shops,

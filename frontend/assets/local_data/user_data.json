@@ -43,6 +43,15 @@
       "phone_number": "3333333333",
       "picture": "https://www.gravatar.com/avatar/placeholder",
       "type": "executive"
+    },
+    {
+      "id": "6",
+      "firstname": "Eve",
+      "lastname": "Davis",
+      "email": "john.doe@example.com",
+      "phone_number": "1234567891",
+      "picture": "https://www.gravatar.com/avatar/placeholder",
+      "type": "superAdmin"
     }
   ]
   

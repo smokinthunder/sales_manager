@@ -39,7 +39,7 @@ class NotificationState {
   }
 }
 
-@Riverpod(keepAlive: true)
+@riverpod
 class NotificationNotifier extends _$NotificationNotifier {
   Timer? _refreshTimer;
   static const Duration _refreshInterval = Duration(minutes: 1);
@@ -181,7 +181,7 @@ class NotificationNotifier extends _$NotificationNotifier {
 
 /// Provider for easy access to pending notification count
 @riverpod
-int pendingNotificationCount(PendingNotificationCountRef ref) {
+int pendingNotificationCount(Ref ref) {
   final notificationState = ref.watch(notificationNotifierProvider);
   return notificationState.pendingCount;
 }

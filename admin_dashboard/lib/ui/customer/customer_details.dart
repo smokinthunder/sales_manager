@@ -1,0 +1,186 @@
+import 'package:admin_dashboard/routing/routes.dart';
+import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
+
+class CustomerDetails extends StatelessWidget {
+  const CustomerDetails({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Container(
+      padding: EdgeInsets.all(32),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Column(
+        spacing: 32,
+        children: [
+          _buildTitle(context, theme),
+          Container(
+            color: theme.colorScheme.surface,
+            padding: EdgeInsets.all(12),
+            child: Row(
+              spacing: 12,
+              children: [
+                Flexible(
+                  flex: 4,
+                  child: Column(
+                    spacing: 12,
+                    children: [
+                      _buildShopTitleCard(theme),
+                      _buildBasicDetails(theme),
+                      _buildMoreDetails(theme),
+                    ],
+                  ),
+                ),
+                _buildMostOrderedTable(theme),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Container _buildShopTitleCard(ThemeData theme) {
+    return Container(
+      padding: EdgeInsets.all(12),
+      color: theme.colorScheme.onPrimary,
+      child: Row(
+        children: [
+          CircleAvatar(radius: 24, backgroundImage: NetworkImage("imageUrl")),
+          SizedBox(width: 16),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text("Name", style: theme.textTheme.bodyLarge),
+              Text("Location", style: theme.textTheme.bodySmall),
+            ],
+          ),
+          Spacer(),
+        ],
+      ),
+    );
+  }
+
+  Flexible _buildMostOrderedTable(ThemeData theme) {
+    return Flexible(
+      flex: 6,
+      child: Container(
+        padding: EdgeInsets.all(12),
+        color: theme.colorScheme.onPrimary,
+        child: Column(
+          spacing: 20,
+          children: [
+            Text("Most ordered products", style: theme.textTheme.bodyLarge),
+            Table(
+              border: TableBorder(
+                verticalInside: BorderSide(
+                  width: 2,
+                  color: theme.colorScheme.tertiary.withAlpha(128),
+                ),
+              ),
+              children: [
+                TableRow(
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.all(8.0),
+                      child: Text("Date", style: theme.textTheme.bodyLarge),
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.all(8.0).copyWith(left: 32),
+                      child: Text("Items", style: theme.textTheme.bodyLarge),
+                    ),
+                  ],
+                ),
+                for (var _ in Iterable.generate(10))
+                  TableRow(
+                    children: [
+                      Padding(
+                        padding: const EdgeInsets.all(8.0),
+                        child: Text("21-12-2025"),
+                      ),
+                      Padding(
+                        padding: const EdgeInsets.all(8.0).copyWith(left: 32),
+                        child: Text("Aqua Star Elbow Socker 80"),
+                      ),
+                    ],
+                  ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Container _buildMoreDetails(ThemeData theme) {
+    return Container(
+      padding: EdgeInsets.all(12),
+      color: theme.colorScheme.onPrimary,
+      child: Column(
+        spacing: 12,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text("More details", style: theme.textTheme.bodyLarge),
+          _buildRowItem("Area manager : ", "Vishnu kumar"),
+          _buildRowItem("Sales Executive : ", "Vishnu kumar"),
+          _buildRowItem("Area : ", "Kalamassery"),
+        ],
+      ),
+    );
+  }
+
+  Container _buildBasicDetails(ThemeData theme) {
+    return Container(
+      padding: EdgeInsets.all(12),
+      color: theme.colorScheme.onPrimary,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        spacing: 12,
+        children: [
+          Text("Basic details", style: theme.textTheme.bodyLarge),
+          _buildRowItem(
+            "Address: ",
+            "THIS IS SOME ADDRESSTHIS IS SOME ADDRESSTHIS IS SOME ADDRESS",
+          ),
+          _buildRowItem("Contact no : ", "+91 9797938457"),
+          _buildRowItem("Location : ", "Kochi"),
+          _buildRowItem("Shop owner : ", "Vishnu kumar"),
+          _buildRowItem("Join date : ", "21-09-2023"),
+        ],
+      ),
+    );
+  }
+
+  Row _buildRowItem(String title, String value) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(title),
+        Expanded(child: Text(value)),
+      ],
+    );
+  }
+
+  Row _buildTitle(BuildContext context, ThemeData theme) {
+    return Row(
+      children: [
+        TextButton(
+          onPressed: () {
+            context.go(Routes.customer);
+          },
+          child: Text(
+            "All customer list",
+            style: TextStyle(color: theme.colorScheme.onSurface),
+          ),
+        ),
+        Icon(Icons.chevron_right),
+        Text("Kerala Pipe House"),
+        Spacer(),
+      ],
+    );
+  }
+}
