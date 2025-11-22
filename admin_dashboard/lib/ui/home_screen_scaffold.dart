@@ -43,6 +43,12 @@ class HomeScreen extends StatelessWidget {
       route: Routes.areaManager,
       title: 'Area Manager',
     ),
+    _NavTab(
+      label: 'Order',
+      icon: Icons.shopping_cart_outlined,
+      route: Routes.order,
+      title: 'Order',
+    ),
   ];
 
   @override
