@@ -22,4 +22,11 @@ abstract class RoutePaths {
   static const chat = '/chat';
   static const pendingRequests = '/pending_requests';
   static const createTarget = '/create_target';
+  static const superAdminDashboard = '/super_admin/dashboard';
+  static const cart = '/cart';
+  static const createOrder = '/create_order';
+  static const orderHistory = '/order_history';
+  static const selectProducts = '/select_products';
+  static const todaysRoute = '/todays_route';
+  static const todaysSpecialRoute = '/todays_special_route';
 }
