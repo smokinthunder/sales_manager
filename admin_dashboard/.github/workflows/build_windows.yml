@@ -1,0 +1,39 @@
+name: Build Windows App
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [ antesh_3 ]
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    steps:
+      # 1. Checkout entire repo
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # 2. Install Flutter
+      - name: Install Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+
+      # 3. Get dependencies
+      - name: Flutter pub get
+        working-directory: admin_dashboard
+        run: flutter pub get
+
+      # 4. Build Windows Release
+        # Note: flutter must be run from the project folder
+      - name: Build Windows release
+        working-directory: admin_dashboard
+        run: flutter build windows --release
+
+      # 5. Upload Windows .exe + build folder as artifact
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: windows-build
+          path: admin_dashboard/build/windows/runner/Release/
