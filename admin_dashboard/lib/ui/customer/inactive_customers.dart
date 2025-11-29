@@ -109,11 +109,53 @@ class CustomerTable extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            title,
-            style: theme.textTheme.headlineLarge?.copyWith(
-              color: theme.colorScheme.primary,
-            ),
+          Row(
+            children: [
+              Text(
+                title,
+                style: theme.textTheme.headlineLarge?.copyWith(
+                  color: theme.colorScheme.primary,
+                ),
+              ),
+              Spacer(),
+              Text(
+                "Set billing cycle not generated  ",
+                style: theme.textTheme.labelLarge,
+              ),
+              SizedBox(
+                width: 200,
+                child: CustomDropDownMenu(
+                  hintText: "Select Month",
+                  dropdownMenuEntries: [
+                    DropdownMenuEntry(
+                      value: "Last1Month",
+                      label: "Last 1 Month",
+                    ),
+                    DropdownMenuEntry(
+                      value: "Last2Month",
+                      label: "Last 2 Month",
+                    ),
+                    DropdownMenuEntry(
+                      value: "Last3Month",
+                      label: "Last 3 Month",
+                    ),
+                    DropdownMenuEntry(
+                      value: "Last4Month",
+                      label: "Last 4 Month",
+                    ),
+                    DropdownMenuEntry(
+                      value: "Last5Month",
+                      label: "Last 5 Month",
+                    ),
+                    DropdownMenuEntry(
+                      value: "Last6Month",
+                      label: "Last 6 Month",
+                    ),
+                    DropdownMenuEntry(value: "Last1Year", label: "Last 1 Year"),
+                  ],
+                ),
+              ),
+            ],
           ),
           Text(data.length.toString(), style: theme.textTheme.headlineLarge),
           Row(
