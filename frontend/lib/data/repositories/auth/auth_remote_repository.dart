@@ -20,7 +20,7 @@ class AuthRemoteRepository {
   Future<Result<Response<Map<String, dynamic>>>> verifyOtp(
     String phoneNumber,
     String otp,
-  ) async => await remoteAuthService.verifyOtp(phoneNumber, otp);
+  ) async => await remoteAuthService. verifyOtp(phoneNumber, otp);
 
   Future<Result<Response<Map<String, dynamic>>>> refreshToken(
     String refreshToken,
