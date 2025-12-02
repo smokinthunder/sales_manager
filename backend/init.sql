@@ -391,29 +391,6 @@ INSERT INTO users (phone, name, email, role, status, tenant_id, created_by) VALU
 ('+9999999999', 'Super Administrator', 'superadmin@salesmanager.com', 'superadmin', 'active', 'tenant1', 1)
 ON DUPLICATE KEY UPDATE name = VALUES(name), email = VALUES(email);
 
--- Insert email authentication records for admin users
--- Default password: "Aquastar123!" for all admin users (should be changed after first login)
--- Password hash for "Aquastar123!" using bcrypt with 12 rounds
-INSERT INTO user_auth (user_id, email, password_hash, tenant_id, created_by, updated_by)
-SELECT 
-    u.id,
-    u.email,
-    '$2b$12$R7Ck0FScqhGU7tQFHSE/3ud59IQkboS22lNayccGm6KJOv3sVGUzK',  -- bcrypt hash for "Aquastar123!"
-    u.tenant_id,
-    1,  -- created_by superadmin
-    1   -- updated_by superadmin
-FROM users u
-WHERE u.role IN ('client_admin', 'superadmin')
-AND u.email IS NOT NULL
-AND NOT EXISTS (
-    SELECT 1 FROM user_auth ua WHERE ua.user_id = u.id
-)
-AND u.status = 'active'
-ON DUPLICATE KEY UPDATE 
-    email = VALUES(email),
-    password_hash = VALUES(password_hash),
-    updated_at = CURRENT_TIMESTAMP;
-
 -- Create due_data table for outstanding payments
 CREATE TABLE IF NOT EXISTS due_data (
     id INT AUTO_INCREMENT PRIMARY KEY,
@@ -564,15 +541,38 @@ CREATE TABLE IF NOT EXISTS user_auth_audit (
     FOREIGN KEY (user_auth_id) REFERENCES user_auth(id) ON DELETE CASCADE
 );
 
--- Create indexes for performance
-CREATE INDEX IF NOT EXISTS idx_users_tenant_role ON users(tenant_id, role);
-CREATE INDEX IF NOT EXISTS idx_territories_tenant ON territories(tenant_id);
-CREATE INDEX IF NOT EXISTS idx_shops_tenant_territory ON shops(tenant_id, territory_id);
-CREATE INDEX IF NOT EXISTS idx_routes_tenant_week ON routes(tenant_id, week_start_date);
-CREATE INDEX IF NOT EXISTS idx_visits_tenant_date ON visits(tenant_id, checkin_time);
-CREATE INDEX IF NOT EXISTS idx_sales_executive_assignments_tenant ON sales_executive_assignments(tenant_id);
+-- Create indexes for performance (IF NOT EXISTS removed as it's not supported in MySQL for CREATE INDEX)
+CREATE INDEX idx_users_tenant_role ON users(tenant_id, role);
+CREATE INDEX idx_territories_tenant ON territories(tenant_id);
+CREATE INDEX idx_shops_tenant_territory ON shops(tenant_id, territory_id);
+CREATE INDEX idx_routes_tenant_week ON routes(tenant_id, week_start_date);
+CREATE INDEX idx_visits_tenant_date ON visits(tenant_id, checkin_time);
+CREATE INDEX idx_sales_executive_assignments_tenant ON sales_executive_assignments(tenant_id);
 
 -- Additional indexes for email authentication
-CREATE INDEX IF NOT EXISTS idx_user_auth_tenant_email ON user_auth(tenant_id, email);
-CREATE INDEX IF NOT EXISTS idx_user_auth_reset_token ON user_auth(reset_token);
-CREATE INDEX IF NOT EXISTS idx_user_auth_audit_tenant_action ON user_auth_audit(tenant_id, action, created_at);
+CREATE INDEX idx_user_auth_tenant_email ON user_auth(tenant_id, email);
+CREATE INDEX idx_user_auth_reset_token ON user_auth(reset_token);
+CREATE INDEX idx_user_auth_audit_tenant_action ON user_auth_audit(tenant_id, action, created_at);
+
+-- Insert email authentication records for admin users
+-- Default password: "Aquastar123!" for all admin users (should be changed after first login)
+-- Password hash for "Aquastar123!" using bcrypt with 12 rounds
+INSERT INTO user_auth (user_id, email, password_hash, tenant_id, created_by, updated_by)
+SELECT 
+    u.id,
+    u.email,
+    '$2b$12$R7Ck0FScqhGU7tQFHSE/3ud59IQkboS22lNayccGm6KJOv3sVGUzK',  -- bcrypt hash for "Aquastar123!"
+    u.tenant_id,
+    1,  -- created_by superadmin
+    1   -- updated_by superadmin
+FROM users u
+WHERE u.role IN ('client_admin', 'superadmin')
+AND u.email IS NOT NULL
+AND NOT EXISTS (
+    SELECT 1 FROM user_auth ua WHERE ua.user_id = u.id
+)
+AND u.status = 'active'
+ON DUPLICATE KEY UPDATE 
+    email = VALUES(email),
+    password_hash = VALUES(password_hash),
+    updated_at = CURRENT_TIMESTAMP;
