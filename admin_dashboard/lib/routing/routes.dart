@@ -1,6 +1,9 @@
 abstract class Routes {
-  //Login
+  //Login and Auth Routes
   static const String login = '/';
+  static const String forgotPassword = '/forgot-password';
+  static const String resetPassword = '/reset-password';
+  static const String changePassword = '/change-password';
 
   //Dashboard and related Routes
   static const String dashboard = '/dashboard';

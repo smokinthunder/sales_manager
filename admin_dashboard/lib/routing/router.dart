@@ -19,23 +19,61 @@ import 'package:admin_dashboard/ui/executive/executive.dart';
 import 'package:admin_dashboard/ui/executive/find_dealers.dart';
 import 'package:admin_dashboard/ui/home_screen_scaffold.dart';
 import 'package:admin_dashboard/ui/login_screen.dart';
+import 'package:admin_dashboard/ui/forgot_password_screen.dart';
+import 'package:admin_dashboard/ui/reset_password_screen.dart';
+import 'package:admin_dashboard/ui/change_password_screen.dart';
 import 'package:admin_dashboard/ui/notifications.dart';
 import 'package:admin_dashboard/ui/orders/orders.dart';
 import 'package:admin_dashboard/ui/orders/view_order_datails.dart';
 import 'package:admin_dashboard/ui/outstanding/invoice.dart';
 import 'package:admin_dashboard/ui/outstanding/more_details.dart';
 import 'package:admin_dashboard/ui/outstanding/outstanding.dart';
+import 'package:admin_dashboard/viewmodel/auth_viewmodel.dart';
+import 'package:admin_dashboard/domain/models/auth_state.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 final router = Provider<GoRouter>((ref) {
+  final authState = ref.watch(authViewModelProvider);
+  
   return GoRouter(
     initialLocation: Routes.login,
+    redirect: (context, state) {
+      final isAuthenticated = authState is AuthAuthenticated;
+      final isLoggingIn = state.matchedLocation == Routes.login ||
+          state.matchedLocation == Routes.forgotPassword ||
+          state.matchedLocation == Routes.resetPassword;
+
+      // If not authenticated and trying to access protected route
+      if (!isAuthenticated && !isLoggingIn) {
+        return Routes.login;
+      }
+
+      // If authenticated and trying to access login
+      if (isAuthenticated && isLoggingIn) {
+        return Routes.dashboard;
+      }
+
+      return null; // No redirect needed
+    },
     routes: [
+      // Auth Routes (Public)
       GoRoute(
         path: Routes.login,
         builder: (context, state) => const LoginScreen(),
       ),
+      GoRoute(
+        path: Routes.forgotPassword,
+        builder: (context, state) => const ForgotPasswordScreen(),
+      ),
+      GoRoute(
+        path: Routes.resetPassword,
+        builder: (context, state) {
+          final token = state.uri.queryParameters['token'];
+          return ResetPasswordScreen(resetToken: token);
+        },
+      ),
+      // Protected Routes
       ShellRoute(
         builder: (context, state, child) {
           return HomeScreen(child: child);
@@ -52,6 +90,10 @@ final router = Provider<GoRouter>((ref) {
           GoRoute(
             path: Routes.notifications,
             builder: (context, state) => const Notifications(),
+          ),
+          GoRoute(
+            path: Routes.changePassword,
+            builder: (context, state) => const ChangePasswordScreen(),
           ),
         ],
       ),

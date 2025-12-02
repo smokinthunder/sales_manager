@@ -2,17 +2,91 @@ import 'package:dio/dio.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:admin_dashboard/data/core/api_endpoints.dart';
 import 'package:admin_dashboard/data/auth/local/local_auth_service.dart';
+import 'package:admin_dashboard/data/auth/remote/auth_interceptor.dart';
+import 'package:admin_dashboard/data/auth/config/auth_config.dart';
 import 'package:admin_dashboard/domain/models/auth_response.dart';
 import 'package:admin_dashboard/utils/result.dart';
+import 'package:admin_dashboard/utils/logger_service.dart';
 
 class RemoteEmailAuthService {
   late final Dio dio;
   final LocalAuthService localAuth = LocalAuthService();
+  final LoggerService logger = LoggerService();
   final tenantId = dotenv.env['TENANT_ID'] ?? "aquastar";
 
-  RemoteEmailAuthService({bool useInterceptor = false}) {
-    dio = Dio();
-    // Interceptor will be added after initial implementation
+  RemoteEmailAuthService({bool useInterceptor = true}) {
+    dio = Dio(
+      BaseOptions(
+        connectTimeout: Duration(seconds: AuthConfig.apiTimeoutSeconds),
+        receiveTimeout: Duration(seconds: AuthConfig.apiTimeoutSeconds),
+        sendTimeout: Duration(seconds: AuthConfig.apiTimeoutSeconds),
+        validateStatus: (status) => status != null && status < 500,
+      ),
+    );
+    
+    // Add auth interceptor if requested
+    if (useInterceptor) {
+      dio.interceptors.add(AuthInterceptor(localAuth));
+      logger.info('Auth interceptor enabled', 'AUTH_SERVICE');
+    }
+    
+    logger.info('RemoteEmailAuthService initialized', 'AUTH_SERVICE');
+  }
+
+  /// Parse DioException and return user-friendly error message
+  String _parseError(DioException e) {
+    logger.apiError(e.requestOptions.uri.toString(), e, e.stackTrace);
+    
+    switch (e.type) {
+      case DioExceptionType.connectionTimeout:
+      case DioExceptionType.sendTimeout:
+      case DioExceptionType.receiveTimeout:
+        return 'Connection timeout. Please check your internet connection.';
+      
+      case DioExceptionType.badResponse:
+        final statusCode = e.response?.statusCode;
+        final data = e.response?.data;
+        
+        if (data is Map<String, dynamic>) {
+          // Try to extract detail from response
+          if (data.containsKey('detail')) {
+            return data['detail'].toString();
+          }
+          if (data.containsKey('message')) {
+            return data['message'].toString();
+          }
+        }
+        
+        // Return status code specific messages
+        switch (statusCode) {
+          case 400:
+            return 'Invalid request. Please check your input.';
+          case 401:
+            return AuthConfig.invalidCredentialsMessage;
+          case 403:
+            return 'Access forbidden. You do not have permission.';
+          case 404:
+            return 'Resource not found. Please contact support.';
+          case 429:
+            return AuthConfig.accountLockedMessage;
+          case 500:
+            return AuthConfig.serverErrorMessage;
+          default:
+            return 'Request failed with status code: $statusCode';
+        }
+      
+      case DioExceptionType.cancel:
+        return 'Request was cancelled.';
+      
+      case DioExceptionType.connectionError:
+        return AuthConfig.networkErrorMessage;
+      
+      case DioExceptionType.badCertificate:
+        return 'Security certificate error. Please check your connection.';
+      
+      default:
+        return e.message ?? AuthConfig.serverErrorMessage;
+    }
   }
 
   /// Login with email and password
@@ -28,9 +102,17 @@ class RemoteEmailAuthService {
     };
     
     try {
+      logger.apiRequest('POST', ApiEndpoints.emailLogin, queryParameters);
+      
       Response<Map<String, dynamic>> response = await dio.post(
         ApiEndpoints.emailLogin,
         queryParameters: queryParameters,
+      );
+      
+      logger.apiResponse(
+        response.statusCode ?? 0,
+        ApiEndpoints.emailLogin,
+        'Success',
       );
       
       if (response.data != null) {
@@ -48,15 +130,18 @@ class RemoteEmailAuthService {
           await localAuth.saveUserInfo(authResponse.user!);
         }
         
+        logger.info('Login successful for user: ${authResponse.user?.email}', 'AUTH_SERVICE');
         return Result.ok(authResponse);
       } else {
+        logger.error('Login failed: Invalid response', 'AUTH_SERVICE');
         return Result.error(Exception('Invalid response from server'));
       }
     } on DioException catch (e) {
-      return Result.error(
-        Exception(e.response?.data['detail'] ?? e.message ?? 'Login failed'),
-      );
-    } catch (e) {
+      final errorMessage = _parseError(e);
+      logger.error('Login failed: $errorMessage', 'AUTH_SERVICE', e);
+      return Result.error(Exception(errorMessage));
+    } catch (e, stackTrace) {
+      logger.error('Login failed: Unexpected error', 'AUTH_SERVICE', e, stackTrace);
       return Result.error(Exception('Unexpected error: $e'));
     }
   }
@@ -72,22 +157,33 @@ class RemoteEmailAuthService {
     };
     
     try {
+      logger.apiRequest('POST', ApiEndpoints.emailForgotPassword, queryParameters);
+      
       Response<Map<String, dynamic>> response = await dio.post(
         ApiEndpoints.emailForgotPassword,
         queryParameters: queryParameters,
       );
       
+      logger.apiResponse(
+        response.statusCode ?? 0,
+        ApiEndpoints.emailForgotPassword,
+        'Success',
+      );
+      
       if (response.data != null) {
         final resetResponse = PasswordResetRequestResponse.fromJson(response.data!);
+        logger.info('Password reset requested for: $email', 'AUTH_SERVICE');
         return Result.ok(resetResponse);
       } else {
+        logger.error('Password reset failed: Invalid response', 'AUTH_SERVICE');
         return Result.error(Exception('Invalid response from server'));
       }
     } on DioException catch (e) {
-      return Result.error(
-        Exception(e.response?.data['detail'] ?? e.message ?? 'Password reset request failed'),
-      );
-    } catch (e) {
+      final errorMessage = _parseError(e);
+      logger.error('Password reset failed: $errorMessage', 'AUTH_SERVICE', e);
+      return Result.error(Exception(errorMessage));
+    } catch (e, stackTrace) {
+      logger.error('Password reset failed: Unexpected error', 'AUTH_SERVICE', e, stackTrace);
       return Result.error(Exception('Unexpected error: $e'));
     }
   }

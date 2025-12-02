@@ -5,7 +5,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 class ResetPasswordScreen extends ConsumerStatefulWidget {
-  const ResetPasswordScreen({super.key});
+  final String? resetToken;
+  
+  const ResetPasswordScreen({super.key, this.resetToken});
 
   @override
   ConsumerState<ResetPasswordScreen> createState() => _ResetPasswordScreenState();
@@ -18,6 +20,15 @@ class _ResetPasswordScreenState extends ConsumerState<ResetPasswordScreen> {
   final _formKey = GlobalKey<FormState>();
   var isObscuredPassword = true;
   var isObscuredConfirm = true;
+
+  @override
+  void initState() {
+    super.initState();
+    // If token is provided from URL, pre-fill it
+    if (widget.resetToken != null) {
+      _tokenController.text = widget.resetToken!;
+    }
+  }
 
   @override
   void dispose() {

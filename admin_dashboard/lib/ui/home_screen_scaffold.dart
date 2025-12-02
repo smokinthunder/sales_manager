@@ -1,8 +1,11 @@
 import 'package:admin_dashboard/routing/routes.dart';
+import 'package:admin_dashboard/viewmodel/auth_viewmodel.dart';
+import 'package:admin_dashboard/domain/models/auth_state.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-class HomeScreen extends StatelessWidget {
+class HomeScreen extends ConsumerWidget {
   final Widget child;
   const HomeScreen({super.key, required this.child});
 
@@ -52,7 +55,7 @@ class HomeScreen extends StatelessWidget {
   ];
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final location = GoRouterState.of(context).matchedLocation;
     final theme = Theme.of(context);
     final width = MediaQuery.of(context).size.width;
@@ -135,31 +138,86 @@ class HomeScreen extends StatelessWidget {
                               },
                             ),
                             SizedBox(width: 16),
-                            InkWell(
-                              onTap: () {
-                                //TODO: Implement Logout Functionality
-                                context.go(Routes.login);
-                              },
-                              child: Row(
-                                children: [
-                                  Padding(
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 8.0,
-                                    ),
-                                    child: Icon(
-                                      Icons.logout_outlined,
-                                      color: theme.colorScheme.primary,
-                                    ),
-                                  ),
-                                  Text(
-                                    "Logout",
-                                    style: theme.textTheme.headlineMedium
-                                        ?.copyWith(
-                                          color: theme.colorScheme.primary,
+                            Consumer(
+                              builder: (context, ref, child) {
+                                // Listen for logout completion
+                                ref.listen<AuthState>(
+                                  authViewModelProvider,
+                                  (previous, next) {
+                                    if (next is AuthUnauthenticated && 
+                                        previous is AuthLoading) {
+                                      // Navigate to login after successful logout
+                                      context.go(Routes.login);
+                                    }
+                                  },
+                                );
+
+                                final authState = ref.watch(authViewModelProvider);
+                                final isLoggingOut = authState is AuthLoading;
+
+                                return InkWell(
+                                  onTap: isLoggingOut ? null : () async {
+                                    // Show confirmation dialog
+                                    final confirmed = await showDialog<bool>(
+                                      context: context,
+                                      builder: (context) => AlertDialog(
+                                        title: const Text('Logout'),
+                                        content: const Text(
+                                          'Are you sure you want to logout?',
                                         ),
+                                        actions: [
+                                          TextButton(
+                                            onPressed: () => Navigator.pop(context, false),
+                                            child: const Text('Cancel'),
+                                          ),
+                                          TextButton(
+                                            onPressed: () => Navigator.pop(context, true),
+                                            child: const Text('Logout'),
+                                          ),
+                                        ],
+                                      ),
+                                    );
+
+                                    if (confirmed == true) {
+                                      // Perform logout - this will clear tokens and update state
+                                      await ref
+                                          .read(authViewModelProvider.notifier)
+                                          .logout();
+                                    }
+                                  },
+                                  child: Row(
+                                    children: [
+                                      Padding(
+                                        padding: const EdgeInsets.symmetric(
+                                          horizontal: 8.0,
+                                        ),
+                                        child: isLoggingOut
+                                            ? SizedBox(
+                                                width: 20,
+                                                height: 20,
+                                                child: CircularProgressIndicator(
+                                                  strokeWidth: 2,
+                                                  valueColor: AlwaysStoppedAnimation<Color>(
+                                                    theme.colorScheme.primary,
+                                                  ),
+                                                ),
+                                              )
+                                            : Icon(
+                                                Icons.logout_outlined,
+                                                color: theme.colorScheme.primary,
+                                              ),
+                                      ),
+                                      Text(
+                                        isLoggingOut ? "Logging out..." : "Logout",
+                                        style: theme.textTheme.headlineMedium
+                                            ?.copyWith(
+                                              color: theme.colorScheme.primary,
+                                            ),
+                                      ),
+                                    ],
                                   ),
-                                ],
-                              ),
+                                );
+                              },
                             ),
                             SizedBox(width: 32),
                           ],

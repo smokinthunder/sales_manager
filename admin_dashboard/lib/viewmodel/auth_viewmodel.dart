@@ -1,9 +1,11 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:admin_dashboard/data/auth/remote/auth_remote_repository.dart';
 import 'package:admin_dashboard/data/auth/local/local_auth_service.dart';
+import 'package:admin_dashboard/data/auth/config/auth_config.dart';
 import 'package:admin_dashboard/domain/models/auth_state.dart';
 import 'package:admin_dashboard/domain/models/auth_response.dart';
 import 'package:admin_dashboard/utils/result.dart';
+import 'package:admin_dashboard/utils/logger_service.dart';
 
 part 'auth_viewmodel.g.dart';
 
@@ -12,87 +14,122 @@ part 'auth_viewmodel.g.dart';
 class AuthViewModel extends _$AuthViewModel {
   late final AuthRemoteRepository _repository;
   late final LocalAuthService _localAuth;
+  late final LoggerService _logger;
 
   @override
   AuthState build() {
     _repository = ref.watch(authRemoteRepositoryProvider);
     _localAuth = LocalAuthService();
+    _logger = LoggerService();
     _checkAuthStatus();
     return const AuthInitial();
   }
 
   /// Check if user is already authenticated
   Future<void> _checkAuthStatus() async {
-    final accessToken = await _localAuth.getAccessToken();
-    if (accessToken != null) {
-      final isExpired = await _localAuth.isAccessTokenExpired();
-      if (!isExpired) {
-        // User is authenticated, load user info
-        final userId = await _localAuth.getUserId();
-        final userEmail = await _localAuth.getUserEmail();
-        final userName = await _localAuth.getUserName();
-        final userRole = await _localAuth.getUserRole();
+    try {
+      _logger.debug('Checking authentication status', 'AUTH_VIEWMODEL');
+      
+      final accessToken = await _localAuth.getAccessToken();
+      if (accessToken != null) {
+        final isExpired = await _localAuth.isAccessTokenExpired();
+        if (!isExpired) {
+          // User is authenticated, load user info
+          final userId = await _localAuth.getUserId();
+          final userEmail = await _localAuth.getUserEmail();
+          final userName = await _localAuth.getUserName();
+          final userRole = await _localAuth.getUserRole();
 
-        if (userId != null && userEmail != null) {
-          final user = UserInfo(
-            id: int.parse(userId),
-            email: userEmail,
-            name: userName ?? '',
-            role: userRole ?? 'client_admin',
-            status: 'active',
-            tenantId: 'aquastar',
-            authType: 'email',
-          );
-          state = AuthAuthenticated(user: user, accessToken: accessToken);
+          if (userId != null && userEmail != null) {
+            final user = UserInfo(
+              id: int.parse(userId),
+              email: userEmail,
+              name: userName ?? '',
+              role: userRole ?? 'client_admin',
+              status: 'active',
+              tenantId: 'aquastar',
+              authType: 'email',
+            );
+            _logger.info('User authenticated: ${user.email}', 'AUTH_VIEWMODEL');
+            state = AuthAuthenticated(user: user, accessToken: accessToken);
+          } else {
+            _logger.warning('User info incomplete, clearing session', 'AUTH_VIEWMODEL');
+            await _localAuth.clearTokens();
+            state = const AuthUnauthenticated();
+          }
+        } else {
+          // Token expired, clear everything
+          _logger.info('Token expired, clearing session', 'AUTH_VIEWMODEL');
+          await _localAuth.clearTokens();
+          state = const AuthUnauthenticated();
         }
       } else {
-        // Token expired, clear everything
-        await _localAuth.clearTokens();
+        _logger.debug('No access token found', 'AUTH_VIEWMODEL');
         state = const AuthUnauthenticated();
       }
-    } else {
+    } catch (e, stackTrace) {
+      _logger.error('Error checking auth status', 'AUTH_VIEWMODEL', e, stackTrace);
       state = const AuthUnauthenticated();
     }
   }
 
   /// Login with email and password
   Future<void> login(String email, String password) async {
-    state = const AuthLoading();
+    try {
+      _logger.info('Login attempt for: $email', 'AUTH_VIEWMODEL');
+      state = const AuthLoading();
 
-    final result = await _repository.login(email, password);
+      final result = await _repository.login(email, password);
 
-    switch (result) {
-      case Ok<AuthResponse>():
-        final authResponse = result.value;
-        if (authResponse.user != null) {
-          state = AuthAuthenticated(
-            user: authResponse.user!,
-            accessToken: authResponse.accessToken,
-          );
-        } else {
-          state = const AuthError('Invalid response from server');
-        }
-        break;
-      case Error<AuthResponse>():
-        state = AuthError(result.error.toString().replaceAll('Exception: ', ''));
-        break;
+      switch (result) {
+        case Ok<AuthResponse>():
+          final authResponse = result.value;
+          if (authResponse.user != null) {
+            _logger.info('Login successful for: ${authResponse.user!.email}', 'AUTH_VIEWMODEL');
+            state = AuthAuthenticated(
+              user: authResponse.user!,
+              accessToken: authResponse.accessToken,
+            );
+          } else {
+            _logger.error('Login failed: Invalid response', 'AUTH_VIEWMODEL');
+            state = const AuthError('Invalid response from server');
+          }
+          break;
+        case Error<AuthResponse>():
+          final errorMessage = result.error.toString().replaceAll('Exception: ', '');
+          _logger.error('Login failed: $errorMessage', 'AUTH_VIEWMODEL');
+          state = AuthError(errorMessage);
+          break;
+      }
+    } catch (e, stackTrace) {
+      _logger.error('Login failed: Unexpected error', 'AUTH_VIEWMODEL', e, stackTrace);
+      state = AuthError(AuthConfig.authErrorMessage);
     }
   }
 
   /// Logout
   Future<void> logout() async {
-    state = const AuthLoading();
-    
-    final result = await _repository.logout();
-    
-    switch (result) {
-      case Ok():
-        state = const AuthUnauthenticated();
-        break;
-      case Error():
-        // Even if logout fails, clear local state
-        state = const AuthUnauthenticated();
-        break;
+    try {
+      _logger.info('Logout initiated', 'AUTH_VIEWMODEL');
+      state = const AuthLoading();
+      
+      final result = await _repository.logout();
+      
+      switch (result) {
+        case Ok():
+          _logger.info('Logout successful', 'AUTH_VIEWMODEL');
+          state = const AuthUnauthenticated();
+          break;
+        case Error():
+          // Even if logout fails, clear local state
+          _logger.warning('Logout API failed, clearing local state', 'AUTH_VIEWMODEL');
+          state = const AuthUnauthenticated();
+          break;
+      }
+    } catch (e, stackTrace) {
+      _logger.error('Logout error', 'AUTH_VIEWMODEL', e, stackTrace);
+      // Always clear state on logout
+      state = const AuthUnauthenticated();
     }
   }
 
