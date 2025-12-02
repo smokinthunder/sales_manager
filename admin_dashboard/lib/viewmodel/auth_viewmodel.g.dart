@@ -44,7 +44,7 @@ final class AuthViewModelProvider
   }
 }
 
-String _$authViewModelHash() => r'6f062d48969fabe61a830f1c7d9c34eb5c716004';
+String _$authViewModelHash() => r'c84d7914120a629fc89e584058a0f25a2899c23c';
 
 /// Auth ViewModel - Manages authentication state
 
