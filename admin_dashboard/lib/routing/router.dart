@@ -107,8 +107,11 @@ final areaManagerRoutes = [
     builder: (context, state) => const AreaManager(),
   ),
   GoRoute(
-    path: Routes.findExecutive,
-    builder: (context, state) => FindExecutive(),
+    path: '${Routes.findExecutive}/:managerId',
+    builder: (context, state) {
+      final managerId = int.tryParse(state.pathParameters['managerId'] ?? '0') ?? 0;
+      return FindExecutive(managerId: managerId);
+    },
   ),
   GoRoute(
     path: Routes.addAreaManager,
@@ -134,8 +137,11 @@ final executiveRoutes = [
     builder: (context, state) => const Executive(),
   ),
   GoRoute(
-    path: Routes.findDealers,
-    builder: (context, state) => const FindDealers(),
+    path: '${Routes.findDealers}/:executiveId',
+    builder: (context, state) {
+      final executiveId = int.tryParse(state.pathParameters['executiveId'] ?? '0') ?? 0;
+      return FindDealers(executiveId: executiveId);
+    },
   ),
   GoRoute(
     path: Routes.assignSpecialRoutes,

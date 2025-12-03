@@ -1,3 +1,4 @@
+import 'package:admin_dashboard/domain/models/user/app_user.dart';
 import 'package:admin_dashboard/routing/routes.dart';
 import 'package:admin_dashboard/ui/analytics/analytics.dart';
 import 'package:admin_dashboard/ui/widgets/dropdownmenu.dart';
@@ -8,7 +9,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 class FindExecutive extends ConsumerStatefulWidget {
-  const FindExecutive({super.key});
+  final int managerId;
+  
+  const FindExecutive({required this.managerId, super.key});
 
   @override
   ConsumerState<FindExecutive> createState() => _FindExecutiveState();
@@ -27,18 +30,14 @@ class _FindExecutiveState extends ConsumerState<FindExecutive> {
         borderRadius: BorderRadius.circular(8),
       ),
       child: Column(
-        spacing: 32,
+        spacing: 12,
         children: [
           Row(
             spacing: 20,
             children: [
               Flexible(
                 child: TextField(
-                  onChanged: (value) {
-                    setState(() {
-                      _searchQuery = value;
-                    });
-                  },
+                  onChanged: (value) => setState(() => _searchQuery = value),
                   decoration: InputDecoration(
                     suffixIcon: Icon(Icons.search),
                     hintText: "Search Executive by name, phone, or email",
@@ -47,38 +46,106 @@ class _FindExecutiveState extends ConsumerState<FindExecutive> {
               ),
             ],
           ),
-          Container(
-            padding: EdgeInsets.all(16),
-            width: double.infinity,
-            decoration: BoxDecoration(
-              color: theme.colorScheme.primary.withAlpha(48),
-              border: Border.all(color: theme.colorScheme.primary),
-              borderRadius: BorderRadius.circular(16),
-            ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Flexible(
-                  flex: 2,
-                  child: Table(
-                    children: [
-                      _buildTableRow(theme, "Name", "Arun Kumar"),
-                      _buildTableRow(theme, "Location", "Ernakulam"),
-                    ],
+          // Fetch area manager and executives data
+          Consumer(
+            builder: (context, ref, child) {
+              // Fetch the selected area manager's data
+              final managerAsync = ref.watch(userByIdProvider(widget.managerId));
+              // Fetch all active executives
+              final executivesAsync = ref.watch(usersProvider(
+                role: 'sales_executive',
+                status: 'active',
+              ));
+
+              return managerAsync.when(
+                data: (managerData) {
+                  final manager = AppUser.fromJson(managerData);
+                  
+                  return executivesAsync.when(
+                    data: (executivesList) {
+                      // Calculate statistics from real data
+                      final totalExecutives = executivesList.length;
+                      
+                      return Container(
+                        padding: EdgeInsets.all(16),
+                        width: double.infinity,
+                        decoration: BoxDecoration(
+                          color: theme.colorScheme.primary.withAlpha(48),
+                          border: Border.all(color: theme.colorScheme.primary),
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Flexible(
+                              child: Table(
+                                children: [
+                                  _buildTableRow(theme, "Name", manager.name),
+                                  _buildTableRow(theme, "Location", manager.territoryId?.toString() ?? 'N/A'),
+                                  _buildTableRow(theme, "Contact no", manager.phone),
+                                  _buildTableRow(theme, "Joined date", manager.createdAt.toString().split(' ')[0]),
+                                ],
+                              ),
+                            ),
+                            Spacer(),
+                            Flexible(
+                              child: Table(
+                                children: [
+                                  _buildTableRow(theme, "Total Executives", totalExecutives.toString()),
+                                  _buildTableRow(theme, "Active", totalExecutives.toString()),
+                                  _buildTableRow(theme, "Inactive", "0"),
+                                  _buildTableRow(theme, "Month", _getCurrentMonthName()),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                      );
+                    },
+                    loading: () => Container(
+                      padding: EdgeInsets.all(16),
+                      width: double.infinity,
+                      decoration: BoxDecoration(
+                        color: theme.colorScheme.primary.withAlpha(48),
+                        border: Border.all(color: theme.colorScheme.primary),
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                      child: Center(child: CircularProgressIndicator()),
+                    ),
+                    error: (error, stack) => Container(
+                      padding: EdgeInsets.all(16),
+                      width: double.infinity,
+                      decoration: BoxDecoration(
+                        color: theme.colorScheme.primary.withAlpha(48),
+                        border: Border.all(color: theme.colorScheme.primary),
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                      child: Text('Error loading executives: ${error.toString()}'),
+                    ),
+                  );
+                },
+                loading: () => Container(
+                  padding: EdgeInsets.all(16),
+                  width: double.infinity,
+                  decoration: BoxDecoration(
+                    color: theme.colorScheme.primary.withAlpha(48),
+                    border: Border.all(color: theme.colorScheme.primary),
+                    borderRadius: BorderRadius.circular(16),
                   ),
+                  child: Center(child: CircularProgressIndicator()),
                 ),
-                Spacer(flex: 1),
-                Flexible(
-                  flex: 2,
-                  child: Table(
-                    children: [
-                      _buildTableRow(theme, "Contanct no", "+91 345345345"),
-                      _buildTableRow(theme, "Joined date", "21-08-205"),
-                    ],
+                error: (error, stack) => Container(
+                  padding: EdgeInsets.all(16),
+                  width: double.infinity,
+                  decoration: BoxDecoration(
+                    color: theme.colorScheme.primary.withAlpha(48),
+                    border: Border.all(color: theme.colorScheme.primary),
+                    borderRadius: BorderRadius.circular(16),
                   ),
+                  child: Text('Error loading area manager: ${error.toString()}'),
                 ),
-              ],
-            ),
+              );
+            },
           ),
           Row(
             children: [
@@ -112,28 +179,27 @@ class _FindExecutiveState extends ConsumerState<FindExecutive> {
             ],
           ),
           // Sales Executives List with real data
-          Consumer(
-            builder: (context, ref, child) {
-              final executives = ref.watch(usersProvider(
-                role: 'sales_executive',
-                status: 'active',
-                search: _searchQuery.isEmpty ? null : _searchQuery,
-              ));
+          Expanded(
+            child: Consumer(
+              builder: (context, ref, child) {
+                final executives = ref.watch(usersProvider(
+                  role: 'sales_executive',
+                  status: 'active',
+                  search: _searchQuery.isEmpty ? null : _searchQuery,
+                ));
 
-              return executives.when(
+                return executives.when(
                 data: (executivesList) {
                   // Empty state
                   if (executivesList.isEmpty) {
-                    return Expanded(
-                      child: _searchQuery.isNotEmpty
-                          ? SearchEmptyState(searchQuery: _searchQuery)
-                          : EmptyState(
-                              icon: Icons.person_search,
-                              title: 'No executives found',
-                              message:
-                                  'Sales executives will appear here once assigned to this area',
-                            ),
-                    );
+                    return _searchQuery.isNotEmpty
+                        ? SearchEmptyState(searchQuery: _searchQuery)
+                        : EmptyState(
+                            icon: Icons.person_search,
+                            title: 'No executives found',
+                            message:
+                                'Sales executives will appear here once assigned to this area',
+                          );
                   }
 
                   return SafePaginatedCardGrid(
@@ -174,20 +240,17 @@ class _FindExecutiveState extends ConsumerState<FindExecutive> {
                     ],
                   );
                 },
-                loading: () => Expanded(
-                  child: LoadingState(message: 'Loading executives...'),
-                ),
-                error: (error, stack) => Expanded(
-                  child: ErrorState(
-                    title: 'Failed to load executives',
-                    message: error.toString(),
-                    onRetry: () {
-                      ref.invalidate(usersProvider);
-                    },
-                  ),
+                loading: () => LoadingState(message: 'Loading executives...'),
+                error: (error, stack) => ErrorState(
+                  title: 'Failed to load executives',
+                  message: error.toString(),
+                  onRetry: () {
+                    ref.invalidate(usersProvider);
+                  },
                 ),
               );
-            },
+              },
+            ),
           ),
         ],
       ),
@@ -219,9 +282,17 @@ class _FindExecutiveState extends ConsumerState<FindExecutive> {
         ),
         Padding(
           padding: const EdgeInsets.all(4.0),
-          child: Text(value, style: theme.textTheme.bodyLarge),
+          child: Text(value, style: theme.textTheme.bodyLarge, maxLines: 1),
         ),
       ],
     );
+  }
+
+  String _getCurrentMonthName() {
+    const months = [
+      'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
+    ];
+    return months[DateTime.now().month - 1];
   }
 }

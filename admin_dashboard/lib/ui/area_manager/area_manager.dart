@@ -1,3 +1,4 @@
+import 'package:admin_dashboard/domain/models/user/app_user.dart';
 import 'package:admin_dashboard/routing/routes.dart';
 import 'package:admin_dashboard/ui/analytics/analytics.dart';
 import 'package:admin_dashboard/ui/widgets/dropdownmenu.dart';
@@ -151,9 +152,9 @@ class _AreaManagerState extends ConsumerState<AreaManager> {
                   cards: [
                     for (var manager in managers)
                       AreaManagerCard(
+                        manager: manager,
                         onFindExecutives: () {
-                          // TODO: Pass manager.id to find executives
-                          context.go(Routes.findExecutive);
+                          context.go('${Routes.findExecutive}/${manager.id}');
                         },
                       ),
                   ],
@@ -190,7 +191,13 @@ class _AreaManagerState extends ConsumerState<AreaManager> {
 }
 
 class AreaManagerCard extends StatelessWidget {
-  const AreaManagerCard({super.key, required this.onFindExecutives});
+  const AreaManagerCard({
+    super.key,
+    required this.manager,
+    required this.onFindExecutives,
+  });
+  
+  final AppUser manager;
   final VoidCallback onFindExecutives;
 
   @override
@@ -220,12 +227,11 @@ class AreaManagerCard extends StatelessWidget {
             child: Column(
               spacing: 6,
               children: [
-                _buildIconAndTextRow(Icons.person_outline, "Rahul", theme),
-
-                _buildIconAndTextRow(Symbols.phone, "+91 984624352", theme),
+                _buildIconAndTextRow(Icons.person_outline, manager.name, theme),
+                _buildIconAndTextRow(Symbols.phone, manager.phone, theme),
                 _buildIconAndTextRow(
                   Icons.location_on_outlined,
-                  "Kochi, Edappaly +91 984624352",
+                  manager.territoryId?.toString() ?? 'N/A',
                   theme,
                 ),
               ],

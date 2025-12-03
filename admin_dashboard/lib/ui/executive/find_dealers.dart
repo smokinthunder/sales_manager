@@ -1,3 +1,4 @@
+import 'package:admin_dashboard/domain/models/user/app_user.dart';
 import 'package:admin_dashboard/routing/routes.dart';
 import 'package:admin_dashboard/ui/analytics/analytics.dart';
 import 'package:admin_dashboard/ui/widgets/dropdownmenu.dart';
@@ -8,7 +9,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 class FindDealers extends ConsumerStatefulWidget {
-  const FindDealers({super.key});
+  final int executiveId;
+  
+  const FindDealers({required this.executiveId, super.key});
 
   @override
   ConsumerState<FindDealers> createState() => _FindDealersState();
@@ -43,40 +46,109 @@ class _FindDealersState extends ConsumerState<FindDealers> {
               ),
             ],
           ),
-          Container(
-            padding: EdgeInsets.all(16),
-            width: double.infinity,
-            decoration: BoxDecoration(
-              color: theme.colorScheme.primary.withAlpha(48),
-              border: Border.all(color: theme.colorScheme.primary),
-              borderRadius: BorderRadius.circular(16),
-            ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Flexible(
-                  child: Table(
-                    children: [
-                      _buildTableRow(theme, "Name", "Arun Kumar"),
-                      _buildTableRow(theme, "Location", "Ernakulam"),
-                      _buildTableRow(theme, "Contanct no", "+91 345345345"),
-                      _buildTableRow(theme, "Joined date", "21-08-205"),
-                    ],
+          // Fetch executive and shops data
+          Consumer(
+            builder: (context, ref, child) {
+              // Fetch the selected executive's data
+              final executiveAsync = ref.watch(userByIdProvider(widget.executiveId));
+              // Fetch all active shops
+              final shopsAsync = ref.watch(shopsProvider(status: 'active'));
+
+              return executiveAsync.when(
+                data: (executiveData) {
+                  final executive = AppUser.fromJson(executiveData);
+                  
+                  return shopsAsync.when(
+                    data: (shopsList) {
+                      // Calculate statistics from real data
+                      // TODO: Filter shops by executive assignment when backend supports it
+                      final totalShops = shopsList.length;
+                      
+                      // Count shops visited this month (assuming shops have lastVisit data)
+                      // For now, use placeholder until we have visit tracking
+                      final visitedShops = 0; // TODO: Calculate from visit data when available
+                      final pendingShops = totalShops - visitedShops;
+                  
+                      return Container(
+                        padding: EdgeInsets.all(16),
+                        width: double.infinity,
+                        decoration: BoxDecoration(
+                          color: theme.colorScheme.primary.withAlpha(48),
+                          border: Border.all(color: theme.colorScheme.primary),
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Flexible(
+                              child: Table(
+                                children: [
+                                  _buildTableRow(theme, "Name", executive.name),
+                                  _buildTableRow(theme, "Location", executive.territoryId?.toString() ?? 'N/A'),
+                                  _buildTableRow(theme, "Contact no", executive.phone),
+                                  _buildTableRow(theme, "Joined date", executive.createdAt.toString().split(' ')[0]),
+                                ],
+                              ),
+                            ),
+                            Spacer(),
+                            Flexible(
+                              child: Table(
+                                children: [
+                                  _buildTableRow(theme, "Total Shops", totalShops.toString()),
+                                  _buildTableRow(theme, "Month", _getCurrentMonthName()),
+                                  _buildTableRow(theme, "Pending to Visit", pendingShops.toString()),
+                                  _buildTableRow(theme, "Visited Shops", visitedShops.toString()),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                      );
+                    },
+                    loading: () => Container(
+                      padding: EdgeInsets.all(16),
+                      width: double.infinity,
+                      decoration: BoxDecoration(
+                        color: theme.colorScheme.primary.withAlpha(48),
+                        border: Border.all(color: theme.colorScheme.primary),
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                      child: Center(child: CircularProgressIndicator()),
+                    ),
+                    error: (error, stack) => Container(
+                      padding: EdgeInsets.all(16),
+                      width: double.infinity,
+                      decoration: BoxDecoration(
+                        color: theme.colorScheme.primary.withAlpha(48),
+                        border: Border.all(color: theme.colorScheme.primary),
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                      child: Text('Error loading shops: ${error.toString()}'),
+                    ),
+                  );
+                },
+                loading: () => Container(
+                  padding: EdgeInsets.all(16),
+                  width: double.infinity,
+                  decoration: BoxDecoration(
+                    color: theme.colorScheme.primary.withAlpha(48),
+                    border: Border.all(color: theme.colorScheme.primary),
+                    borderRadius: BorderRadius.circular(16),
                   ),
+                  child: Center(child: CircularProgressIndicator()),
                 ),
-                Spacer(),
-                Flexible(
-                  child: Table(
-                    children: [
-                      _buildTableRow(theme, "Total Shops", "35"),
-                      _buildTableRow(theme, "Month", "Sep"),
-                      _buildTableRow(theme, "Pending to Visit", "10"),
-                      _buildTableRow(theme, "Visited Shops", "25"),
-                    ],
+                error: (error, stack) => Container(
+                  padding: EdgeInsets.all(16),
+                  width: double.infinity,
+                  decoration: BoxDecoration(
+                    color: theme.colorScheme.primary.withAlpha(48),
+                    border: Border.all(color: theme.colorScheme.primary),
+                    borderRadius: BorderRadius.circular(16),
                   ),
+                  child: Text('Error loading executive: ${error.toString()}'),
                 ),
-              ],
-            ),
+              );
+            },
           ),
           Row(
             children: [
@@ -429,4 +501,12 @@ class ShopStateCard extends StatelessWidget {
       ],
     ),
   );
+}
+
+String _getCurrentMonthName() {
+  const months = [
+    'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+    'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
+  ];
+  return months[DateTime.now().month - 1];
 }

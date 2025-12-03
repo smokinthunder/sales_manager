@@ -170,8 +170,7 @@ class _ExecutiveState extends ConsumerState<Executive> {
                             context.go(Routes.assignSpecialRoutes);
                           },
                           onFindDealers: () {
-                            //TODO:
-                            context.go(Routes.findDealers);
+                            context.go('${Routes.findDealers}/${executive.id}');
                           },
                         ),
                     ],
