@@ -2395,6 +2395,119 @@ final class OutstandingPaymentsFamily extends $Family
   String toString() => r'outstandingPaymentsProvider';
 }
 
+/// Fetch single outstanding payment by ID
+///
+/// Parameters:
+/// - [paymentId]: Outstanding payment ID
+///
+/// Returns Map<String, dynamic> with outstanding payment details
+
+@ProviderFor(outstandingPaymentById)
+const outstandingPaymentByIdProvider = OutstandingPaymentByIdFamily._();
+
+/// Fetch single outstanding payment by ID
+///
+/// Parameters:
+/// - [paymentId]: Outstanding payment ID
+///
+/// Returns Map<String, dynamic> with outstanding payment details
+
+final class OutstandingPaymentByIdProvider
+    extends
+        $FunctionalProvider<
+          AsyncValue<Map<String, dynamic>>,
+          Map<String, dynamic>,
+          FutureOr<Map<String, dynamic>>
+        >
+    with
+        $FutureModifier<Map<String, dynamic>>,
+        $FutureProvider<Map<String, dynamic>> {
+  /// Fetch single outstanding payment by ID
+  ///
+  /// Parameters:
+  /// - [paymentId]: Outstanding payment ID
+  ///
+  /// Returns Map<String, dynamic> with outstanding payment details
+  const OutstandingPaymentByIdProvider._({
+    required OutstandingPaymentByIdFamily super.from,
+    required int super.argument,
+  }) : super(
+         retry: null,
+         name: r'outstandingPaymentByIdProvider',
+         isAutoDispose: true,
+         dependencies: null,
+         $allTransitiveDependencies: null,
+       );
+
+  @override
+  String debugGetCreateSourceHash() => _$outstandingPaymentByIdHash();
+
+  @override
+  String toString() {
+    return r'outstandingPaymentByIdProvider'
+        ''
+        '($argument)';
+  }
+
+  @$internal
+  @override
+  $FutureProviderElement<Map<String, dynamic>> $createElement(
+    $ProviderPointer pointer,
+  ) => $FutureProviderElement(pointer);
+
+  @override
+  FutureOr<Map<String, dynamic>> create(Ref ref) {
+    final argument = this.argument as int;
+    return outstandingPaymentById(ref, argument);
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return other is OutstandingPaymentByIdProvider &&
+        other.argument == argument;
+  }
+
+  @override
+  int get hashCode {
+    return argument.hashCode;
+  }
+}
+
+String _$outstandingPaymentByIdHash() =>
+    r'eef75067830bb0584084fa8c00813965eb361083';
+
+/// Fetch single outstanding payment by ID
+///
+/// Parameters:
+/// - [paymentId]: Outstanding payment ID
+///
+/// Returns Map<String, dynamic> with outstanding payment details
+
+final class OutstandingPaymentByIdFamily extends $Family
+    with $FunctionalFamilyOverride<FutureOr<Map<String, dynamic>>, int> {
+  const OutstandingPaymentByIdFamily._()
+    : super(
+        retry: null,
+        name: r'outstandingPaymentByIdProvider',
+        dependencies: null,
+        $allTransitiveDependencies: null,
+        isAutoDispose: true,
+      );
+
+  /// Fetch single outstanding payment by ID
+  ///
+  /// Parameters:
+  /// - [paymentId]: Outstanding payment ID
+  ///
+  /// Returns Map<String, dynamic> with outstanding payment details
+
+  OutstandingPaymentByIdProvider call(int paymentId) =>
+      OutstandingPaymentByIdProvider._(argument: paymentId, from: this);
+
+  @override
+  String toString() => r'outstandingPaymentByIdProvider';
+}
+
 /// Fetch outstanding payments summary with totals and counts
 ///
 /// Returns Map<String, dynamic> with summary statistics

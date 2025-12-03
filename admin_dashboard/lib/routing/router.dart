@@ -119,7 +119,13 @@ final areaManagerRoutes = [
 final outStandingRoutes = [
   GoRoute(path: Routes.outstanding, builder: (context, state) => Outstanding()),
   GoRoute(path: Routes.viewInvoice, builder: (context, state) => Invoice()),
-  GoRoute(path: Routes.viewDetails, builder: (context, state) => MoreDetails()),
+  GoRoute(
+    path: '${Routes.viewDetails}/:paymentId',
+    builder: (context, state) {
+      final paymentId = int.tryParse(state.pathParameters['paymentId'] ?? '0') ?? 0;
+      return MoreDetails(paymentId: paymentId);
+    },
+  ),
 ];
 
 final executiveRoutes = [
@@ -171,8 +177,11 @@ final customerRoutes = [
     builder: (context, state) => const InactiveCustomers(),
   ),
   GoRoute(
-    path: Routes.customerDetails,
-    builder: (context, state) => const CustomerDetails(),
+    path: '${Routes.customerDetails}/:shopId',
+    builder: (context, state) {
+      final shopId = state.pathParameters['shopId'] ?? '';
+      return CustomerDetails(shopId: shopId);
+    },
   ),
 ];
 
@@ -186,8 +195,11 @@ final analyticsRoutes = [
     builder: (context, state) => const PointSystem(),
   ),
   GoRoute(
-    path: Routes.shopAnalytics,
-    builder: (context, state) => const ShopAnalytics(),
+    path: '${Routes.shopAnalytics}/:shopId',
+    builder: (context, state) {
+      final shopId = state.pathParameters['shopId'] ?? '';
+      return ShopAnalytics(shopId: shopId);
+    },
   ),
 ];
 
@@ -197,7 +209,10 @@ final orderRoutes = [
     builder: (context, state) => const Orders(),
   ),
   GoRoute(
-    path: Routes.viewOrderDetails,
-    builder: (context, state) => const ViewOrderDatails(),
+    path: '${Routes.viewOrderDetails}/:orderId',
+    builder: (context, state) {
+      final orderId = int.tryParse(state.pathParameters['orderId'] ?? '0') ?? 0;
+      return ViewOrderDatails(orderId: orderId);
+    },
   ),
 ];

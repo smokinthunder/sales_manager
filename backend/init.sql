@@ -385,7 +385,7 @@ ON DUPLICATE KEY UPDATE name = VALUES(name);
 
 -- Insert sample admin users for each tenant
 INSERT INTO users (phone, name, email, role, status, tenant_id, created_by) VALUES
-('+1111111111', 'John Smith', 'admin@aquastar.com', 'client_admin', 'active', 'AQUASTAR', 1),
+('+1111111111', 'John Smith', 'john.smith@aquastar.com', 'client_admin', 'active', 'AQUASTAR', 1),
 ('+2222222222', 'Tom Anderson', 'tom.anderson@freshfood.com', 'client_admin', 'active', 'FRESHFOOD', 1),
 ('+3333333333', 'Mark Johnson', 'mark.johnson@metro.com', 'client_admin', 'active', 'METRO', 1),
 ('+9999999999', 'Super Administrator', 'superadmin@salesmanager.com', 'superadmin', 'active', 'tenant1', 1)

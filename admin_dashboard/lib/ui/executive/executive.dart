@@ -145,7 +145,8 @@ class _ExecutiveState extends ConsumerState<Executive> {
 
                   // Empty state
                   if (filteredExecutives.isEmpty) {
-                    return Expanded(
+                    return SizedBox(
+                      height: 400,
                       child: _searchQuery.isNotEmpty
                           ? SearchEmptyState(searchQuery: _searchQuery)
                           : EmptyState(
@@ -176,10 +177,11 @@ class _ExecutiveState extends ConsumerState<Executive> {
                     ],
                   );
                 },
-                loading: () => Expanded(
+                loading: () => SizedBox(height: 400,
                   child: LoadingState(message: 'Loading executives...'),
                 ),
-                error: (error, stack) => Expanded(
+                error: (error, stack) => SizedBox(
+                  height: 400,
                   child: ErrorState(
                     title: 'Failed to load executives',
                     message: error.toString(),

@@ -144,7 +144,8 @@ class _OrdersState extends ConsumerState<Orders> {
                   .toList();
               
               if (orders.isEmpty) {
-                return Expanded(
+                return SizedBox(
+                  height: 400,
                   child: _searchQuery.isNotEmpty
                       ? SearchEmptyState(searchQuery: _searchQuery)
                       : EmptyState(
@@ -162,16 +163,17 @@ class _OrdersState extends ConsumerState<Orders> {
                     ShopAnalyticsCard(
                       order: order,
                       onTap: () {
-                        context.go(Routes.viewOrderDetails);
+                        context.go('${Routes.viewOrderDetails}/${order.id}');
                       },
                     ),
                 ],
               );
             },
-            loading: () => Expanded(
+            loading: () => SizedBox(height: 400,
               child: LoadingState(message: 'Loading orders...'),
             ),
-            error: (error, stackTrace) => Expanded(
+            error: (error, stackTrace) => SizedBox(
+              height: 400,
               child: ErrorState(
                 title: 'Failed to load orders',
                 message: error.toString(),

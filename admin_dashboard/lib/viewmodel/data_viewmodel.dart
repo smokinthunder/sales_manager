@@ -761,6 +761,38 @@ Future<Map<String, dynamic>> outstandingPayments(
   };
 }
 
+/// Fetch single outstanding payment by ID
+/// 
+/// Parameters:
+/// - [paymentId]: Outstanding payment ID
+/// 
+/// Returns Map<String, dynamic> with outstanding payment details
+@riverpod
+Future<Map<String, dynamic>> outstandingPaymentById(Ref ref, int paymentId) async {
+  final logger = LoggerService();
+  logger.info('ViewModel: Fetching outstanding payment by ID: $paymentId', 'DATA_VM');
+
+  final repository = ref.read(dataRepositoryProvider.notifier);
+  final result = await repository.getOutstandingPaymentById(paymentId);
+
+  return switch (result) {
+    Ok(value: final data) => () {
+      logger.info(
+        'ViewModel: Successfully fetched outstanding payment: $paymentId',
+        'DATA_VM',
+      );
+      return data;
+    }(),
+    Error(error: final error) => () {
+      logger.error(
+        'ViewModel: Failed to fetch outstanding payment $paymentId - ${error.toString()}',
+        'DATA_VM',
+      );
+      throw error;
+    }(),
+  };
+}
+
 /// Fetch outstanding payments summary with totals and counts
 /// 
 /// Returns Map<String, dynamic> with summary statistics

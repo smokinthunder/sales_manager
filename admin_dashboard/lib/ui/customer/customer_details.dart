@@ -1,185 +1,260 @@
 import 'package:admin_dashboard/routing/routes.dart';
+import 'package:admin_dashboard/viewmodel/data_viewmodel.dart';
+import 'package:admin_dashboard/domain/models/shop/shop.dart';
+import 'package:admin_dashboard/domain/models/shop/shop_status.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-class CustomerDetails extends StatelessWidget {
-  const CustomerDetails({super.key});
+class CustomerDetails extends ConsumerWidget {
+  final String shopId;
+  
+  const CustomerDetails({
+    super.key,
+    required this.shopId,
+  });
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
-    return Container(
-      padding: EdgeInsets.all(32),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(8),
+    final shopAsync = ref.watch(shopByIdProvider(shopId));
+    
+    return shopAsync.when(
+      loading: () => Container(
+        padding: EdgeInsets.all(32),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(8),
+        ),
+        child: Center(
+          child: CircularProgressIndicator(),
+        ),
       ),
-      child: Column(
-        spacing: 32,
-        children: [
-          _buildTitle(context, theme),
-          Container(
-            color: theme.colorScheme.surface,
-            padding: EdgeInsets.all(12),
-            child: Row(
-              spacing: 12,
-              children: [
-                Flexible(
-                  flex: 4,
-                  child: Column(
-                    spacing: 12,
-                    children: [
-                      _buildShopTitleCard(theme),
-                      _buildBasicDetails(theme),
-                      _buildMoreDetails(theme),
-                    ],
-                  ),
-                ),
-                _buildMostOrderedTable(theme),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Container _buildShopTitleCard(ThemeData theme) {
-    return Container(
-      padding: EdgeInsets.all(12),
-      color: theme.colorScheme.onPrimary,
-      child: Row(
-        children: [
-          CircleAvatar(radius: 24, backgroundImage: NetworkImage("imageUrl")),
-          SizedBox(width: 16),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+      error: (error, stack) => Container(
+        padding: EdgeInsets.all(32),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(8),
+        ),
+        child: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Text("Name", style: theme.textTheme.bodyLarge),
-              Text("Location", style: theme.textTheme.bodySmall),
+              Icon(Icons.error_outline, size: 64, color: Colors.red),
+              SizedBox(height: 16),
+              Text(
+                'Failed to load shop details',
+                style: theme.textTheme.titleLarge?.copyWith(color: Colors.red),
+              ),
+              SizedBox(height: 8),
+              Text(
+                error.toString(),
+                style: theme.textTheme.bodyMedium,
+                textAlign: TextAlign.center,
+              ),
+              SizedBox(height: 16),
+              ElevatedButton.icon(
+                onPressed: () {
+                  ref.invalidate(shopByIdProvider(shopId));
+                },
+                icon: Icon(Icons.refresh),
+                label: Text('Retry'),
+              ),
             ],
           ),
-          Spacer(),
-        ],
+        ),
       ),
-    );
-  }
-
-  Flexible _buildMostOrderedTable(ThemeData theme) {
-    return Flexible(
-      flex: 6,
-      child: Container(
-        padding: EdgeInsets.all(12),
-        color: theme.colorScheme.onPrimary,
-        child: Column(
-          spacing: 20,
-          children: [
-            Text("Most ordered products", style: theme.textTheme.bodyLarge),
-            Table(
-              border: TableBorder(
-                verticalInside: BorderSide(
-                  width: 2,
-                  color: theme.colorScheme.tertiary.withAlpha(128),
-                ),
-              ),
-              children: [
-                TableRow(
-                  children: [
-                    Padding(
-                      padding: const EdgeInsets.all(8.0),
-                      child: Text("Date", style: theme.textTheme.bodyLarge),
+      data: (shopData) {
+        final shop = Shop.fromJson(shopData);
+        
+        return Container(
+          padding: EdgeInsets.all(32),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: Column(
+            spacing: 32,
+            children: [
+              // Title with back button
+              Row(
+                children: [
+                  TextButton(
+                    onPressed: () {
+                      context.go(Routes.customer);
+                    },
+                    child: Text(
+                      "Customer",
+                      style: TextStyle(color: theme.colorScheme.onSurface),
                     ),
-                    Padding(
-                      padding: const EdgeInsets.all(8.0).copyWith(left: 32),
-                      child: Text("Items", style: theme.textTheme.bodyLarge),
+                  ),
+                  Icon(Icons.chevron_right),
+                  Text(shop.name),
+                ],
+              ),
+              
+              Container(
+                color: theme.colorScheme.surface,
+                padding: EdgeInsets.all(12),
+                child: Row(
+                  spacing: 12,
+                  children: [
+                    Flexible(
+                      flex: 4,
+                      child: Column(
+                        spacing: 12,
+                        children: [
+                          // Shop Title Card
+                          Container(
+                            padding: EdgeInsets.all(12),
+                            color: theme.colorScheme.onPrimary,
+                            child: Row(
+                              children: [
+                                CircleAvatar(
+                                  radius: 24,
+                                  backgroundColor: theme.colorScheme.primary,
+                                  child: Text(
+                                    shop.name.isNotEmpty 
+                                        ? shop.name[0].toUpperCase() 
+                                        : 'S',
+                                    style: theme.textTheme.headlineMedium?.copyWith(
+                                      color: Colors.white,
+                                    ),
+                                  ),
+                                ),
+                                SizedBox(width: 16),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        shop.name,
+                                        style: theme.textTheme.bodyLarge,
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                      Text(
+                                        shop.address ?? 'No address',
+                                        style: theme.textTheme.bodySmall,
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                Spacer(),
+                                Chip(
+                                  label: Text(shop.status.name.toUpperCase()),
+                                  backgroundColor: shop.status == ShopStatus.active
+                                      ? Colors.green.shade100
+                                      : Colors.grey.shade300,
+                                ),
+                              ],
+                            ),
+                          ),
+                          
+                          // Basic Details
+                          Container(
+                            padding: EdgeInsets.all(12),
+                            color: theme.colorScheme.onPrimary,
+                            child: Column(
+                              spacing: 12,
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text("Basic details", style: theme.textTheme.bodyLarge),
+                                _buildRowItem(theme, "Shop ID", shop.shopId),
+                                _buildRowItem(theme, "Phone", shop.phone ?? 'Not provided'),
+                                _buildRowItem(theme, "Email", shop.email ?? 'Not provided'),
+                                _buildRowItem(theme, "Address", shop.address ?? 'Not provided'),
+                                _buildRowItem(theme, "Territory ID", shop.territoryId ?? 'N/A'),
+                              ],
+                            ),
+                          ),
+                          
+                          // More Details
+                          Container(
+                            padding: EdgeInsets.all(12),
+                            color: theme.colorScheme.onPrimary,
+                            child: Column(
+                              spacing: 12,
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text("More details", style: theme.textTheme.bodyLarge),
+                                _buildRowItem(theme, "Contact Person", shop.contactPerson ?? 'Not provided'),
+                                _buildRowItem(theme, "Location", shop.locationName ?? 'N/A'),
+                                _buildRowItem(theme, "Pin Code", shop.pinCode ?? 'N/A'),
+                                _buildRowItem(theme, "GST Number", shop.gstNumber ?? 'Not provided'),
+                                _buildRowItem(theme, "Created Date", shop.createdAt.toString().substring(0, 10)),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    
+                    // Recent Orders Section (placeholder - needs order API)
+                    Flexible(
+                      flex: 6,
+                      child: Container(
+                        padding: EdgeInsets.all(12),
+                        color: theme.colorScheme.onPrimary,
+                        child: Column(
+                          spacing: 20,
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text("Recent Orders", style: theme.textTheme.bodyLarge),
+                            Center(
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  SizedBox(height: 40),
+                                  Icon(
+                                    Icons.receipt_long_outlined,
+                                    size: 48,
+                                    color: theme.colorScheme.tertiary,
+                                  ),
+                                  SizedBox(height: 16),
+                                  Text(
+                                    'Order history feature coming soon',
+                                    style: theme.textTheme.bodyMedium?.copyWith(
+                                      color: theme.colorScheme.tertiary,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
                     ),
                   ],
                 ),
-                for (var _ in Iterable.generate(10))
-                  TableRow(
-                    children: [
-                      Padding(
-                        padding: const EdgeInsets.all(8.0),
-                        child: Text("21-12-2025"),
-                      ),
-                      Padding(
-                        padding: const EdgeInsets.all(8.0).copyWith(left: 32),
-                        child: Text("Aqua Star Elbow Socker 80"),
-                      ),
-                    ],
-                  ),
-              ],
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Container _buildMoreDetails(ThemeData theme) {
-    return Container(
-      padding: EdgeInsets.all(12),
-      color: theme.colorScheme.onPrimary,
-      child: Column(
-        spacing: 12,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text("More details", style: theme.textTheme.bodyLarge),
-          _buildRowItem("Area manager : ", "Vishnu kumar"),
-          _buildRowItem("Sales Executive : ", "Vishnu kumar"),
-          _buildRowItem("Area : ", "Kalamassery"),
-        ],
-      ),
-    );
-  }
-
-  Container _buildBasicDetails(ThemeData theme) {
-    return Container(
-      padding: EdgeInsets.all(12),
-      color: theme.colorScheme.onPrimary,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        spacing: 12,
-        children: [
-          Text("Basic details", style: theme.textTheme.bodyLarge),
-          _buildRowItem(
-            "Address: ",
-            "THIS IS SOME ADDRESSTHIS IS SOME ADDRESSTHIS IS SOME ADDRESS",
+              ),
+            ],
           ),
-          _buildRowItem("Contact no : ", "+91 9797938457"),
-          _buildRowItem("Location : ", "Kochi"),
-          _buildRowItem("Shop owner : ", "Vishnu kumar"),
-          _buildRowItem("Join date : ", "21-09-2023"),
-        ],
-      ),
+        );
+      },
     );
   }
-
-  Row _buildRowItem(String title, String value) {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(title),
-        Expanded(child: Text(value)),
-      ],
-    );
-  }
-
-  Row _buildTitle(BuildContext context, ThemeData theme) {
+  
+  Widget _buildRowItem(ThemeData theme, String title, String value) {
     return Row(
       children: [
-        TextButton(
-          onPressed: () {
-            context.go(Routes.customer);
-          },
+        Expanded(
+          flex: 2,
           child: Text(
-            "All customer list",
-            style: TextStyle(color: theme.colorScheme.onSurface),
+            "$title:",
+            style: theme.textTheme.bodyMedium?.copyWith(
+              fontWeight: FontWeight.w500,
+            ),
           ),
         ),
-        Icon(Icons.chevron_right),
-        Text("Kerala Pipe House"),
-        Spacer(),
+        Expanded(
+          flex: 3,
+          child: Text(
+            value,
+            style: theme.textTheme.bodyMedium,
+            overflow: TextOverflow.ellipsis,
+          ),
+        ),
       ],
     );
   }

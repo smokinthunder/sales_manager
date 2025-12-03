@@ -688,6 +688,37 @@ class DataRepository extends _$DataRepository {
     }
   }
 
+  /// Fetch single outstanding payment by ID
+  Future<Result<Map<String, dynamic>>> getOutstandingPaymentById(int paymentId) async {
+    _logger.info('Fetching outstanding payment by ID: $paymentId', 'DATA_REPO');
+
+    try {
+      final result = await _remoteDataService.getOutstandingPaymentById(paymentId);
+
+      switch (result) {
+        case Ok():
+          _logger.info(
+            'Successfully fetched outstanding payment: $paymentId',
+            'DATA_REPO',
+          );
+          return result;
+        case Error(error: final error):
+          _logger.error(
+            'Failed to fetch outstanding payment $paymentId: ${error.toString()}',
+            'DATA_REPO',
+          );
+          return result;
+      }
+    } catch (e, stackTrace) {
+      _logger.error(
+        'Unexpected error fetching outstanding payment $paymentId: $e',
+        'DATA_REPO',
+        stackTrace,
+      );
+      return Result.error(Exception('An unexpected error occurred while fetching outstanding payment'));
+    }
+  }
+
   /// Fetch outstanding payments summary with totals and counts
   /// 
   /// Returns Result<Map<String, dynamic>> with summary statistics

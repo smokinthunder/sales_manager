@@ -36,9 +36,10 @@ class _AnalyticsState extends ConsumerState<Analytics> {
         color: Colors.white,
         borderRadius: BorderRadius.circular(8),
       ),
-      child: Column(
-        spacing: 24,
-        children: [
+      child: SingleChildScrollView(
+        child: Column(
+          spacing: 24,
+          children: [
           TextButton(
             onPressed: () {
               context.go(Routes.pointSystem);
@@ -179,7 +180,8 @@ class _AnalyticsState extends ConsumerState<Analytics> {
 
               // Empty state
               if (shops.isEmpty) {
-                return Expanded(
+                return SizedBox(
+                  height: 400,
                   child: Center(
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
@@ -223,19 +225,20 @@ class _AnalyticsState extends ConsumerState<Analytics> {
                       (shop) => ShopAnalyticsCardWidget(
                         shopData: shop,
                         onTap: () {
-                          context.go(Routes.shopAnalytics);
+                          context.go('${Routes.shopAnalytics}/${shop.shopId}');
                         },
                       ),
                     )
                     .toList(),
               );
             },
-            loading: () => Expanded(
+            loading: () => SizedBox(height: 400,
               child: Center(
                 child: CircularProgressIndicator(),
               ),
             ),
-            error: (error, stack) => Expanded(
+            error: (error, stack) => SizedBox(
+              height: 400,
               child: Center(
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
@@ -274,6 +277,7 @@ class _AnalyticsState extends ConsumerState<Analytics> {
             ),
           ),
         ],
+      ),
       ),
     );
   }
@@ -352,7 +356,7 @@ class _SafePaginatedCardGridState extends State<SafePaginatedCardGrid> {
           // Total pages
           final totalPages = (widget.cards.length / cardsPerPage).ceil();
 
-          // Clamp currentPage to valid range
+          // Clamp currentPage to valid range (DIRECT MUTATION - working pattern)
           if (currentPage >= totalPages) {
             currentPage = totalPages - 1;
           }
@@ -380,14 +384,14 @@ class _SafePaginatedCardGridState extends State<SafePaginatedCardGrid> {
                     spacing: widget.spacing,
                     runSpacing: widget.spacing,
                     children: pageCards
-                        .map(
-                          (card) => SizedBox(
-                            width: widget.cardWidth,
-                            height: widget.cardHeight,
-                            child: card,
-                          ),
-                        )
-                        .toList(),
+                      .map(
+                        (card) => SizedBox(
+                          width: widget.cardWidth,
+                          height: widget.cardHeight,
+                          child: card,
+                        ),
+                      )
+                      .toList(),
                   ),
                 ),
               ),

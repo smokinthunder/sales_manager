@@ -247,7 +247,8 @@ class _CustomerState extends ConsumerState<Customer> {
 
               // Empty state
               if (filteredShops.isEmpty) {
-                return Expanded(
+                return SizedBox(
+                  height: 400,
                   child: Center(
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
@@ -299,25 +300,27 @@ class _CustomerState extends ConsumerState<Customer> {
               return SafePaginatedCardGrid(
                 spacing: 16,
                 cardWidth: 300,
-                cardHeight: 160,
+                cardHeight: 200,
                 cards: filteredShops
                     .map(
                       (shop) => ShopCard(
                         shop: shop,
                         onClick: () {
-                          context.go(Routes.customerDetails);
+                          context.go('${Routes.customerDetails}/${shop.shopId}');
                         },
                       ),
                     )
                     .toList(),
               );
             },
-            loading: () => Expanded(
+            loading: () => SizedBox(
+              height: 400,
               child: Center(
                 child: CircularProgressIndicator(),
               ),
             ),
-            error: (error, stack) => Expanded(
+            error: (error, stack) => SizedBox(
+              height: 400,
               child: Center(
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
@@ -361,7 +364,7 @@ class _CustomerState extends ConsumerState<Customer> {
   }
 }
 
-class ShopCard extends StatelessWidget {
+class ShopCard extends StatelessWidget{
   const ShopCard({
     super.key,
     required this.shop,

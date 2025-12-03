@@ -16,10 +16,10 @@ class AuthResponse {
 
   factory AuthResponse.fromJson(Map<String, dynamic> json) {
     return AuthResponse(
-      accessToken: json['access_token'] as String,
-      refreshToken: json['refresh_token'] as String,
-      tokenType: json['token_type'] as String? ?? 'bearer',
-      expiresIn: json['expires_in'] as int,
+      accessToken: (json['access_token'] as String?) ?? '',
+      refreshToken: (json['refresh_token'] as String?) ?? '',
+      tokenType: (json['token_type'] as String?) ?? 'bearer',
+      expiresIn: (json['expires_in'] as int?) ?? 3600,
       user: json['user'] != null
           ? UserInfo.fromJson(json['user'] as Map<String, dynamic>)
           : null,
@@ -59,13 +59,13 @@ class UserInfo {
 
   factory UserInfo.fromJson(Map<String, dynamic> json) {
     return UserInfo(
-      id: json['id'] as int,
-      email: json['email'] as String,
-      name: json['name'] as String,
-      role: json['role'] as String,
-      status: json['status'] as String,
-      tenantId: json['tenant_id'] as String,
-      authType: json['auth_type'] as String? ?? 'email',
+      id: (json['id'] as int?) ?? 0,
+      email: (json['email'] as String?) ?? '',
+      name: (json['name'] as String?) ?? '',
+      role: (json['role'] as String?) ?? 'client_admin',
+      status: (json['status'] as String?) ?? 'active',
+      tenantId: (json['tenant_id'] as String?) ?? 'AQUASTAR',
+      authType: (json['auth_type'] as String?) ?? 'email',
     );
   }
 

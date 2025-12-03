@@ -260,7 +260,8 @@ class _OutstandingState extends ConsumerState<Outstanding> {
 
               // Empty state
               if (payments.isEmpty) {
-                return Expanded(
+                return SizedBox(
+                  height: 400,
                   child: searchQuery.isNotEmpty
                       ? SearchEmptyState(searchQuery: searchQuery)
                       : EmptyState(
@@ -278,7 +279,7 @@ class _OutstandingState extends ConsumerState<Outstanding> {
                       (payment) => OutstandingPaymentCard(
                         payment: payment,
                         onMoreDetails: () {
-                          context.go(Routes.viewDetails);
+                          context.go('${Routes.viewDetails}/${payment.id}');
                         },
                         onViewInvoice: () {
                           context.go(Routes.viewInvoice);
@@ -289,10 +290,11 @@ class _OutstandingState extends ConsumerState<Outstanding> {
                 backgroundColor: selectedStatus.color,
               );
             },
-            loading: () => Expanded(
+            loading: () => SizedBox(height: 400,
               child: LoadingState(message: 'Loading outstanding payments...'),
             ),
-            error: (error, stack) => Expanded(
+            error: (error, stack) => SizedBox(
+              height: 400,
               child: ErrorState(
                 title: 'Failed to load outstanding payments',
                 message: error.toString(),

@@ -568,6 +568,32 @@ class RemoteDataService {
     }
   }
 
+  /// Fetch single outstanding payment by ID
+  Future<Result<Map<String, dynamic>>> getOutstandingPaymentById(int paymentId) async {
+    final endpoint = '/api/v1/outstanding/$paymentId';
+
+    logger.info('Fetching outstanding payment with ID: $paymentId', 'REMOTE_DATA_SERVICE');
+
+    try {
+      final response = await dio.get(endpoint);
+
+      logger.info('Successfully fetched outstanding payment: ${response.data['id']}', 'REMOTE_DATA_SERVICE');
+      return Result.ok(response.data as Map<String, dynamic>);
+    } on DioException catch (e, stackTrace) {
+      final errorMessage = _parseError(e);
+      logger.error(
+        'Failed to fetch outstanding payment $paymentId: $errorMessage',
+        'REMOTE_DATA_SERVICE',
+        e,
+        stackTrace,
+      );
+      return Result.error(Exception(errorMessage));
+    } catch (e, stackTrace) {
+      logger.error('Unexpected error fetching outstanding payment $paymentId', 'REMOTE_DATA_SERVICE', e, stackTrace);
+      return Result.error(Exception(DataConfig.unknownErrorMessage));
+    }
+  }
+
   /// Fetch outstanding payments summary
   Future<Result<Map<String, dynamic>>> getOutstandingSummary() async {
     const endpoint = '/api/v1/outstanding/summary';
