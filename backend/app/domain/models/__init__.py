@@ -25,6 +25,15 @@ from .route import (
 from .visit import (
     Visit, VisitCreate, VisitUpdate, VisitRead, VisitStatus
 )
+from .order import (
+    Order, OrderCreate, OrderUpdate, OrderRead, OrderListItem,
+    OrderItem, OrderItemCreate, OrderItemUpdate, OrderItemRead,
+    OrderStatus
+)
+from .assignment import (
+    ShopAssignment, ShopAssignmentCreate, ShopAssignmentUpdate, ShopAssignmentRead,
+    ShopAssignmentListItem, AssignmentStatus
+)
 from .approval import (
     Approval, ApprovalCreate, ApprovalUpdate, ApprovalRead, ApprovalStatus
 )
@@ -73,6 +82,14 @@ __all__ = [
     # Visit tracking
     "Visit", "VisitCreate", "VisitUpdate", "VisitRead", "VisitStatus",
     
+    # Order management
+    "Order", "OrderCreate", "OrderUpdate", "OrderRead", "OrderListItem",
+    "OrderItem", "OrderItemCreate", "OrderItemUpdate", "OrderItemRead",
+    "OrderStatus",
+    
+    # Shop Assignment management
+    "ShopAssignment", "ShopAssignmentCreate", "ShopAssignmentUpdate", "ShopAssignmentRead",
+    "ShopAssignmentListItem", "AssignmentStatus",
     
     # Approval workflows
     "Approval", "ApprovalCreate", "ApprovalUpdate", "ApprovalRead", "ApprovalStatus",

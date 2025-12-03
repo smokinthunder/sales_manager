@@ -312,3 +312,159 @@ INSERT INTO due_data (shop_id, shop_name, amount, due_date, status, sales_execut
 ('FF-M-002', 'Urban Fresh Store', 500.00, '2024-02-09', 'current', 11, 'FF-METRO', 'FRESHFOOD', 500.00, 0, NULL, 'Current payment', 1),
 ('MR-D-001', 'Downtown Metro Market', 600.00, '2024-02-07', 'current', 17, 'MR-DOWNTOWN', 'METRO', 600.00, 0, NULL, 'Current payment', 1),
 ('MR-D-002', 'CBD Metro Store', 700.00, '2024-02-10', 'current', 17, 'MR-DOWNTOWN', 'METRO', 700.00, 0, NULL, 'Current payment', 1);
+
+
+-- ============================================
+-- Orders and Order Items (New tables)
+-- ============================================
+
+-- Insert Orders
+INSERT INTO orders (order_id, bill_number, shop_id, executive_id, order_date, total_amount, status, items_count, notes, delivery_date, payment_status, payment_method, tenant_id, created_by) VALUES
+-- AquaStar Orders - Alex Thompson (executive_id: 5)
+('ORD2024001', 'BILL-2024-0001', 'AQ-N-001', 5, '2024-11-25', 5850.00, 'completed', 3, 'Regular monthly order', '2024-11-27', 'paid', 'cash', 'AQUASTAR', 1),
+('ORD2024002', 'BILL-2024-0002', 'AQ-N-002', 5, '2024-11-26', 8920.00, 'completed', 4, 'Bulk order for renovation', '2024-11-28', 'paid', 'credit', 'AQUASTAR', 1),
+('ORD2024003', 'BILL-2024-0003', 'AQ-N-001', 5, '2024-11-28', 3240.00, 'pending', 2, 'Emergency stock replenishment', '2024-12-02', 'pending', 'credit', 'AQUASTAR', 1),
+
+-- AquaStar Orders - Maria Garcia (executive_id: 6)
+('ORD2024004', 'BILL-2024-0004', 'AQ-N-003', 6, '2024-11-25', 12450.00, 'completed', 5, 'Major project order', '2024-11-29', 'partial', 'bank_transfer', 'AQUASTAR', 1),
+('ORD2024005', 'BILL-2024-0005', 'AQ-N-004', 6, '2024-11-27', 4560.00, 'confirmed', 3, 'Regular weekly order', '2024-12-01', 'pending', 'cash', 'AQUASTAR', 1),
+('ORD2024006', 'BILL-2024-0006', 'AQ-N-003', 6, '2024-11-29', 7890.00, 'processing', 4, 'Scheduled maintenance order', '2024-12-03', 'pending', 'credit', 'AQUASTAR', 1),
+
+-- AquaStar Orders - James Anderson (executive_id: 7)
+('ORD2024007', 'BILL-2024-0007', 'AQ-S-001', 7, '2024-11-26', 6780.00, 'completed', 3, 'Standard order', '2024-11-30', 'paid', 'cash', 'AQUASTAR', 1),
+('ORD2024008', 'BILL-2024-0008', 'AQ-S-002', 7, '2024-11-27', 9340.00, 'shipped', 5, 'Large order for expansion', '2024-12-01', 'partial', 'bank_transfer', 'AQUASTAR', 1),
+('ORD2024009', 'BILL-2024-0009', 'AQ-S-001', 7, '2024-11-30', 2890.00, 'cancelled', 2, 'Cancelled due to stock unavailability', NULL, 'pending', NULL, 'AQUASTAR', 1),
+
+-- AquaStar Orders - Jennifer Taylor (executive_id: 8)
+('ORD2024010', 'BILL-2024-0010', 'AQ-S-003', 8, '2024-11-25', 5670.00, 'completed', 3, 'Regular order', '2024-11-28', 'paid', 'credit', 'AQUASTAR', 1),
+('ORD2024011', 'BILL-2024-0011', 'AQ-S-004', 8, '2024-11-28', 8120.00, 'delivered', 4, 'Special project order', '2024-12-02', 'paid', 'bank_transfer', 'AQUASTAR', 1),
+
+-- FreshFood Orders - Kevin Murphy (executive_id: 11)
+('ORD2024012', 'BILL-2024-0012', 'FF-M-001', 11, '2024-11-26', 4320.00, 'completed', 3, 'Regular monthly order', '2024-11-29', 'paid', 'cash', 'FRESHFOOD', 1),
+('ORD2024013', 'BILL-2024-0013', 'FF-M-002', 11, '2024-11-29', 6540.00, 'processing', 4, 'Expansion project order', '2024-12-03', 'pending', 'credit', 'FRESHFOOD', 1),
+
+-- FreshFood Orders - Nicole Adams (executive_id: 12)
+('ORD2024014', 'BILL-2024-0014', 'FF-M-003', 12, '2024-11-27', 7890.00, 'completed', 5, 'Bulk order', '2024-12-01', 'paid', 'bank_transfer', 'FRESHFOOD', 1),
+('ORD2024015', 'BILL-2024-0015', 'FF-M-004', 12, '2024-11-30', 3450.00, 'confirmed', 2, 'Regular order', '2024-12-04', 'pending', 'cash', 'FRESHFOOD', 1),
+
+-- Metro Orders - Ryan Miller (executive_id: 17)
+('ORD2024016', 'BILL-2024-0016', 'MR-D-001', 17, '2024-11-25', 9870.00, 'completed', 4, 'Large project order', '2024-11-28', 'paid', 'bank_transfer', 'METRO', 1),
+('ORD2024017', 'BILL-2024-0017', 'MR-D-002', 17, '2024-11-28', 5430.00, 'delivered', 3, 'Regular monthly order', '2024-12-02', 'paid', 'credit', 'METRO', 1),
+
+-- Metro Orders - Amanda Garcia (executive_id: 18)
+('ORD2024018', 'BILL-2024-0018', 'MR-D-003', 18, '2024-11-26', 6780.00, 'completed', 4, 'Standard order', '2024-11-30', 'paid', 'cash', 'METRO', 1),
+('ORD2024019', 'BILL-2024-0019', 'MR-D-004', 18, '2024-11-29', 8920.00, 'processing', 5, 'Special project', '2024-12-03', 'pending', 'bank_transfer', 'METRO', 1),
+
+-- Returned order example
+('ORD2024020', 'BILL-2024-0020', 'AQ-N-002', 5, '2024-11-27', 2340.00, 'returned', 2, 'Quality issues - returned', NULL, 'pending', NULL, 'AQUASTAR', 1);
+
+
+-- Insert Order Items
+INSERT INTO order_items (order_id, product_code, product_name, quantity, unit, unit_price, total_price, discount, tax_amount, tenant_id) VALUES
+-- Order 1 items (ORD2024001 - get order id dynamically)
+((SELECT id FROM orders WHERE order_id = 'ORD2024001'), 'PVC-100-10', 'PVC Pipe 100mm x 10ft', 20.00, 'pcs', 150.00, 3000.00, 0.00, 360.00, 'AQUASTAR'),
+((SELECT id FROM orders WHERE order_id = 'ORD2024001'), 'ELB-100-90', '100mm 90° Elbow', 15.00, 'pcs', 45.00, 675.00, 33.75, 81.00, 'AQUASTAR'),
+((SELECT id FROM orders WHERE order_id = 'ORD2024001'), 'TEE-100', '100mm T-Joint', 25.00, 'pcs', 65.00, 1625.00, 81.25, 195.00, 'AQUASTAR'),
+
+-- Order 2 items (ORD2024002)
+((SELECT id FROM orders WHERE order_id = 'ORD2024002'), 'PVC-150-10', 'PVC Pipe 150mm x 10ft', 15.00, 'pcs', 280.00, 4200.00, 0.00, 504.00, 'AQUASTAR'),
+((SELECT id FROM orders WHERE order_id = 'ORD2024002'), 'ELB-150-90', '150mm 90° Elbow', 20.00, 'pcs', 75.00, 1500.00, 75.00, 180.00, 'AQUASTAR'),
+((SELECT id FROM orders WHERE order_id = 'ORD2024002'), 'CPL-150', '150mm Coupler', 30.00, 'pcs', 55.00, 1650.00, 82.50, 198.00, 'AQUASTAR'),
+((SELECT id FROM orders WHERE order_id = 'ORD2024002'), 'VLV-150', '150mm Ball Valve', 10.00, 'pcs', 120.00, 1200.00, 60.00, 144.00, 'AQUASTAR'),
+
+-- Order 3 items (ORD2024003)
+((SELECT id FROM orders WHERE order_id = 'ORD2024003'), 'PVC-75-10', 'PVC Pipe 75mm x 10ft', 25.00, 'pcs', 95.00, 2375.00, 0.00, 285.00, 'AQUASTAR'),
+((SELECT id FROM orders WHERE order_id = 'ORD2024003'), 'ELB-75-45', '75mm 45° Elbow', 12.00, 'pcs', 35.00, 420.00, 21.00, 50.40, 'AQUASTAR'),
+
+-- Order 4 items (ORD2024004)
+((SELECT id FROM orders WHERE order_id = 'ORD2024004'), 'PVC-200-10', 'PVC Pipe 200mm x 10ft', 20.00, 'pcs', 450.00, 9000.00, 0.00, 1080.00, 'AQUASTAR'),
+((SELECT id FROM orders WHERE order_id = 'ORD2024004'), 'ELB-200-90', '200mm 90° Elbow', 8.00, 'pcs', 125.00, 1000.00, 50.00, 120.00, 'AQUASTAR'),
+((SELECT id FROM orders WHERE order_id = 'ORD2024004'), 'TEE-200', '200mm T-Joint', 10.00, 'pcs', 180.00, 1800.00, 90.00, 216.00, 'AQUASTAR'),
+((SELECT id FROM orders WHERE order_id = 'ORD2024004'), 'CPL-200', '200mm Coupler', 15.00, 'pcs', 95.00, 1425.00, 71.25, 171.00, 'AQUASTAR'),
+((SELECT id FROM orders WHERE order_id = 'ORD2024004'), 'VLV-200', '200mm Ball Valve', 5.00, 'pcs', 280.00, 1400.00, 70.00, 168.00, 'AQUASTAR'),
+
+-- Order 5 items (ORD2024005)
+((SELECT id FROM orders WHERE order_id = 'ORD2024005'), 'PVC-100-10', 'PVC Pipe 100mm x 10ft', 18.00, 'pcs', 150.00, 2700.00, 0.00, 324.00, 'AQUASTAR'),
+((SELECT id FROM orders WHERE order_id = 'ORD2024005'), 'CPL-100', '100mm Coupler', 20.00, 'pcs', 42.00, 840.00, 42.00, 100.80, 'AQUASTAR'),
+((SELECT id FROM orders WHERE order_id = 'ORD2024005'), 'VLV-100', '100mm Ball Valve', 8.00, 'pcs', 95.00, 760.00, 38.00, 91.20, 'AQUASTAR'),
+
+-- Order 6 items (ORD2024006)
+((SELECT id FROM orders WHERE order_id = 'ORD2024006'), 'PVC-150-10', 'PVC Pipe 150mm x 10ft', 12.00, 'pcs', 280.00, 3360.00, 0.00, 403.20, 'AQUASTAR'),
+((SELECT id FROM orders WHERE order_id = 'ORD2024006'), 'ELB-150-90', '150mm 90° Elbow', 16.00, 'pcs', 75.00, 1200.00, 60.00, 144.00, 'AQUASTAR'),
+((SELECT id FROM orders WHERE order_id = 'ORD2024006'), 'TEE-150', '150mm T-Joint', 18.00, 'pcs', 95.00, 1710.00, 85.50, 205.20, 'AQUASTAR'),
+((SELECT id FROM orders WHERE order_id = 'ORD2024006'), 'CPL-150', '150mm Coupler', 25.00, 'pcs', 55.00, 1375.00, 68.75, 165.00, 'AQUASTAR'),
+
+-- Order 7 items (ORD2024007)
+((SELECT id FROM orders WHERE order_id = 'ORD2024007'), 'PVC-100-10', 'PVC Pipe 100mm x 10ft', 22.00, 'pcs', 150.00, 3300.00, 0.00, 396.00, 'AQUASTAR'),
+((SELECT id FROM orders WHERE order_id = 'ORD2024007'), 'ELB-100-90', '100mm 90° Elbow', 18.00, 'pcs', 45.00, 810.00, 40.50, 97.20, 'AQUASTAR'),
+((SELECT id FROM orders WHERE order_id = 'ORD2024007'), 'TEE-100', '100mm T-Joint', 20.00, 'pcs', 65.00, 1300.00, 65.00, 156.00, 'AQUASTAR'),
+
+-- Order 8 items (ORD2024008)
+((SELECT id FROM orders WHERE order_id = 'ORD2024008'), 'PVC-200-10', 'PVC Pipe 200mm x 10ft', 10.00, 'pcs', 450.00, 4500.00, 0.00, 540.00, 'AQUASTAR'),
+((SELECT id FROM orders WHERE order_id = 'ORD2024008'), 'ELB-200-90', '200mm 90° Elbow', 12.00, 'pcs', 125.00, 1500.00, 75.00, 180.00, 'AQUASTAR'),
+((SELECT id FROM orders WHERE order_id = 'ORD2024008'), 'TEE-200', '200mm T-Joint', 8.00, 'pcs', 180.00, 1440.00, 72.00, 172.80, 'AQUASTAR'),
+((SELECT id FROM orders WHERE order_id = 'ORD2024008'), 'CPL-200', '200mm Coupler', 18.00, 'pcs', 95.00, 1710.00, 85.50, 205.20, 'AQUASTAR'),
+((SELECT id FROM orders WHERE order_id = 'ORD2024008'), 'VLV-200', '200mm Ball Valve', 6.00, 'pcs', 280.00, 1680.00, 84.00, 201.60, 'AQUASTAR'),
+
+-- Order 10 items (ORD2024010)
+((SELECT id FROM orders WHERE order_id = 'ORD2024010'), 'PVC-100-10', 'PVC Pipe 100mm x 10ft', 16.00, 'pcs', 150.00, 2400.00, 0.00, 288.00, 'AQUASTAR'),
+((SELECT id FROM orders WHERE order_id = 'ORD2024010'), 'ELB-100-90', '100mm 90° Elbow', 22.00, 'pcs', 45.00, 990.00, 49.50, 118.80, 'AQUASTAR'),
+((SELECT id FROM orders WHERE order_id = 'ORD2024010'), 'CPL-100', '100mm Coupler', 28.00, 'pcs', 42.00, 1176.00, 58.80, 141.12, 'AQUASTAR'),
+
+-- Order 11 items (ORD2024011)
+((SELECT id FROM orders WHERE order_id = 'ORD2024011'), 'PVC-150-10', 'PVC Pipe 150mm x 10ft', 14.00, 'pcs', 280.00, 3920.00, 0.00, 470.40, 'AQUASTAR'),
+((SELECT id FROM orders WHERE order_id = 'ORD2024011'), 'ELB-150-90', '150mm 90° Elbow', 16.00, 'pcs', 75.00, 1200.00, 60.00, 144.00, 'AQUASTAR'),
+((SELECT id FROM orders WHERE order_id = 'ORD2024011'), 'TEE-150', '150mm T-Joint', 12.00, 'pcs', 95.00, 1140.00, 57.00, 136.80, 'AQUASTAR'),
+((SELECT id FROM orders WHERE order_id = 'ORD2024011'), 'VLV-150', '150mm Ball Valve', 10.00, 'pcs', 150.00, 1500.00, 75.00, 180.00, 'AQUASTAR'),
+
+-- FreshFood Orders
+-- Order 12 items (ORD2024012)
+((SELECT id FROM orders WHERE order_id = 'ORD2024012'), 'PVC-100-10', 'PVC Pipe 100mm x 10ft', 14.00, 'pcs', 150.00, 2100.00, 0.00, 252.00, 'FRESHFOOD'),
+((SELECT id FROM orders WHERE order_id = 'ORD2024012'), 'ELB-100-90', '100mm 90° Elbow', 20.00, 'pcs', 45.00, 900.00, 45.00, 108.00, 'FRESHFOOD'),
+((SELECT id FROM orders WHERE order_id = 'ORD2024012'), 'CPL-100', '100mm Coupler', 18.00, 'pcs', 42.00, 756.00, 37.80, 90.72, 'FRESHFOOD'),
+
+-- Order 13 items (ORD2024013)
+((SELECT id FROM orders WHERE order_id = 'ORD2024013'), 'PVC-150-10', 'PVC Pipe 150mm x 10ft', 10.00, 'pcs', 280.00, 2800.00, 0.00, 336.00, 'FRESHFOOD'),
+((SELECT id FROM orders WHERE order_id = 'ORD2024013'), 'ELB-150-90', '150mm 90° Elbow', 15.00, 'pcs', 75.00, 1125.00, 56.25, 135.00, 'FRESHFOOD'),
+((SELECT id FROM orders WHERE order_id = 'ORD2024013'), 'TEE-150', '150mm T-Joint', 12.00, 'pcs', 95.00, 1140.00, 57.00, 136.80, 'FRESHFOOD'),
+((SELECT id FROM orders WHERE order_id = 'ORD2024013'), 'VLV-150', '150mm Ball Valve', 8.00, 'pcs', 150.00, 1200.00, 60.00, 144.00, 'FRESHFOOD'),
+
+-- Order 14 items (ORD2024014)
+((SELECT id FROM orders WHERE order_id = 'ORD2024014'), 'PVC-200-10', 'PVC Pipe 200mm x 10ft', 8.00, 'pcs', 450.00, 3600.00, 0.00, 432.00, 'FRESHFOOD'),
+((SELECT id FROM orders WHERE order_id = 'ORD2024014'), 'ELB-200-90', '200mm 90° Elbow', 10.00, 'pcs', 125.00, 1250.00, 62.50, 150.00, 'FRESHFOOD'),
+((SELECT id FROM orders WHERE order_id = 'ORD2024014'), 'TEE-200', '200mm T-Joint', 12.00, 'pcs', 180.00, 2160.00, 108.00, 259.20, 'FRESHFOOD'),
+((SELECT id FROM orders WHERE order_id = 'ORD2024014'), 'CPL-200', '200mm Coupler', 14.00, 'pcs', 95.00, 1330.00, 66.50, 159.60, 'FRESHFOOD'),
+((SELECT id FROM orders WHERE order_id = 'ORD2024014'), 'VLV-200', '200mm Ball Valve', 4.00, 'pcs', 280.00, 1120.00, 56.00, 134.40, 'FRESHFOOD'),
+
+-- Order 15 items (ORD2024015)
+((SELECT id FROM orders WHERE order_id = 'ORD2024015'), 'PVC-75-10', 'PVC Pipe 75mm x 10ft', 20.00, 'pcs', 95.00, 1900.00, 0.00, 228.00, 'FRESHFOOD'),
+((SELECT id FROM orders WHERE order_id = 'ORD2024015'), 'ELB-75-90', '75mm 90° Elbow', 18.00, 'pcs', 38.00, 684.00, 34.20, 82.08, 'FRESHFOOD'),
+
+-- Metro Orders
+-- Order 16 items (ORD2024016)
+((SELECT id FROM orders WHERE order_id = 'ORD2024016'), 'PVC-200-10', 'PVC Pipe 200mm x 10ft', 12.00, 'pcs', 450.00, 5400.00, 0.00, 648.00, 'METRO'),
+((SELECT id FROM orders WHERE order_id = 'ORD2024016'), 'ELB-200-90', '200mm 90° Elbow', 15.00, 'pcs', 125.00, 1875.00, 93.75, 225.00, 'METRO'),
+((SELECT id FROM orders WHERE order_id = 'ORD2024016'), 'TEE-200', '200mm T-Joint', 10.00, 'pcs', 180.00, 1800.00, 90.00, 216.00, 'METRO'),
+((SELECT id FROM orders WHERE order_id = 'ORD2024016'), 'VLV-200', '200mm Ball Valve', 6.00, 'pcs', 280.00, 1680.00, 84.00, 201.60, 'METRO'),
+
+-- Order 17 items (ORD2024017)
+((SELECT id FROM orders WHERE order_id = 'ORD2024017'), 'PVC-100-10', 'PVC Pipe 100mm x 10ft', 18.00, 'pcs', 150.00, 2700.00, 0.00, 324.00, 'METRO'),
+((SELECT id FROM orders WHERE order_id = 'ORD2024017'), 'ELB-100-90', '100mm 90° Elbow', 16.00, 'pcs', 45.00, 720.00, 36.00, 86.40, 'METRO'),
+((SELECT id FROM orders WHERE order_id = 'ORD2024017'), 'TEE-100', '100mm T-Joint', 14.00, 'pcs', 65.00, 910.00, 45.50, 109.20, 'METRO'),
+
+-- Order 18 items (ORD2024018)
+((SELECT id FROM orders WHERE order_id = 'ORD2024018'), 'PVC-150-10', 'PVC Pipe 150mm x 10ft', 11.00, 'pcs', 280.00, 3080.00, 0.00, 369.60, 'METRO'),
+((SELECT id FROM orders WHERE order_id = 'ORD2024018'), 'ELB-150-90', '150mm 90° Elbow', 14.00, 'pcs', 75.00, 1050.00, 52.50, 126.00, 'METRO'),
+((SELECT id FROM orders WHERE order_id = 'ORD2024018'), 'TEE-150', '150mm T-Joint', 16.00, 'pcs', 95.00, 1520.00, 76.00, 182.40, 'METRO'),
+((SELECT id FROM orders WHERE order_id = 'ORD2024018'), 'CPL-150', '150mm Coupler', 20.00, 'pcs', 55.00, 1100.00, 55.00, 132.00, 'METRO'),
+
+-- Order 19 items (ORD2024019)
+((SELECT id FROM orders WHERE order_id = 'ORD2024019'), 'PVC-200-10', 'PVC Pipe 200mm x 10ft', 10.00, 'pcs', 450.00, 4500.00, 0.00, 540.00, 'METRO'),
+((SELECT id FROM orders WHERE order_id = 'ORD2024019'), 'ELB-200-90', '200mm 90° Elbow', 12.00, 'pcs', 125.00, 1500.00, 75.00, 180.00, 'METRO'),
+((SELECT id FROM orders WHERE order_id = 'ORD2024019'), 'TEE-200', '200mm T-Joint', 14.00, 'pcs', 180.00, 2520.00, 126.00, 302.40, 'METRO'),
+((SELECT id FROM orders WHERE order_id = 'ORD2024019'), 'CPL-200', '200mm Coupler', 16.00, 'pcs', 95.00, 1520.00, 76.00, 182.40, 'METRO'),
+((SELECT id FROM orders WHERE order_id = 'ORD2024019'), 'VLV-200', '200mm Ball Valve', 5.00, 'pcs', 280.00, 1400.00, 70.00, 168.00, 'METRO'),
+
+-- Order 20 items (ORD2024020 - returned order)
+((SELECT id FROM orders WHERE order_id = 'ORD2024020'), 'PVC-100-10', 'PVC Pipe 100mm x 10ft', 10.00, 'pcs', 150.00, 1500.00, 0.00, 180.00, 'AQUASTAR'),
+((SELECT id FROM orders WHERE order_id = 'ORD2024020'), 'ELB-100-90', '100mm 90° Elbow', 8.00, 'pcs', 45.00, 360.00, 18.00, 43.20, 'AQUASTAR');

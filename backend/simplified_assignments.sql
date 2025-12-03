@@ -77,3 +77,84 @@ INSERT INTO sales_executive_assignments (sales_executive_id, shop_id, territory_
 (22, 'MR-M-003', 'MR-MIDTOWN', 'METRO', '2024-01-01', 'active', 1),
 (22, 'MR-M-004', 'MR-MIDTOWN', 'METRO', '2024-01-01', 'active', 1);
 
+
+-- ============================================
+-- Shop Assignments (New shop_assignments table)
+-- ============================================
+
+INSERT INTO shop_assignments (shop_id, executive_id, territory_id, assigned_date, status, tenant_id, created_by) VALUES
+-- AquaStar Assignments
+-- Alex Thompson (ID: 5) - AQ-NORTH Territory
+('AQ-N-001', 5, 'AQ-NORTH', '2024-01-01', 'active', 'AQUASTAR', 1),
+('AQ-N-002', 5, 'AQ-NORTH', '2024-01-01', 'active', 'AQUASTAR', 1),
+
+-- Maria Garcia (ID: 6) - AQ-NORTH Territory
+('AQ-N-003', 6, 'AQ-NORTH', '2024-01-01', 'active', 'AQUASTAR', 1),
+('AQ-N-004', 6, 'AQ-NORTH', '2024-01-01', 'active', 'AQUASTAR', 1),
+
+-- James Anderson (ID: 7) - AQ-SOUTH Territory
+('AQ-S-001', 7, 'AQ-SOUTH', '2024-01-01', 'active', 'AQUASTAR', 1),
+('AQ-S-002', 7, 'AQ-SOUTH', '2024-01-01', 'active', 'AQUASTAR', 1),
+
+-- Jennifer Taylor (ID: 8) - AQ-SOUTH Territory
+('AQ-S-003', 8, 'AQ-SOUTH', '2024-01-01', 'active', 'AQUASTAR', 1),
+('AQ-S-004', 8, 'AQ-SOUTH', '2024-01-01', 'active', 'AQUASTAR', 1),
+
+-- Robert Martinez (ID: 9) - AQ-EAST Territory
+('AQ-E-001', 9, 'AQ-EAST', '2024-01-01', 'active', 'AQUASTAR', 1),
+('AQ-E-002', 9, 'AQ-EAST', '2024-01-01', 'active', 'AQUASTAR', 1),
+
+-- Linda Rodriguez (ID: 10) - AQ-EAST Territory
+('AQ-E-003', 10, 'AQ-EAST', '2024-01-01', 'active', 'AQUASTAR', 1),
+('AQ-E-004', 10, 'AQ-EAST', '2024-01-01', 'active', 'AQUASTAR', 1),
+
+-- FreshFood Assignments
+-- Kevin Murphy (ID: 11) - FF-METRO Territory
+('FF-M-001', 11, 'FF-METRO', '2024-01-01', 'active', 'FRESHFOOD', 1),
+('FF-M-002', 11, 'FF-METRO', '2024-01-01', 'active', 'FRESHFOOD', 1),
+
+-- Nicole Adams (ID: 12) - FF-METRO Territory
+('FF-M-003', 12, 'FF-METRO', '2024-01-01', 'active', 'FRESHFOOD', 1),
+('FF-M-004', 12, 'FF-METRO', '2024-01-01', 'active', 'FRESHFOOD', 1),
+
+-- Brian Wilson (ID: 13) - FF-SUBURB Territory
+('FF-S-001', 13, 'FF-SUBURB', '2024-01-01', 'active', 'FRESHFOOD', 1),
+('FF-S-002', 13, 'FF-SUBURB', '2024-01-01', 'active', 'FRESHFOOD', 1),
+
+-- Stephanie Hall (ID: 14) - FF-SUBURB Territory
+('FF-S-003', 14, 'FF-SUBURB', '2024-01-01', 'active', 'FRESHFOOD', 1),
+('FF-S-004', 14, 'FF-SUBURB', '2024-01-01', 'active', 'FRESHFOOD', 1),
+
+-- Daniel Young (ID: 15) - FF-RURAL Territory
+('FF-R-001', 15, 'FF-RURAL', '2024-01-01', 'active', 'FRESHFOOD', 1),
+('FF-R-002', 15, 'FF-RURAL', '2024-01-01', 'active', 'FRESHFOOD', 1),
+
+-- Jessica King (ID: 16) - FF-RURAL Territory
+('FF-R-003', 16, 'FF-RURAL', '2024-01-01', 'active', 'FRESHFOOD', 1),
+('FF-R-004', 16, 'FF-RURAL', '2024-01-01', 'active', 'FRESHFOOD', 1),
+
+-- Metro Assignments
+-- Ryan Miller (ID: 17) - MR-DOWNTOWN Territory
+('MR-D-001', 17, 'MR-DOWNTOWN', '2024-01-01', 'active', 'METRO', 1),
+('MR-D-002', 17, 'MR-DOWNTOWN', '2024-01-01', 'active', 'METRO', 1),
+
+-- Amanda Garcia (ID: 18) - MR-DOWNTOWN Territory
+('MR-D-003', 18, 'MR-DOWNTOWN', '2024-01-01', 'active', 'METRO', 1),
+('MR-D-004', 18, 'MR-DOWNTOWN', '2024-01-01', 'active', 'METRO', 1),
+
+-- Jason Rodriguez (ID: 19) - MR-UPTOWN Territory
+('MR-U-001', 19, 'MR-UPTOWN', '2024-01-01', 'active', 'METRO', 1),
+('MR-U-002', 19, 'MR-UPTOWN', '2024-01-01', 'active', 'METRO', 1),
+
+-- Melissa Lee (ID: 20) - MR-UPTOWN Territory
+('MR-U-003', 20, 'MR-UPTOWN', '2024-01-01', 'active', 'METRO', 1),
+('MR-U-004', 20, 'MR-UPTOWN', '2024-01-01', 'active', 'METRO', 1),
+
+-- Andrew White (ID: 21) - MR-MIDTOWN Territory
+('MR-M-001', 21, 'MR-MIDTOWN', '2024-01-01', 'active', 'METRO', 1),
+('MR-M-002', 21, 'MR-MIDTOWN', '2024-01-01', 'active', 'METRO', 1),
+
+-- Samantha Harris (ID: 22) - MR-MIDTOWN Territory
+('MR-M-003', 22, 'MR-MIDTOWN', '2024-01-01', 'active', 'METRO', 1),
+('MR-M-004', 22, 'MR-MIDTOWN', '2024-01-01', 'active', 'METRO', 1);
+

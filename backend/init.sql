@@ -576,3 +576,174 @@ ON DUPLICATE KEY UPDATE
     email = VALUES(email),
     password_hash = VALUES(password_hash),
     updated_at = CURRENT_TIMESTAMP;
+
+-- ============================================
+-- NEW TABLES: Orders, Order Items, Shop Assignments
+-- ============================================
+
+-- Orders table
+CREATE TABLE IF NOT EXISTS orders (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    order_id VARCHAR(50) NOT NULL,
+    bill_number VARCHAR(50) NOT NULL,
+    shop_id VARCHAR(20) NOT NULL,
+    executive_id INT NOT NULL,
+    order_date DATE NOT NULL,
+    total_amount DECIMAL(10, 2) NOT NULL DEFAULT 0.00,
+    status ENUM('pending', 'confirmed', 'processing', 'shipped', 'delivered', 'completed', 'cancelled', 'returned') DEFAULT 'pending',
+    items_count INT DEFAULT 0,
+    notes TEXT,
+    delivery_date DATE,
+    payment_status ENUM('pending', 'partial', 'paid', 'overdue') DEFAULT 'pending',
+    payment_method VARCHAR(50),
+    tenant_id VARCHAR(50) NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    created_by INT,
+    updated_by INT,
+    UNIQUE KEY uq_order_id_tenant (order_id, tenant_id),
+    UNIQUE KEY uq_bill_number_tenant (bill_number, tenant_id),
+    INDEX idx_tenant_shop (tenant_id, shop_id),
+    INDEX idx_tenant_executive (tenant_id, executive_id),
+    INDEX idx_tenant_date (tenant_id, order_date),
+    INDEX idx_tenant_status (tenant_id, status),
+    INDEX idx_shop_date (shop_id, order_date),
+    INDEX idx_executive_date (executive_id, order_date),
+    INDEX idx_status_date (status, order_date),
+    INDEX idx_payment_status (payment_status),
+    FOREIGN KEY (executive_id) REFERENCES users(id) ON DELETE RESTRICT,
+    FOREIGN KEY (shop_id) REFERENCES shops(shop_id) ON DELETE RESTRICT
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Order Items table
+CREATE TABLE IF NOT EXISTS order_items (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    order_id INT NOT NULL,
+    product_code VARCHAR(50) NOT NULL,
+    product_name VARCHAR(255) NOT NULL,
+    quantity DECIMAL(10, 2) NOT NULL,
+    unit VARCHAR(20) NOT NULL DEFAULT 'pcs',
+    unit_price DECIMAL(10, 2) NOT NULL,
+    total_price DECIMAL(10, 2) NOT NULL,
+    discount DECIMAL(10, 2) DEFAULT 0.00,
+    tax_amount DECIMAL(10, 2) DEFAULT 0.00,
+    tenant_id VARCHAR(50) NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    INDEX idx_order (order_id),
+    INDEX idx_product (product_code),
+    INDEX idx_tenant (tenant_id),
+    FOREIGN KEY (order_id) REFERENCES orders(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Shop Assignments table
+CREATE TABLE IF NOT EXISTS shop_assignments (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    shop_id VARCHAR(20) NOT NULL,
+    executive_id INT NOT NULL,
+    territory_id VARCHAR(20),
+    assigned_date DATE NOT NULL,
+    end_date DATE,
+    status ENUM('active', 'inactive', 'suspended', 'transferred') DEFAULT 'active',
+    notes TEXT,
+    tenant_id VARCHAR(50) NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    created_by INT,
+    updated_by INT,
+    UNIQUE KEY uq_shop_executive_tenant (shop_id, executive_id, tenant_id),
+    INDEX idx_tenant_shop (tenant_id, shop_id),
+    INDEX idx_tenant_executive (tenant_id, executive_id),
+    INDEX idx_tenant_territory (tenant_id, territory_id),
+    INDEX idx_tenant_status (tenant_id, status),
+    INDEX idx_shop_status (shop_id, status),
+    INDEX idx_executive_status (executive_id, status),
+    FOREIGN KEY (shop_id) REFERENCES shops(shop_id) ON DELETE CASCADE,
+    FOREIGN KEY (executive_id) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (territory_id) REFERENCES territories(territory_id) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Add columns to visits table for order tracking
+ALTER TABLE visits 
+ADD COLUMN IF NOT EXISTS order_placed BOOLEAN DEFAULT FALSE AFTER remarks,
+ADD COLUMN IF NOT EXISTS order_id INT AFTER order_placed,
+ADD COLUMN IF NOT EXISTS photos TEXT AFTER order_id,
+ADD INDEX IF NOT EXISTS idx_order (order_id);
+
+-- Add foreign key for order_id if not exists
+SET @fk_exists = (
+    SELECT COUNT(*)
+    FROM information_schema.TABLE_CONSTRAINTS
+    WHERE CONSTRAINT_SCHEMA = DATABASE()
+    AND TABLE_NAME = 'visits'
+    AND CONSTRAINT_NAME = 'fk_visit_order'
+);
+
+SET @sql = IF(@fk_exists = 0,
+    'ALTER TABLE visits ADD CONSTRAINT fk_visit_order FOREIGN KEY (order_id) REFERENCES orders(id) ON DELETE SET NULL',
+    'SELECT "Foreign key already exists" AS message'
+);
+
+PREPARE stmt FROM @sql;
+EXECUTE stmt;
+DEALLOCATE PREPARE stmt;
+
+-- Create views for reporting
+CREATE OR REPLACE VIEW v_active_shop_assignments AS
+SELECT 
+    sa.id,
+    sa.shop_id,
+    s.name AS shop_name,
+    sa.executive_id,
+    u.name AS executive_name,
+    sa.territory_id,
+    t.name AS territory_name,
+    sa.assigned_date,
+    sa.status,
+    sa.tenant_id
+FROM shop_assignments sa
+JOIN shops s ON sa.shop_id = s.shop_id
+JOIN users u ON sa.executive_id = u.id
+LEFT JOIN territories t ON sa.territory_id = t.territory_id
+WHERE sa.status = 'active';
+
+CREATE OR REPLACE VIEW v_order_summary AS
+SELECT 
+    o.id,
+    o.order_id,
+    o.bill_number,
+    o.shop_id,
+    s.name AS shop_name,
+    o.executive_id,
+    u.name AS executive_name,
+    o.order_date,
+    o.total_amount,
+    o.status,
+    o.payment_status,
+    o.items_count,
+    o.tenant_id
+FROM orders o
+JOIN shops s ON o.shop_id = s.shop_id
+JOIN users u ON o.executive_id = u.id;
+
+CREATE OR REPLACE VIEW v_visit_summary AS
+SELECT 
+    v.id,
+    v.shop_id,
+    s.name AS shop_name,
+    v.sales_executive_id,
+    u.name AS executive_name,
+    v.checkin_time,
+    v.checkout_time,
+    v.status,
+    v.order_placed,
+    v.order_id,
+    CASE 
+        WHEN v.order_placed = TRUE THEN o.bill_number
+        ELSE NULL
+    END AS bill_number,
+    v.tenant_id
+FROM visits v
+JOIN shops s ON v.shop_id = s.shop_id
+JOIN users u ON v.sales_executive_id = u.id
+LEFT JOIN orders o ON v.order_id = o.id;
