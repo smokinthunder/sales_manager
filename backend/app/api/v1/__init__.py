@@ -13,9 +13,6 @@ from .outstanding import router as outstanding_router
 from .sync import router as sync_router
 from .analytics import router as analytics_router
 from .notifications import router as notifications_router
-from .orders import router as orders_router
-from .assignments import router as assignments_router
-from .visits import router as visits_router
 
 __all__ = [
     "auth_router",
@@ -26,8 +23,5 @@ __all__ = [
     "outstanding_router",
     "sync_router",
     "analytics_router",
-    "notifications_router",
-    "orders_router",
-    "assignments_router",
-    "visits_router"
+    "notifications_router"
 ]

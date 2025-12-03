@@ -4114,6 +4114,470 @@ async def delete_notification(tenant_id: str, notification_id: str, db=Depends(g
         raise HTTPException(status_code=500, detail="Internal server error")
 
 
+# ==================== Orders Endpoints ====================
+
+class OrderResponse(BaseModel):
+    id: int
+    order_id: str
+    bill_number: Optional[str] = None
+    shop_id: str
+    executive_id: int
+    order_date: date
+    delivery_date: Optional[date] = None
+    total_amount: float
+    discount_amount: Optional[float] = None
+    tax_amount: Optional[float] = None
+    final_amount: float
+    status: str
+    payment_status: str
+    payment_method: Optional[str] = None
+    items_count: int
+    notes: Optional[str] = None
+    tenant_id: str
+    created_at: datetime
+    updated_at: datetime
+
+class OrderItemResponse(BaseModel):
+    id: int
+    order_id: int
+    product_code: str
+    product_name: str
+    quantity: int
+    unit_price: float
+    discount_percent: Optional[float] = None
+    discount_amount: Optional[float] = None
+    tax_percent: Optional[float] = None
+    tax_amount: Optional[float] = None
+    total_amount: float
+    created_at: datetime
+
+class OrderCreate(BaseModel):
+    order_id: str
+    bill_number: Optional[str] = None
+    shop_id: str
+    executive_id: int
+    order_date: date
+    delivery_date: Optional[date] = None
+    total_amount: float
+    discount_amount: Optional[float] = 0
+    tax_amount: Optional[float] = 0
+    final_amount: float
+    status: str = "pending"
+    payment_status: str = "pending"
+    payment_method: Optional[str] = None
+    items_count: int = 0
+    notes: Optional[str] = None
+    tenant_id: str
+
+class OrderItemCreate(BaseModel):
+    order_id: int
+    product_code: str
+    product_name: str
+    quantity: int
+    unit_price: float
+    discount_percent: Optional[float] = 0
+    discount_amount: Optional[float] = 0
+    tax_percent: Optional[float] = 0
+    tax_amount: Optional[float] = 0
+    total_amount: float
+
+@app.get("/api/orders/{tenant_id}", response_model=List[OrderResponse])
+async def get_orders(
+    tenant_id: str,
+    status: Optional[str] = Query(None),
+    shop_id: Optional[str] = Query(None),
+    executive_id: Optional[int] = Query(None),
+    from_date: Optional[str] = Query(None),
+    to_date: Optional[str] = Query(None),
+    search: Optional[str] = Query(None),
+    page: int = Query(1, gt=0),
+    page_size: int = Query(50, gt=0, le=100)
+):
+    """Get all orders for a tenant with optional filters."""
+    db = SessionLocal()
+    try:
+        # Build query with filters
+        conditions = ["tenant_id = :tenant_id"]
+        params = {"tenant_id": tenant_id}
+        
+        if status:
+            conditions.append("status = :status")
+            params["status"] = status
+        
+        if shop_id:
+            conditions.append("shop_id = :shop_id")
+            params["shop_id"] = shop_id
+        
+        if executive_id:
+            conditions.append("executive_id = :executive_id")
+            params["executive_id"] = executive_id
+        
+        if from_date:
+            conditions.append("order_date >= :from_date")
+            params["from_date"] = from_date
+        
+        if to_date:
+            conditions.append("order_date <= :to_date")
+            params["to_date"] = to_date
+        
+        if search:
+            conditions.append("(order_id LIKE :search OR bill_number LIKE :search)")
+            params["search"] = f"%{search}%"
+        
+        where_clause = " AND ".join(conditions)
+        offset = (page - 1) * page_size
+        
+        query = text(f"""
+            SELECT * FROM orders
+            WHERE {where_clause}
+            ORDER BY order_date DESC, created_at DESC
+            LIMIT :limit OFFSET :offset
+        """)
+        
+        params["limit"] = page_size
+        params["offset"] = offset
+        
+        result = db.execute(query, params)
+        orders = [dict(row._mapping) for row in result]
+        
+        return orders
+        
+    except SQLAlchemyError as e:
+        logger.error(f"Database error: {e}")
+        raise HTTPException(status_code=500, detail="Database error")
+    finally:
+        db.close()
+
+@app.get("/api/orders/{tenant_id}/{order_id}", response_model=OrderResponse)
+async def get_order_by_id(tenant_id: str, order_id: str):
+    """Get a single order by order_id."""
+    db = SessionLocal()
+    try:
+        query = text("""
+            SELECT * FROM orders
+            WHERE tenant_id = :tenant_id AND order_id = :order_id
+        """)
+        
+        result = db.execute(query, {"tenant_id": tenant_id, "order_id": order_id})
+        order = result.fetchone()
+        
+        if not order:
+            raise HTTPException(status_code=404, detail="Order not found")
+        
+        return dict(order._mapping)
+        
+    except HTTPException:
+        raise
+    except SQLAlchemyError as e:
+        logger.error(f"Database error: {e}")
+        raise HTTPException(status_code=500, detail="Database error")
+    finally:
+        db.close()
+
+@app.get("/api/orders/{tenant_id}/{order_id}/items", response_model=List[OrderItemResponse])
+async def get_order_items(tenant_id: str, order_id: str):
+    """Get all items for an order."""
+    db = SessionLocal()
+    try:
+        # First verify order exists
+        order_query = text("""
+            SELECT id FROM orders
+            WHERE tenant_id = :tenant_id AND order_id = :order_id
+        """)
+        order_result = db.execute(order_query, {"tenant_id": tenant_id, "order_id": order_id})
+        order = order_result.fetchone()
+        
+        if not order:
+            raise HTTPException(status_code=404, detail="Order not found")
+        
+        # Get order items
+        items_query = text("""
+            SELECT * FROM order_items
+            WHERE order_id = :order_id
+            ORDER BY id
+        """)
+        
+        result = db.execute(items_query, {"order_id": order[0]})
+        items = [dict(row._mapping) for row in result]
+        
+        return items
+        
+    except HTTPException:
+        raise
+    except SQLAlchemyError as e:
+        logger.error(f"Database error: {e}")
+        raise HTTPException(status_code=500, detail="Database error")
+    finally:
+        db.close()
+
+@app.post("/api/orders/{tenant_id}", response_model=OrderResponse)
+async def create_order(tenant_id: str, order: OrderCreate):
+    """Create a new order."""
+    db = SessionLocal()
+    try:
+        # Check if order_id already exists
+        check_query = text("""
+            SELECT id FROM orders
+            WHERE tenant_id = :tenant_id AND order_id = :order_id
+        """)
+        existing = db.execute(check_query, {"tenant_id": tenant_id, "order_id": order.order_id})
+        if existing.fetchone():
+            raise HTTPException(status_code=400, detail="Order ID already exists")
+        
+        # Insert order
+        insert_query = text("""
+            INSERT INTO orders (
+                order_id, bill_number, shop_id, executive_id, order_date,
+                delivery_date, total_amount, discount_amount, tax_amount,
+                final_amount, status, payment_status, payment_method,
+                items_count, notes, tenant_id
+            ) VALUES (
+                :order_id, :bill_number, :shop_id, :executive_id, :order_date,
+                :delivery_date, :total_amount, :discount_amount, :tax_amount,
+                :final_amount, :status, :payment_status, :payment_method,
+                :items_count, :notes, :tenant_id
+            )
+        """)
+        
+        db.execute(insert_query, order.dict())
+        db.commit()
+        
+        # Get created order
+        get_query = text("""
+            SELECT * FROM orders
+            WHERE tenant_id = :tenant_id AND order_id = :order_id
+        """)
+        result = db.execute(get_query, {"tenant_id": tenant_id, "order_id": order.order_id})
+        created_order = result.fetchone()
+        
+        return dict(created_order._mapping)
+        
+    except HTTPException:
+        db.rollback()
+        raise
+    except SQLAlchemyError as e:
+        db.rollback()
+        logger.error(f"Database error: {e}")
+        raise HTTPException(status_code=500, detail="Database error")
+    finally:
+        db.close()
+
+@app.post("/api/order-items", response_model=OrderItemResponse)
+async def create_order_item(item: OrderItemCreate):
+    """Create a new order item."""
+    db = SessionLocal()
+    try:
+        insert_query = text("""
+            INSERT INTO order_items (
+                order_id, product_code, product_name, quantity, unit_price,
+                discount_percent, discount_amount, tax_percent, tax_amount, total_amount
+            ) VALUES (
+                :order_id, :product_code, :product_name, :quantity, :unit_price,
+                :discount_percent, :discount_amount, :tax_percent, :tax_amount, :total_amount
+            )
+        """)
+        
+        db.execute(insert_query, item.dict())
+        db.commit()
+        
+        # Get created item
+        get_query = text("""
+            SELECT * FROM order_items
+            WHERE order_id = :order_id AND product_code = :product_code
+            ORDER BY id DESC LIMIT 1
+        """)
+        result = db.execute(get_query, {"order_id": item.order_id, "product_code": item.product_code})
+        created_item = result.fetchone()
+        
+        return dict(created_item._mapping)
+        
+    except SQLAlchemyError as e:
+        db.rollback()
+        logger.error(f"Database error: {e}")
+        raise HTTPException(status_code=500, detail="Database error")
+    finally:
+        db.close()
+
+# ==================== Shop Assignments Endpoints ====================
+
+class ShopAssignmentResponse(BaseModel):
+    id: int
+    shop_id: str
+    executive_id: int
+    territory_id: Optional[str] = None
+    assigned_date: date
+    end_date: Optional[date] = None
+    status: str
+    notes: Optional[str] = None
+    tenant_id: str
+    created_at: datetime
+    updated_at: datetime
+
+class ShopAssignmentCreate(BaseModel):
+    shop_id: str
+    executive_id: int
+    territory_id: Optional[str] = None
+    assigned_date: date
+    end_date: Optional[date] = None
+    status: str = "active"
+    notes: Optional[str] = None
+    tenant_id: str
+
+@app.get("/api/shop-assignments/{tenant_id}", response_model=List[ShopAssignmentResponse])
+async def get_shop_assignments(
+    tenant_id: str,
+    shop_id: Optional[str] = Query(None),
+    executive_id: Optional[int] = Query(None),
+    territory_id: Optional[str] = Query(None),
+    status: Optional[str] = Query(None)
+):
+    """Get all shop assignments for a tenant with optional filters."""
+    db = SessionLocal()
+    try:
+        conditions = ["tenant_id = :tenant_id"]
+        params = {"tenant_id": tenant_id}
+        
+        if shop_id:
+            conditions.append("shop_id = :shop_id")
+            params["shop_id"] = shop_id
+        
+        if executive_id:
+            conditions.append("executive_id = :executive_id")
+            params["executive_id"] = executive_id
+        
+        if territory_id:
+            conditions.append("territory_id = :territory_id")
+            params["territory_id"] = territory_id
+        
+        if status:
+            conditions.append("status = :status")
+            params["status"] = status
+        
+        where_clause = " AND ".join(conditions)
+        
+        query = text(f"""
+            SELECT * FROM shop_assignments
+            WHERE {where_clause}
+            ORDER BY assigned_date DESC, created_at DESC
+        """)
+        
+        result = db.execute(query, params)
+        assignments = [dict(row._mapping) for row in result]
+        
+        return assignments
+        
+    except SQLAlchemyError as e:
+        logger.error(f"Database error: {e}")
+        raise HTTPException(status_code=500, detail="Database error")
+    finally:
+        db.close()
+
+@app.post("/api/shop-assignments/{tenant_id}", response_model=ShopAssignmentResponse)
+async def create_shop_assignment(tenant_id: str, assignment: ShopAssignmentCreate):
+    """Create a new shop assignment."""
+    db = SessionLocal()
+    try:
+        # Check for existing active assignment
+        check_query = text("""
+            SELECT id FROM shop_assignments
+            WHERE tenant_id = :tenant_id 
+            AND shop_id = :shop_id 
+            AND executive_id = :executive_id
+            AND status = 'active'
+        """)
+        existing = db.execute(check_query, {
+            "tenant_id": tenant_id,
+            "shop_id": assignment.shop_id,
+            "executive_id": assignment.executive_id
+        })
+        if existing.fetchone():
+            raise HTTPException(status_code=400, detail="Active assignment already exists for this shop and executive")
+        
+        # Insert assignment
+        insert_query = text("""
+            INSERT INTO shop_assignments (
+                shop_id, executive_id, territory_id, assigned_date,
+                end_date, status, notes, tenant_id
+            ) VALUES (
+                :shop_id, :executive_id, :territory_id, :assigned_date,
+                :end_date, :status, :notes, :tenant_id
+            )
+        """)
+        
+        db.execute(insert_query, assignment.dict())
+        db.commit()
+        
+        # Get created assignment
+        get_query = text("""
+            SELECT * FROM shop_assignments
+            WHERE tenant_id = :tenant_id 
+            AND shop_id = :shop_id 
+            AND executive_id = :executive_id
+            ORDER BY id DESC LIMIT 1
+        """)
+        result = db.execute(get_query, {
+            "tenant_id": tenant_id,
+            "shop_id": assignment.shop_id,
+            "executive_id": assignment.executive_id
+        })
+        created_assignment = result.fetchone()
+        
+        return dict(created_assignment._mapping)
+        
+    except HTTPException:
+        db.rollback()
+        raise
+    except SQLAlchemyError as e:
+        db.rollback()
+        logger.error(f"Database error: {e}")
+        raise HTTPException(status_code=500, detail="Database error")
+    finally:
+        db.close()
+
+# ==================== Enhanced Visits Endpoints ====================
+
+@app.get("/api/visits/{tenant_id}/shop/{shop_id}/status")
+async def get_shop_visit_status(tenant_id: str, shop_id: str):
+    """Get visit status summary for a specific shop."""
+    db = SessionLocal()
+    try:
+        query = text("""
+            SELECT 
+                MAX(DATE(checkin_time)) as last_visit_date,
+                DATEDIFF(CURDATE(), MAX(DATE(checkin_time))) as days_since_visit,
+                COUNT(CASE WHEN MONTH(checkin_time) = MONTH(CURDATE()) 
+                      AND YEAR(checkin_time) = YEAR(CURDATE()) THEN 1 END) as visit_count_this_month,
+                (SELECT MAX(order_date) FROM orders 
+                 WHERE shop_id = :shop_id AND tenant_id = :tenant_id) as last_order_date,
+                (SELECT COUNT(*) FROM orders 
+                 WHERE shop_id = :shop_id AND tenant_id = :tenant_id
+                 AND MONTH(order_date) = MONTH(CURDATE()) 
+                 AND YEAR(order_date) = YEAR(CURDATE())) as orders_this_month
+            FROM visits
+            WHERE tenant_id = :tenant_id AND shop_id = :shop_id
+        """)
+        
+        result = db.execute(query, {"tenant_id": tenant_id, "shop_id": shop_id})
+        status = result.fetchone()
+        
+        if not status:
+            return {
+                "last_visit_date": None,
+                "days_since_visit": None,
+                "visit_count_this_month": 0,
+                "last_order_date": None,
+                "orders_this_month": 0
+            }
+        
+        return dict(status._mapping)
+        
+    except SQLAlchemyError as e:
+        logger.error(f"Database error: {e}")
+        raise HTTPException(status_code=500, detail="Database error")
+    finally:
+        db.close()
+
+
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run(app, host="0.0.0.0", port=8000)

@@ -611,8 +611,7 @@ CREATE TABLE IF NOT EXISTS orders (
     INDEX idx_executive_date (executive_id, order_date),
     INDEX idx_status_date (status, order_date),
     INDEX idx_payment_status (payment_status),
-    FOREIGN KEY (executive_id) REFERENCES users(id) ON DELETE RESTRICT,
-    FOREIGN KEY (shop_id) REFERENCES shops(shop_id) ON DELETE RESTRICT
+    FOREIGN KEY (executive_id) REFERENCES users(id) ON DELETE RESTRICT
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- Order Items table
@@ -658,32 +657,43 @@ CREATE TABLE IF NOT EXISTS shop_assignments (
     INDEX idx_tenant_status (tenant_id, status),
     INDEX idx_shop_status (shop_id, status),
     INDEX idx_executive_status (executive_id, status),
-    FOREIGN KEY (shop_id) REFERENCES shops(shop_id) ON DELETE CASCADE,
-    FOREIGN KEY (executive_id) REFERENCES users(id) ON DELETE CASCADE,
-    FOREIGN KEY (territory_id) REFERENCES territories(territory_id) ON DELETE SET NULL
+    FOREIGN KEY (executive_id) REFERENCES users(id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- Add columns to visits table for order tracking
-ALTER TABLE visits 
-ADD COLUMN IF NOT EXISTS order_placed BOOLEAN DEFAULT FALSE AFTER remarks,
-ADD COLUMN IF NOT EXISTS order_id INT AFTER order_placed,
-ADD COLUMN IF NOT EXISTS photos TEXT AFTER order_id,
-ADD INDEX IF NOT EXISTS idx_order (order_id);
+-- Add columns to visits table for order tracking (conditional)
+SET @col_exists = (SELECT COUNT(*) FROM information_schema.COLUMNS 
+    WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'visits' AND COLUMN_NAME = 'order_placed');
+SET @sql = IF(@col_exists = 0, 
+    'ALTER TABLE visits ADD COLUMN order_placed BOOLEAN DEFAULT FALSE AFTER remarks', 
+    'SELECT "Column order_placed already exists"');
+PREPARE stmt FROM @sql;
+EXECUTE stmt;
+DEALLOCATE PREPARE stmt;
 
--- Add foreign key for order_id if not exists
-SET @fk_exists = (
-    SELECT COUNT(*)
-    FROM information_schema.TABLE_CONSTRAINTS
-    WHERE CONSTRAINT_SCHEMA = DATABASE()
-    AND TABLE_NAME = 'visits'
-    AND CONSTRAINT_NAME = 'fk_visit_order'
-);
+SET @col_exists = (SELECT COUNT(*) FROM information_schema.COLUMNS 
+    WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'visits' AND COLUMN_NAME = 'order_id');
+SET @sql = IF(@col_exists = 0, 
+    'ALTER TABLE visits ADD COLUMN order_id INT AFTER order_placed', 
+    'SELECT "Column order_id already exists"');
+PREPARE stmt FROM @sql;
+EXECUTE stmt;
+DEALLOCATE PREPARE stmt;
 
-SET @sql = IF(@fk_exists = 0,
-    'ALTER TABLE visits ADD CONSTRAINT fk_visit_order FOREIGN KEY (order_id) REFERENCES orders(id) ON DELETE SET NULL',
-    'SELECT "Foreign key already exists" AS message'
-);
+SET @col_exists = (SELECT COUNT(*) FROM information_schema.COLUMNS 
+    WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'visits' AND COLUMN_NAME = 'photos');
+SET @sql = IF(@col_exists = 0, 
+    'ALTER TABLE visits ADD COLUMN photos TEXT AFTER order_id', 
+    'SELECT "Column photos already exists"');
+PREPARE stmt FROM @sql;
+EXECUTE stmt;
+DEALLOCATE PREPARE stmt;
 
+-- Add index for order_id (conditional)
+SET @idx_exists = (SELECT COUNT(*) FROM information_schema.STATISTICS 
+    WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'visits' AND INDEX_NAME = 'idx_order');
+SET @sql = IF(@idx_exists = 0, 
+    'ALTER TABLE visits ADD INDEX idx_order (order_id)', 
+    'SELECT "Index idx_order already exists"');
 PREPARE stmt FROM @sql;
 EXECUTE stmt;
 DEALLOCATE PREPARE stmt;
@@ -702,9 +712,9 @@ SELECT
     sa.status,
     sa.tenant_id
 FROM shop_assignments sa
-JOIN shops s ON sa.shop_id = s.shop_id
+JOIN shops s ON sa.shop_id COLLATE utf8mb4_unicode_ci = s.shop_id COLLATE utf8mb4_unicode_ci
 JOIN users u ON sa.executive_id = u.id
-LEFT JOIN territories t ON sa.territory_id = t.territory_id
+LEFT JOIN territories t ON sa.territory_id COLLATE utf8mb4_unicode_ci = t.territory_id COLLATE utf8mb4_unicode_ci
 WHERE sa.status = 'active';
 
 CREATE OR REPLACE VIEW v_order_summary AS
@@ -723,7 +733,7 @@ SELECT
     o.items_count,
     o.tenant_id
 FROM orders o
-JOIN shops s ON o.shop_id = s.shop_id
+JOIN shops s ON o.shop_id COLLATE utf8mb4_unicode_ci = s.shop_id COLLATE utf8mb4_unicode_ci
 JOIN users u ON o.executive_id = u.id;
 
 CREATE OR REPLACE VIEW v_visit_summary AS
@@ -744,6 +754,6 @@ SELECT
     END AS bill_number,
     v.tenant_id
 FROM visits v
-JOIN shops s ON v.shop_id = s.shop_id
+JOIN shops s ON v.shop_id COLLATE utf8mb4_unicode_ci = s.shop_id COLLATE utf8mb4_unicode_ci
 JOIN users u ON v.sales_executive_id = u.id
 LEFT JOIN orders o ON v.order_id = o.id;
