@@ -1,11 +1,20 @@
 import 'package:admin_dashboard/routing/routes.dart';
 import 'package:admin_dashboard/ui/analytics/analytics.dart';
 import 'package:admin_dashboard/ui/widgets/dropdownmenu.dart';
+import 'package:admin_dashboard/viewmodel/data_viewmodel.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-class FindExecutive extends StatelessWidget {
+class FindExecutive extends ConsumerStatefulWidget {
   const FindExecutive({super.key});
+
+  @override
+  ConsumerState<FindExecutive> createState() => _FindExecutiveState();
+}
+
+class _FindExecutiveState extends ConsumerState<FindExecutive> {
+  String _searchQuery = '';
 
   @override
   Widget build(BuildContext context) {
@@ -24,9 +33,14 @@ class FindExecutive extends StatelessWidget {
             children: [
               Flexible(
                 child: TextField(
+                  onChanged: (value) {
+                    setState(() {
+                      _searchQuery = value;
+                    });
+                  },
                   decoration: InputDecoration(
                     suffixIcon: Icon(Icons.search),
-                    hintText: "Search Executive",
+                    hintText: "Search Executive by name, phone, or email",
                   ),
                 ),
               ),
@@ -96,38 +110,76 @@ class FindExecutive extends StatelessWidget {
               ),
             ],
           ),
-          SafePaginatedCardGrid(
-            cardHeight: 102,
-            cardWidth: 230,
-            cards: [
-              for (var _ in Iterable.generate(100000))
-                Container(
-                  padding: EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(8),
-                    border: Border.all(color: theme.colorScheme.tertiary),
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text("Rohit", style: theme.textTheme.bodyLarge),
-                      Text(
-                        "+91 983459853",
-                        style: theme.textTheme.bodyMedium?.copyWith(
-                          color: theme.colorScheme.tertiary,
+          // Sales Executives List with real data
+          Consumer(
+            builder: (context, ref, child) {
+              final executives = ref.watch(usersProvider(
+                role: 'sales_executive',
+                status: 'active',
+                search: _searchQuery.isEmpty ? null : _searchQuery,
+              ));
+
+              return executives.when(
+                data: (executivesList) => SafePaginatedCardGrid(
+                  cardHeight: 102,
+                  cardWidth: 230,
+                  cards: [
+                    for (var executive in executivesList)
+                      Container(
+                        padding: EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(color: theme.colorScheme.tertiary),
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              executive.name,
+                              style: theme.textTheme.bodyLarge,
+                            ),
+                            Text(
+                              executive.phone,
+                              style: theme.textTheme.bodyMedium?.copyWith(
+                                color: theme.colorScheme.tertiary,
+                              ),
+                            ),
+                            SizedBox(height: 4),
+                            Text(
+                              executive.email ?? "N/A",
+                              style: theme.textTheme.bodyMedium?.copyWith(
+                                color: theme.colorScheme.tertiary,
+                              ),
+                            ),
+                          ],
                         ),
                       ),
-                      SizedBox(height: 4),
+                  ],
+                ),
+                loading: () => Center(
+                  child: CircularProgressIndicator(),
+                ),
+                error: (error, stack) => Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(Icons.error_outline, size: 48, color: Colors.red),
+                      SizedBox(height: 16),
                       Text(
-                        "Kochi, Thevara",
-                        style: theme.textTheme.bodyMedium?.copyWith(
-                          color: theme.colorScheme.tertiary,
-                        ),
+                        'Failed to load executives',
+                        style: theme.textTheme.titleMedium,
+                      ),
+                      SizedBox(height: 8),
+                      Text(
+                        error.toString(),
+                        style: theme.textTheme.bodySmall,
+                        textAlign: TextAlign.center,
                       ),
                     ],
                   ),
                 ),
-            ],
+              );
+            },
           ),
         ],
       ),

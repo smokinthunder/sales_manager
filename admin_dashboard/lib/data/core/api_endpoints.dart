@@ -30,4 +30,22 @@ class ApiEndpoints {
   static final String notifications = _notificationApi;
   static final String notificationConfirm = "$_notificationApi{}/confirm"; // {} will be replaced with notification ID
 
+  // Shop/Customer Apis
+  static final String _shopsApi = "${_apiUrl}shops/";
+  static final String shops = _shopsApi;
+  static final String shopById = "$_shopsApi{}"; // {} will be replaced with shop_id
+  static final String shopSyncedData = "$_shopsApi{}/synced-data"; // {} will be replaced with shop_id
+  static final String shopPaymentStatus = "$_shopsApi{}/payment-status"; // {} will be replaced with shop_id
+  static final String shopOrders = "$_shopsApi{}/orders"; // {} will be replaced with shop_id
+  static final String shopAnalytics = "$_shopsApi{}/analytics"; // {} will be replaced with shop_id
+
+  // Analytics Apis
+  static final String _analyticsApi = "${_apiUrl}analytics/";
+  static final String analyticsExecutiveTopCustomers = "${_analyticsApi}executive/top_customers";
+  static final String analyticsExecutiveBestSellingProducts = "${_analyticsApi}executive/best_selling_products";
+  static final String analyticsExecutiveSalesReport = "${_analyticsApi}executive/sales_report";
+  static final String analyticsExecutivePurchaseAnalysis = "${_analyticsApi}executive/purchase_analysis";
+  static final String analyticsShopBestSellingProducts = "${_analyticsApi}shop/best_selling_products";
+  static final String analyticsShopSalesReport = "${_analyticsApi}shop/sales_report";
+
 }

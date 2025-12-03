@@ -1,11 +1,20 @@
 import 'package:admin_dashboard/routing/routes.dart';
 import 'package:admin_dashboard/ui/analytics/analytics.dart';
 import 'package:admin_dashboard/ui/widgets/dropdownmenu.dart';
+import 'package:admin_dashboard/viewmodel/data_viewmodel.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-class FindDealers extends StatelessWidget {
+class FindDealers extends ConsumerStatefulWidget {
   const FindDealers({super.key});
+
+  @override
+  ConsumerState<FindDealers> createState() => _FindDealersState();
+}
+
+class _FindDealersState extends ConsumerState<FindDealers> {
+  String _searchQuery = '';
 
   @override
   Widget build(BuildContext context) {
@@ -24,6 +33,7 @@ class FindDealers extends StatelessWidget {
             children: [
               Flexible(
                 child: TextField(
+                  onChanged: (value) => setState(() => _searchQuery = value),
                   decoration: InputDecoration(
                     suffixIcon: Icon(Icons.search),
                     hintText: "Search shop",
@@ -98,20 +108,85 @@ class FindDealers extends StatelessWidget {
               ),
             ],
           ),
-          SafePaginatedCardGrid(
-            cardHeight: 220,
-            cardWidth: 224,
-            cards: [
-              for (var _ in Iterable.generate(100000))
-                ShopStateCard(
-                  orderReceived: true,
-                  shopVisited: false,
-                  executiveName: "Abhin K Leji",
-                  executivePhoneNo: "+91 8345349537",
-                  shopName: "Kerala Pipe House",
-                  shopLocation: "Kerala Pipe House",
+          Consumer(
+            builder: (context, ref, child) {
+              final shopsAsync = ref.watch(
+                shopsProvider(
+                  status: 'active',
                 ),
-            ],
+              );
+
+              return shopsAsync.when(
+                data: (shopsList) {
+                  // Apply client-side search filter
+                  final filteredShops = _searchQuery.isEmpty
+                      ? shopsList
+                      : shopsList
+                          .where((shop) =>
+                              shop.name
+                                  .toLowerCase()
+                                  .contains(_searchQuery.toLowerCase()) ||
+                              (shop.address
+                                      ?.toLowerCase()
+                                      .contains(_searchQuery.toLowerCase()) ??
+                                  false) ||
+                              (shop.locationName
+                                      ?.toLowerCase()
+                                      .contains(_searchQuery.toLowerCase()) ??
+                                  false))
+                          .toList();
+
+                  return SafePaginatedCardGrid(
+                    cardHeight: 220,
+                    cardWidth: 224,
+                    cards: [
+                      for (var shop in filteredShops)
+                        ShopStateCard(
+                          orderReceived: false, // TODO: Requires orders API
+                          shopVisited:
+                              false, // TODO: Requires visits/tracking API
+                          executiveName:
+                              "N/A", // TODO: Requires shop-executive relationship API
+                          executivePhoneNo:
+                              "N/A", // TODO: Requires shop-executive relationship API
+                          shopName: shop.name,
+                          shopLocation:
+                              shop.address ?? shop.locationName ?? "N/A",
+                        ),
+                    ],
+                  );
+                },
+                loading: () => const Center(
+                  child: Padding(
+                    padding: EdgeInsets.all(32.0),
+                    child: CircularProgressIndicator(),
+                  ),
+                ),
+                error: (error, stack) => Center(
+                  child: Padding(
+                    padding: const EdgeInsets.all(32.0),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          Icons.error_outline,
+                          size: 48,
+                          color: Theme.of(context).colorScheme.error,
+                        ),
+                        const SizedBox(height: 16),
+                        Text(
+                          'Error loading shops: $error',
+                          style: TextStyle(
+                            color: Theme.of(context).colorScheme.error,
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              );
+            },
           ),
         ],
       ),

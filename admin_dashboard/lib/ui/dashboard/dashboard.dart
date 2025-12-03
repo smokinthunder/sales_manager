@@ -3,14 +3,16 @@ import 'package:admin_dashboard/ui/widgets/bar_chart.dart';
 import 'package:admin_dashboard/ui/widgets/dropdownmenu.dart';
 import 'package:admin_dashboard/ui/widgets/sales_report.dart';
 import 'package:admin_dashboard/ui/widgets/title_and_value_container.dart';
+import 'package:admin_dashboard/viewmodel/data_viewmodel.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-class Dashboard extends StatelessWidget {
+class Dashboard extends ConsumerWidget {
   const Dashboard({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
     return Container(
       padding: const EdgeInsets.all(32),
@@ -25,9 +27,66 @@ class Dashboard extends StatelessWidget {
             spacing: 32,
             runSpacing: 32,
             children: [
-              TitleAndValueContainer(title: "All Executive's", count: "100"),
-              TitleAndValueContainer(title: "All Customers", count: "15489"),
-              TitleAndValueContainer(title: "New Customers", count: "20"),
+              // All Executives Count
+              Consumer(
+                builder: (context, ref, child) {
+                  final executivesCount = ref.watch(activeSalesExecutivesCountProvider);
+                  return executivesCount.when(
+                    data: (count) => TitleAndValueContainer(
+                      title: "All Executive's",
+                      count: "$count",
+                    ),
+                    loading: () => TitleAndValueContainer(
+                      title: "All Executive's",
+                      count: "...",
+                    ),
+                    error: (error, stack) => TitleAndValueContainer(
+                      title: "All Executive's",
+                      count: "0",
+                    ),
+                  );
+                },
+              ),
+              // All Customers Count
+              Consumer(
+                builder: (context, ref, child) {
+                  final customersCount = ref.watch(activeCustomersCountProvider);
+                  return customersCount.when(
+                    data: (count) => TitleAndValueContainer(
+                      title: "All Customers",
+                      count: "$count",
+                    ),
+                    loading: () => TitleAndValueContainer(
+                      title: "All Customers",
+                      count: "...",
+                    ),
+                    error: (error, stack) => TitleAndValueContainer(
+                      title: "All Customers",
+                      count: "0",
+                    ),
+                  );
+                },
+              ),
+              // New Customers Count (using dashboard stats)
+              Consumer(
+                builder: (context, ref, child) {
+                  final dashboardStats = ref.watch(dashboardStatsProvider);
+                  return dashboardStats.when(
+                    data: (stats) => TitleAndValueContainer(
+                      title: "New Customers",
+                      count: "${stats.newCustomers}",
+                    ),
+                    loading: () => TitleAndValueContainer(
+                      title: "New Customers",
+                      count: "...",
+                    ),
+                    error: (error, stack) => TitleAndValueContainer(
+                      title: "New Customers",
+                      count: "0",
+                    ),
+                  );
+                },
+              ),
             ],
           ),
           Padding(

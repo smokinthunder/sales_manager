@@ -2,12 +2,21 @@ import 'package:admin_dashboard/routing/routes.dart';
 import 'package:admin_dashboard/ui/analytics/analytics.dart';
 import 'package:admin_dashboard/ui/widgets/dropdownmenu.dart';
 import 'package:admin_dashboard/ui/widgets/title_and_value_container.dart';
+import 'package:admin_dashboard/viewmodel/data_viewmodel.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:material_symbols_icons/symbols.dart';
 
-class AreaManager extends StatelessWidget {
+class AreaManager extends ConsumerStatefulWidget {
   const AreaManager({super.key});
+
+  @override
+  ConsumerState<AreaManager> createState() => _AreaManagerState();
+}
+
+class _AreaManagerState extends ConsumerState<AreaManager> {
+  String _searchQuery = '';
 
   @override
   Widget build(BuildContext context) {
@@ -24,16 +33,51 @@ class AreaManager extends StatelessWidget {
           Row(
             spacing: 32,
             children: [
-              TitleAndValueContainer(
-                title: "Total Area Managers",
-                count: "15489",
-                width: 216,
+              // Total Area Managers
+              Consumer(
+                builder: (context, ref, child) {
+                  final count = ref.watch(activeAreaManagersCountProvider);
+                  return count.when(
+                    data: (num) => TitleAndValueContainer(
+                      title: "Total Area Managers",
+                      count: "$num",
+                      width: 216,
+                    ),
+                    loading: () => TitleAndValueContainer(
+                      title: "Total Area Managers",
+                      count: "...",
+                      width: 216,
+                    ),
+                    error: (error, stack) => TitleAndValueContainer(
+                      title: "Total Area Managers",
+                      count: "0",
+                      width: 216,
+                    ),
+                  );
+                },
               ),
-
-              TitleAndValueContainer(
-                title: "New Area Managers",
-                count: "5",
-                width: 216,
+              // New Area Managers
+              Consumer(
+                builder: (context, ref, child) {
+                  final dashboardStats = ref.watch(dashboardStatsProvider);
+                  return dashboardStats.when(
+                    data: (stats) => TitleAndValueContainer(
+                      title: "New Area Managers",
+                      count: "${stats.newAreaManagers}",
+                      width: 216,
+                    ),
+                    loading: () => TitleAndValueContainer(
+                      title: "New Area Managers",
+                      count: "...",
+                      width: 216,
+                    ),
+                    error: (error, stack) => TitleAndValueContainer(
+                      title: "New Area Managers",
+                      count: "0",
+                      width: 216,
+                    ),
+                  );
+                },
               ),
               Spacer(),
               InkWell(
@@ -57,9 +101,14 @@ class AreaManager extends StatelessWidget {
             children: [
               Flexible(
                 child: TextField(
+                  onChanged: (value) {
+                    setState(() {
+                      _searchQuery = value;
+                    });
+                  },
                   decoration: InputDecoration(
                     suffixIcon: Icon(Icons.search),
-                    hintText: "Search by executive",
+                    hintText: "Search by area manager name, phone, or email",
                   ),
                 ),
               ),
@@ -86,18 +135,53 @@ class AreaManager extends StatelessWidget {
               ),
             ],
           ),
-          SafePaginatedCardGrid(
-            cardHeight: 208,
-            cardWidth: 208,
-            cards: [
-              for (var _ in Iterable.generate(1000))
-                AreaManagerCard(
-                  onFindExecutives: () {
-                    //TODO:
-                    context.go(Routes.findExecutive);
-                  },
+          // Area Managers List with real data
+          Consumer(
+            builder: (context, ref, child) {
+              final areaManagers = ref.watch(usersProvider(
+                role: 'area_manager',
+                status: 'active',
+                search: _searchQuery.isEmpty ? null : _searchQuery,
+              ));
+
+              return areaManagers.when(
+                data: (managers) => SafePaginatedCardGrid(
+                  cardHeight: 208,
+                  cardWidth: 208,
+                  cards: [
+                    for (var manager in managers)
+                      AreaManagerCard(
+                        onFindExecutives: () {
+                          // TODO: Pass manager.id to find executives
+                          context.go(Routes.findExecutive);
+                        },
+                      ),
+                  ],
                 ),
-            ],
+                loading: () => Center(
+                  child: CircularProgressIndicator(),
+                ),
+                error: (error, stack) => Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(Icons.error_outline, size: 48, color: Colors.red),
+                      SizedBox(height: 16),
+                      Text(
+                        'Failed to load area managers',
+                        style: theme.textTheme.titleMedium,
+                      ),
+                      SizedBox(height: 8),
+                      Text(
+                        error.toString(),
+                        style: theme.textTheme.bodySmall,
+                        textAlign: TextAlign.center,
+                      ),
+                    ],
+                  ),
+                ),
+              );
+            },
           ),
         ],
       ),

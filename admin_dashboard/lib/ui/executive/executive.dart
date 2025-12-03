@@ -2,12 +2,21 @@ import 'package:admin_dashboard/routing/routes.dart';
 import 'package:admin_dashboard/ui/analytics/analytics.dart';
 import 'package:admin_dashboard/ui/widgets/dropdownmenu.dart';
 import 'package:admin_dashboard/ui/widgets/title_and_value_container.dart';
+import 'package:admin_dashboard/viewmodel/data_viewmodel.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:material_symbols_icons/material_symbols_icons.dart';
 
-class Executive extends StatelessWidget {
+class Executive extends ConsumerStatefulWidget {
   const Executive({super.key});
+
+  @override
+  ConsumerState<Executive> createState() => _ExecutiveState();
+}
+
+class _ExecutiveState extends ConsumerState<Executive> {
+  String _searchQuery = '';
 
   @override
   Widget build(BuildContext context) {
@@ -24,15 +33,49 @@ class Executive extends StatelessWidget {
           Row(
             spacing: 32,
             children: [
-              TitleAndValueContainer(
-                title: "Total Executives",
-                count: "100",
-                width: 200,
+              Consumer(
+                builder: (context, ref, child) {
+                  final count = ref.watch(activeSalesExecutivesCountProvider);
+                  return count.when(
+                    data: (total) => TitleAndValueContainer(
+                      title: "Total Executives",
+                      count: total.toString(),
+                      width: 200,
+                    ),
+                    loading: () => TitleAndValueContainer(
+                      title: "Total Executives",
+                      count: "...",
+                      width: 200,
+                    ),
+                    error: (_, __) => TitleAndValueContainer(
+                      title: "Total Executives",
+                      count: "0",
+                      width: 200,
+                    ),
+                  );
+                },
               ),
-              TitleAndValueContainer(
-                title: "New Executives",
-                count: "15",
-                width: 200,
+              Consumer(
+                builder: (context, ref, child) {
+                  final stats = ref.watch(dashboardStatsProvider);
+                  return stats.when(
+                    data: (dashboardStats) => TitleAndValueContainer(
+                      title: "New Executives",
+                      count: "0", // TODO: Need newExecutives field in backend
+                      width: 200,
+                    ),
+                    loading: () => TitleAndValueContainer(
+                      title: "New Executives",
+                      count: "...",
+                      width: 200,
+                    ),
+                    error: (_, __) => TitleAndValueContainer(
+                      title: "New Executives",
+                      count: "0",
+                      width: 200,
+                    ),
+                  );
+                },
               ),
             ],
           ),
@@ -41,6 +84,7 @@ class Executive extends StatelessWidget {
             children: [
               Flexible(
                 child: TextField(
+                  onChanged: (value) => setState(() => _searchQuery = value),
                   decoration: InputDecoration(
                     suffixIcon: Icon(Icons.search),
                     hintText: "Search by executive",
@@ -70,22 +114,84 @@ class Executive extends StatelessWidget {
               ),
             ],
           ),
-          SafePaginatedCardGrid(
-            cardWidth: 208,
-            cardHeight: 272,
-            cards: [
-              for (var _ in Iterable.generate(10000))
-                ExecutiveCard(
-                  onAddSpecialRoute: () {
-                    //TODO
-                    context.go(Routes.assignSpecialRoutes);
-                  },
-                  onFindDealers: () {
-                    //TODO:
-                    context.go(Routes.findDealers);
-                  },
+          Consumer(
+            builder: (context, ref, child) {
+              final executivesAsync = ref.watch(
+                usersProvider(
+                  role: 'sales_executive',
+                  status: 'active',
                 ),
-            ],
+              );
+
+              return executivesAsync.when(
+                data: (executivesList) {
+                  // Apply client-side search filter
+                  final filteredExecutives = _searchQuery.isEmpty
+                      ? executivesList
+                      : executivesList
+                          .where((exec) =>
+                              exec.name
+                                  .toLowerCase()
+                                  .contains(_searchQuery.toLowerCase()) ||
+                              exec.phone
+                                  .toLowerCase()
+                                  .contains(_searchQuery.toLowerCase()) ||
+                              (exec.email != null &&
+                                  exec.email!
+                                      .toLowerCase()
+                                      .contains(_searchQuery.toLowerCase())))
+                          .toList();
+
+                  return SafePaginatedCardGrid(
+                    cardWidth: 208,
+                    cardHeight: 272,
+                    cards: [
+                      for (var executive in filteredExecutives)
+                        ExecutiveCard(
+                          executive: executive,
+                          onAddSpecialRoute: () {
+                            //TODO
+                            context.go(Routes.assignSpecialRoutes);
+                          },
+                          onFindDealers: () {
+                            //TODO:
+                            context.go(Routes.findDealers);
+                          },
+                        ),
+                    ],
+                  );
+                },
+                loading: () => const Center(
+                  child: Padding(
+                    padding: EdgeInsets.all(32.0),
+                    child: CircularProgressIndicator(),
+                  ),
+                ),
+                error: (error, stack) => Center(
+                  child: Padding(
+                    padding: const EdgeInsets.all(32.0),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          Icons.error_outline,
+                          size: 48,
+                          color: Theme.of(context).colorScheme.error,
+                        ),
+                        const SizedBox(height: 16),
+                        Text(
+                          'Error loading executives: $error',
+                          style: TextStyle(
+                            color: Theme.of(context).colorScheme.error,
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              );
+            },
           ),
         ],
       ),
@@ -96,9 +202,12 @@ class Executive extends StatelessWidget {
 class ExecutiveCard extends StatelessWidget {
   const ExecutiveCard({
     super.key,
+    required this.executive,
     required this.onFindDealers,
     required this.onAddSpecialRoute,
   });
+  
+  final dynamic executive; // AppUser type
   final VoidCallback onFindDealers;
   final VoidCallback onAddSpecialRoute;
 
@@ -128,13 +237,24 @@ class ExecutiveCard extends StatelessWidget {
             color: theme.colorScheme.primary.withAlpha(16),
             child: Column(
               children: [
-                _buildIconAndTextRow(Icons.person_outline, "Rahul", theme),
-                _buildIconAndTextRow(Symbols.crown_rounded, "Rajev", theme),
-
-                _buildIconAndTextRow(Symbols.phone, "+91 984624352", theme),
+                _buildIconAndTextRow(
+                  Icons.person_outline,
+                  executive.name,
+                  theme,
+                ),
+                _buildIconAndTextRow(
+                  Symbols.crown_rounded,
+                  "N/A", // TODO: Need manager name from relationship API
+                  theme,
+                ),
+                _buildIconAndTextRow(
+                  Symbols.phone,
+                  executive.phone,
+                  theme,
+                ),
                 _buildIconAndTextRow(
                   Icons.location_on_outlined,
-                  "Kochi, Edappaly +91 984624352",
+                  "N/A", // TODO: Need territory/location details from API
                   theme,
                 ),
               ],
