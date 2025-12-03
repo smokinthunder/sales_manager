@@ -1,14 +1,35 @@
+import 'package:admin_dashboard/domain/models/analytics/shop_analytics.dart';
 import 'package:admin_dashboard/routing/routes.dart';
 import 'package:admin_dashboard/ui/widgets/dropdownmenu.dart';
+import 'package:admin_dashboard/viewmodel/data_viewmodel.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-class Analytics extends StatelessWidget {
+class Analytics extends ConsumerStatefulWidget {
   const Analytics({super.key});
+
+  @override
+  ConsumerState<Analytics> createState() => _AnalyticsState();
+}
+
+class _AnalyticsState extends ConsumerState<Analytics> {
+  int? selectedRating;
+  String searchQuery = '';
+  String sortOrder = 'New';
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    
+    // Fetch shop analytics with optional rating filter
+    final analyticsAsync = ref.watch(
+      shopAnalyticsSummaryProvider(
+        minRating: selectedRating,
+        maxRating: selectedRating,
+      ),
+    );
+
     return Container(
       padding: EdgeInsets.symmetric(horizontal: 32, vertical: 16),
       decoration: BoxDecoration(
@@ -35,6 +56,11 @@ class Analytics extends StatelessWidget {
             children: [
               Flexible(
                 child: TextField(
+                  onChanged: (value) {
+                    setState(() {
+                      searchQuery = value.toLowerCase();
+                    });
+                  },
                   decoration: InputDecoration(
                     suffixIcon: Icon(Icons.search),
                     hintText: "Search by shop name",
@@ -54,15 +80,23 @@ class Analytics extends StatelessWidget {
               SizedBox(
                 width: 118,
                 child: CustomDropDownMenu(
-                  hintText: "New",
+                  hintText: sortOrder,
                   dropdownMenuEntries: [
+                    DropdownMenuEntry(value: "New", label: "New"),
                     DropdownMenuEntry(value: "Old", label: "Old"),
                     DropdownMenuEntry(value: "A-Z", label: "A-Z (Ascending)"),
                     DropdownMenuEntry(
-                      value: "Month",
+                      value: "Z-A",
                       label: "Z-A (Descending)",
                     ),
                   ],
+                  onSelected: (value) {
+                    if (value != null) {
+                      setState(() {
+                        sortOrder = value;
+                      });
+                    }
+                  },
                 ),
               ),
             ],
@@ -74,24 +108,168 @@ class Analytics extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [
                 for (var i = 1; i <= 5; i++)
-                  RatingCard(
-                    count: i,
-                    isSelected: i == 1,
-                    onTap: () {
-                      //TODO
+                  analyticsAsync.when(
+                    data: (data) {
+                      final summary = ShopAnalyticsSummary.fromJson(data);
+                      final count = summary.getCountForRating(i);
+                      return RatingCard(
+                        count: i,
+                        shopCount: count,
+                        isSelected: selectedRating == i,
+                        onTap: () {
+                          setState(() {
+                            selectedRating = selectedRating == i ? null : i;
+                          });
+                        },
+                      );
                     },
+                    loading: () => RatingCard(
+                      count: i,
+                      shopCount: 0,
+                      isSelected: selectedRating == i,
+                      onTap: () {
+                        setState(() {
+                          selectedRating = selectedRating == i ? null : i;
+                        });
+                      },
+                    ),
+                    error: (_, __) => RatingCard(
+                      count: i,
+                      shopCount: 0,
+                      isSelected: selectedRating == i,
+                      onTap: () {
+                        setState(() {
+                          selectedRating = selectedRating == i ? null : i;
+                        });
+                      },
+                    ),
                   ),
               ],
             ),
           ),
-          SafePaginatedCardGrid(
-            cards: List.generate(
-              1000000,
-              (index) => ShopAnalyticsCard(
-                onTap: () {
-                  //TODO:
-                  context.go(Routes.shopAnalytics);
-                },
+          analyticsAsync.when(
+            data: (data) {
+              final summary = ShopAnalyticsSummary.fromJson(data);
+              var shops = summary.shops;
+
+              // Apply search filter
+              if (searchQuery.isNotEmpty) {
+                shops = shops
+                    .where((shop) =>
+                        shop.shopName.toLowerCase().contains(searchQuery))
+                    .toList();
+              }
+
+              // Apply sorting
+              switch (sortOrder) {
+                case 'Old':
+                  shops = shops.reversed.toList();
+                  break;
+                case 'A-Z':
+                  shops.sort((a, b) => a.shopName.compareTo(b.shopName));
+                  break;
+                case 'Z-A':
+                  shops.sort((a, b) => b.shopName.compareTo(a.shopName));
+                  break;
+                case 'New':
+                default:
+                  // Default order from backend
+                  break;
+              }
+
+              // Empty state
+              if (shops.isEmpty) {
+                return Expanded(
+                  child: Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(
+                          Icons.analytics_outlined,
+                          size: 64,
+                          color: theme.colorScheme.tertiary,
+                        ),
+                        SizedBox(height: 16),
+                        Text(
+                          searchQuery.isNotEmpty
+                              ? 'No shops found matching "$searchQuery"'
+                              : selectedRating != null
+                                  ? 'No shops with $selectedRating star rating'
+                                  : 'No shop analytics available',
+                          style: theme.textTheme.titleLarge?.copyWith(
+                            color: theme.colorScheme.tertiary,
+                          ),
+                        ),
+                        SizedBox(height: 8),
+                        Text(
+                          searchQuery.isNotEmpty
+                              ? 'Try adjusting your search'
+                              : selectedRating != null
+                                  ? 'Try selecting a different rating'
+                                  : 'Shop analytics will appear here once available',
+                          style: theme.textTheme.bodyMedium?.copyWith(
+                            color: theme.colorScheme.tertiary,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                );
+              }
+
+              return SafePaginatedCardGrid(
+                cards: shops
+                    .map(
+                      (shop) => ShopAnalyticsCardWidget(
+                        shopData: shop,
+                        onTap: () {
+                          context.go(Routes.shopAnalytics);
+                        },
+                      ),
+                    )
+                    .toList(),
+              );
+            },
+            loading: () => Expanded(
+              child: Center(
+                child: CircularProgressIndicator(),
+              ),
+            ),
+            error: (error, stack) => Expanded(
+              child: Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(
+                      Icons.error_outline,
+                      size: 64,
+                      color: Colors.red,
+                    ),
+                    SizedBox(height: 16),
+                    Text(
+                      'Failed to load shop analytics',
+                      style: theme.textTheme.titleLarge?.copyWith(
+                        color: Colors.red,
+                      ),
+                    ),
+                    SizedBox(height: 8),
+                    Text(
+                      error.toString(),
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                        color: theme.colorScheme.tertiary,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                    SizedBox(height: 16),
+                    ElevatedButton.icon(
+                      onPressed: () {
+                        ref.invalidate(shopAnalyticsSummaryProvider);
+                      },
+                      icon: Icon(Icons.refresh),
+                      label: Text('Retry'),
+                    ),
+                  ],
+                ),
               ),
             ),
           ),
@@ -281,8 +459,14 @@ class _SafePaginatedCardGridState extends State<SafePaginatedCardGrid> {
   }
 }
 
-class ShopAnalyticsCard extends StatelessWidget {
-  const ShopAnalyticsCard({super.key, required this.onTap});
+class ShopAnalyticsCardWidget extends StatelessWidget {
+  const ShopAnalyticsCardWidget({
+    super.key,
+    required this.shopData,
+    required this.onTap,
+  });
+
+  final ShopAnalyticsCard shopData;
   final VoidCallback onTap;
 
   @override
@@ -303,31 +487,88 @@ class ShopAnalyticsCard extends StatelessWidget {
         ],
       ),
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
               Icon(Icons.business_outlined, color: theme.colorScheme.tertiary),
-              Text(" National Pipes", style: theme.textTheme.bodyLarge),
+              Expanded(
+                child: Text(
+                  " ${shopData.shopName}",
+                  style: theme.textTheme.bodyLarge,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
             ],
           ),
+          SizedBox(height: 4),
+          if (shopData.territoryName != null)
+            Row(
+              children: [
+                Icon(
+                  Icons.location_on_outlined,
+                  color: theme.colorScheme.tertiary,
+                  size: 16,
+                ),
+                Expanded(
+                  child: Text(
+                    " ${shopData.territoryName}",
+                    style: theme.textTheme.labelSmall,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+              ],
+            ),
           SizedBox(height: 8),
           Row(
             children: [
               Icon(Icons.person_outline, color: theme.colorScheme.tertiary),
-              Text(" Rahul Dev", style: theme.textTheme.labelLarge),
+              Expanded(
+                child: Text(
+                  " ${shopData.executiveName ?? 'N/A'}",
+                  style: theme.textTheme.labelLarge,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
             ],
           ),
-          SizedBox(height: 32),
+          SizedBox(height: 4),
+          Row(
+            children: [
+              for (var i = 0; i < shopData.rating; i++)
+                Icon(Icons.star, color: Colors.amber, size: 16),
+              for (var i = shopData.rating; i < 5; i++)
+                Icon(Icons.star_border, color: Colors.grey, size: 16),
+            ],
+          ),
+          SizedBox(height: 16),
           Row(
             children: [
               Icon(
                 Icons.monetization_on_outlined,
-                color: Colors.amber,
-                size: 28,
+                color: Colors.green,
+                size: 24,
               ),
-              Text(" 2456", style: theme.textTheme.headlineLarge),
+              Text(
+                " ${shopData.formattedSales}",
+                style: theme.textTheme.titleLarge,
+              ),
             ],
           ),
+          SizedBox(height: 4),
+          Text(
+            'Orders: ${shopData.totalOrders}',
+            style: theme.textTheme.labelMedium?.copyWith(
+              color: theme.colorScheme.tertiary,
+            ),
+          ),
+          if (shopData.lastOrderDate != null)
+            Text(
+              'Last: ${shopData.formattedLastOrderDate}',
+              style: theme.textTheme.labelSmall?.copyWith(
+                color: theme.colorScheme.tertiary,
+              ),
+            ),
           SizedBox(height: 12),
           InkWell(
             onTap: onTap,
@@ -355,11 +596,13 @@ class ShopAnalyticsCard extends StatelessWidget {
 
 class RatingCard extends StatelessWidget {
   final int count;
+  final int shopCount;
   final bool isSelected;
   final VoidCallback onTap;
   const RatingCard({
     super.key,
     required this.count,
+    required this.shopCount,
     required this.isSelected,
     required this.onTap,
   }) : assert(count <= 5 && count >= 0, "Count must be between 0 and 5");
@@ -369,9 +612,9 @@ class RatingCard extends StatelessWidget {
     final theme = Theme.of(context);
 
     return InkWell(
-      onTap: () {},
+      onTap: onTap,
       child: Container(
-        padding: EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+        padding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
         decoration: isSelected
             ? BoxDecoration(
                 color: theme.colorScheme.onPrimary,
@@ -399,11 +642,15 @@ class RatingCard extends StatelessWidget {
                   ),
               ],
             ),
+            SizedBox(height: 4),
             Text(
-              "Shops",
-              style: isSelected
-                  ? null
-                  : TextStyle(color: theme.colorScheme.tertiary),
+              "$shopCount Shops",
+              style: theme.textTheme.labelMedium?.copyWith(
+                color: isSelected
+                    ? theme.colorScheme.primary
+                    : theme.colorScheme.tertiary,
+                fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+              ),
             ),
           ],
         ),

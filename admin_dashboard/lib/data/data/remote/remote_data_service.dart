@@ -20,7 +20,11 @@ class RemoteDataService {
   final String tenantId = dotenv.env['TENANT_ID'] ?? 'AQUASTAR';
 
   RemoteDataService() {
+    final ipAddr = dotenv.env['IP_ADDR'] ?? "192.168.63.132";
+    final baseUrl = "http://$ipAddr:8000";
+    
     dio = Dio(BaseOptions(
+      baseUrl: baseUrl,
       connectTimeout: Duration(seconds: DataConfig.apiTimeoutSeconds),
       receiveTimeout: Duration(seconds: DataConfig.apiTimeoutSeconds),
       sendTimeout: Duration(seconds: DataConfig.apiTimeoutSeconds),
@@ -29,7 +33,7 @@ class RemoteDataService {
     // Add auth interceptor (using LocalAuthService singleton)
     dio.interceptors.add(AuthInterceptor(LocalAuthService()));
     
-    logger.info('RemoteDataService initialized with tenant: $tenantId', 'DATA_SERVICE');
+    logger.info('RemoteDataService initialized with baseUrl: $baseUrl, tenant: $tenantId', 'DATA_SERVICE');
   }
 
   // ===== USERS API =====
@@ -316,6 +320,303 @@ class RemoteDataService {
 
       default:
         return DataConfig.unknownErrorMessage;
+    }
+  }
+
+  // ===== ORDERS API =====
+
+  /// Fetch all orders with optional filtering and pagination
+  Future<Result<Map<String, dynamic>>> getOrders({
+    String? status,
+    String? search,
+    int? executiveId,
+    String? shopId,
+    DateTime? fromDate,
+    DateTime? toDate,
+    int page = 1,
+    int pageSize = 20,
+  }) async {
+    const endpoint = '/api/v1/orders/';
+    final queryParameters = {
+      if (status != null) 'status': status,
+      if (search != null) 'search': search,
+      if (executiveId != null) 'executive_id': executiveId,
+      if (shopId != null) 'shop_id': shopId,
+      if (fromDate != null) 'from_date': fromDate.toIso8601String().split('T')[0],
+      if (toDate != null) 'to_date': toDate.toIso8601String().split('T')[0],
+      'page': page,
+      'page_size': pageSize,
+    };
+
+    logger.info('Fetching orders', 'REMOTE_DATA_SERVICE');
+
+    try {
+      final response = await dio.get(
+        endpoint,
+        queryParameters: queryParameters,
+      );
+
+      logger.info('Successfully fetched ${response.data['total']} orders', 'REMOTE_DATA_SERVICE');
+      return Result.ok(response.data as Map<String, dynamic>);
+    } on DioException catch (e, stackTrace) {
+      final errorMessage = _parseError(e);
+      logger.error(
+        'Failed to fetch orders: $errorMessage',
+        'REMOTE_DATA_SERVICE',
+        e,
+        stackTrace,
+      );
+      return Result.error(Exception(errorMessage));
+    } catch (e, stackTrace) {
+      logger.error('Unexpected error fetching orders', 'REMOTE_DATA_SERVICE', e, stackTrace);
+      return Result.error(Exception(DataConfig.unknownErrorMessage));
+    }
+  }
+
+  /// Fetch single order by ID with items
+  Future<Result<Map<String, dynamic>>> getOrderById(int orderId) async {
+    final endpoint = '/api/v1/orders/$orderId';
+
+    logger.info('Fetching order with ID: $orderId', 'REMOTE_DATA_SERVICE');
+
+    try {
+      final response = await dio.get(endpoint);
+
+      logger.info('Successfully fetched order: ${response.data['order_id']}', 'REMOTE_DATA_SERVICE');
+      return Result.ok(response.data as Map<String, dynamic>);
+    } on DioException catch (e, stackTrace) {
+      final errorMessage = _parseError(e);
+      logger.error(
+        'Failed to fetch order $orderId: $errorMessage',
+        'REMOTE_DATA_SERVICE',
+        e,
+        stackTrace,
+      );
+      return Result.error(Exception(errorMessage));
+    } catch (e, stackTrace) {
+      logger.error('Unexpected error fetching order $orderId', 'REMOTE_DATA_SERVICE', e, stackTrace);
+      return Result.error(Exception(DataConfig.unknownErrorMessage));
+    }
+  }
+
+  // ===== SHOP ASSIGNMENTS API =====
+
+  /// Fetch shop-executive assignments with optional filtering
+  Future<Result<Map<String, dynamic>>> getShopAssignments({
+    String? shopId,
+    int? executiveId,
+    String? status,
+    String? territoryId,
+    int page = 1,
+    int pageSize = 20,
+  }) async {
+    const endpoint = '/api/v1/shop-assignments/';
+    final queryParameters = {
+      if (shopId != null) 'shop_id': shopId,
+      if (executiveId != null) 'executive_id': executiveId,
+      if (status != null) 'status': status,
+      if (territoryId != null) 'territory_id': territoryId,
+      'page': page,
+      'page_size': pageSize,
+    };
+
+    logger.info('Fetching shop assignments', 'REMOTE_DATA_SERVICE');
+
+    try {
+      final response = await dio.get(
+        endpoint,
+        queryParameters: queryParameters,
+      );
+
+      logger.info('Successfully fetched ${response.data['total']} shop assignments', 'REMOTE_DATA_SERVICE');
+      return Result.ok(response.data as Map<String, dynamic>);
+    } on DioException catch (e, stackTrace) {
+      final errorMessage = _parseError(e);
+      logger.error(
+        'Failed to fetch shop assignments: $errorMessage',
+        'REMOTE_DATA_SERVICE',
+        e,
+        stackTrace,
+      );
+      return Result.error(Exception(errorMessage));
+    } catch (e, stackTrace) {
+      logger.error('Unexpected error fetching shop assignments', 'REMOTE_DATA_SERVICE', e, stackTrace);
+      return Result.error(Exception(DataConfig.unknownErrorMessage));
+    }
+  }
+
+  /// Fetch shop visit status for a specific shop
+  Future<Result<Map<String, dynamic>>> getShopVisitStatus(String shopId) async {
+    final endpoint = '/api/v1/visits/shops/$shopId/visit-status';
+
+    logger.info('Fetching visit status for shop: $shopId', 'REMOTE_DATA_SERVICE');
+
+    try {
+      final response = await dio.get(endpoint);
+
+      logger.info('Successfully fetched visit status for shop $shopId', 'REMOTE_DATA_SERVICE');
+      return Result.ok(response.data as Map<String, dynamic>);
+    } on DioException catch (e, stackTrace) {
+      final errorMessage = _parseError(e);
+      logger.error(
+        'Failed to fetch visit status for shop $shopId: $errorMessage',
+        'REMOTE_DATA_SERVICE',
+        e,
+        stackTrace,
+      );
+      return Result.error(Exception(errorMessage));
+    } catch (e, stackTrace) {
+      logger.error('Unexpected error fetching visit status for shop $shopId', 'REMOTE_DATA_SERVICE', e, stackTrace);
+      return Result.error(Exception(DataConfig.unknownErrorMessage));
+    }
+  }
+
+  // ===== ANALYTICS API =====
+
+  /// Fetch shop analytics summary with rating filtering
+  Future<Result<Map<String, dynamic>>> getShopAnalyticsSummary({
+    int? territoryId,
+    String? status,
+    int? minRating,
+    int? maxRating,
+    DateTime? fromDate,
+    DateTime? toDate,
+  }) async {
+    const endpoint = '/api/v1/analytics/shops/summary';
+    final queryParameters = {
+      'tenant_id': tenantId, // Required by backend
+      if (territoryId != null) 'territory_id': territoryId,
+      if (status != null) 'status': status,
+      if (minRating != null) 'min_rating': minRating,
+      if (maxRating != null) 'max_rating': maxRating,
+      if (fromDate != null) 'from_date': fromDate.toIso8601String().split('T')[0],
+      if (toDate != null) 'to_date': toDate.toIso8601String().split('T')[0],
+    };
+
+    logger.info('Fetching shop analytics summary with tenant: $tenantId', 'REMOTE_DATA_SERVICE');
+
+    try {
+      final response = await dio.get(
+        endpoint,
+        queryParameters: queryParameters,
+      );
+
+      logger.info('Successfully fetched shop analytics summary', 'REMOTE_DATA_SERVICE');
+      return Result.ok(response.data as Map<String, dynamic>);
+    } on DioException catch (e, stackTrace) {
+      final errorMessage = _parseError(e);
+      logger.error(
+        'Failed to fetch shop analytics summary: $errorMessage',
+        'REMOTE_DATA_SERVICE',
+        e,
+        stackTrace,
+      );
+      return Result.error(Exception(errorMessage));
+    } catch (e, stackTrace) {
+      logger.error('Unexpected error fetching shop analytics summary', 'REMOTE_DATA_SERVICE', e, stackTrace);
+      return Result.error(Exception(DataConfig.unknownErrorMessage));
+    }
+  }
+
+  // ===== OUTSTANDING PAYMENTS API =====
+
+  /// Fetch outstanding payments list with filtering
+  Future<Result<Map<String, dynamic>>> getOutstandingPayments({
+    String? status,
+    DateTime? fromDate,
+    DateTime? toDate,
+    double? minAmount,
+    double? maxAmount,
+    String? shopSearch,
+    int? page,
+    int? pageSize,
+  }) async {
+    const endpoint = '/api/v1/outstanding/';
+    final queryParameters = {
+      if (status != null) 'status': status,
+      if (fromDate != null) 'from_date': fromDate.toIso8601String().split('T')[0],
+      if (toDate != null) 'to_date': toDate.toIso8601String().split('T')[0],
+      if (minAmount != null) 'min_amount': minAmount,
+      if (maxAmount != null) 'max_amount': maxAmount,
+      if (shopSearch != null) 'shop_search': shopSearch,
+      if (page != null) 'page': page,
+      if (pageSize != null) 'page_size': pageSize,
+    };
+
+    logger.info('Fetching outstanding payments list - status: $status', 'REMOTE_DATA_SERVICE');
+
+    try {
+      final response = await dio.get(
+        endpoint,
+        queryParameters: queryParameters,
+      );
+
+      logger.info('Successfully fetched outstanding payments list', 'REMOTE_DATA_SERVICE');
+      return Result.ok(response.data as Map<String, dynamic>);
+    } on DioException catch (e, stackTrace) {
+      final errorMessage = _parseError(e);
+      logger.error(
+        'Failed to fetch outstanding payments: $errorMessage',
+        'REMOTE_DATA_SERVICE',
+        e,
+        stackTrace,
+      );
+      return Result.error(Exception(errorMessage));
+    } catch (e, stackTrace) {
+      logger.error('Unexpected error fetching outstanding payments', 'REMOTE_DATA_SERVICE', e, stackTrace);
+      return Result.error(Exception(DataConfig.unknownErrorMessage));
+    }
+  }
+
+  /// Fetch outstanding payments summary
+  Future<Result<Map<String, dynamic>>> getOutstandingSummary() async {
+    const endpoint = '/api/v1/outstanding/summary';
+
+    logger.info('Fetching outstanding payments summary', 'REMOTE_DATA_SERVICE');
+
+    try {
+      final response = await dio.get(endpoint);
+
+      logger.info('Successfully fetched outstanding summary', 'REMOTE_DATA_SERVICE');
+      return Result.ok(response.data as Map<String, dynamic>);
+    } on DioException catch (e, stackTrace) {
+      final errorMessage = _parseError(e);
+      logger.error(
+        'Failed to fetch outstanding summary: $errorMessage',
+        'REMOTE_DATA_SERVICE',
+        e,
+        stackTrace,
+      );
+      return Result.error(Exception(errorMessage));
+    } catch (e, stackTrace) {
+      logger.error('Unexpected error fetching outstanding summary', 'REMOTE_DATA_SERVICE', e, stackTrace);
+      return Result.error(Exception(DataConfig.unknownErrorMessage));
+    }
+  }
+
+  /// Fetch single outstanding payment by ID
+  Future<Result<Map<String, dynamic>>> getOutstandingById(int id) async {
+    final endpoint = '/api/v1/outstanding/$id';
+
+    logger.info('Fetching outstanding payment ID: $id', 'REMOTE_DATA_SERVICE');
+
+    try {
+      final response = await dio.get(endpoint);
+
+      logger.info('Successfully fetched outstanding payment $id', 'REMOTE_DATA_SERVICE');
+      return Result.ok(response.data as Map<String, dynamic>);
+    } on DioException catch (e, stackTrace) {
+      final errorMessage = _parseError(e);
+      logger.error(
+        'Failed to fetch outstanding payment $id: $errorMessage',
+        'REMOTE_DATA_SERVICE',
+        e,
+        stackTrace,
+      );
+      return Result.error(Exception(errorMessage));
+    } catch (e, stackTrace) {
+      logger.error('Unexpected error fetching outstanding payment $id', 'REMOTE_DATA_SERVICE', e, stackTrace);
+      return Result.error(Exception(DataConfig.unknownErrorMessage));
     }
   }
 }

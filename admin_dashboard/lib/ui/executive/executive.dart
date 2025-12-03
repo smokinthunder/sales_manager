@@ -1,6 +1,7 @@
 import 'package:admin_dashboard/routing/routes.dart';
 import 'package:admin_dashboard/ui/analytics/analytics.dart';
 import 'package:admin_dashboard/ui/widgets/dropdownmenu.dart';
+import 'package:admin_dashboard/ui/widgets/empty_state.dart';
 import 'package:admin_dashboard/ui/widgets/title_and_value_container.dart';
 import 'package:admin_dashboard/viewmodel/data_viewmodel.dart';
 import 'package:flutter/material.dart';
@@ -142,6 +143,20 @@ class _ExecutiveState extends ConsumerState<Executive> {
                                       .contains(_searchQuery.toLowerCase())))
                           .toList();
 
+                  // Empty state
+                  if (filteredExecutives.isEmpty) {
+                    return Expanded(
+                      child: _searchQuery.isNotEmpty
+                          ? SearchEmptyState(searchQuery: _searchQuery)
+                          : EmptyState(
+                              icon: Icons.person_outline,
+                              title: 'No executives found',
+                              message:
+                                  'Sales executives will appear here once added',
+                            ),
+                    );
+                  }
+
                   return SafePaginatedCardGrid(
                     cardWidth: 208,
                     cardHeight: 272,
@@ -161,33 +176,16 @@ class _ExecutiveState extends ConsumerState<Executive> {
                     ],
                   );
                 },
-                loading: () => const Center(
-                  child: Padding(
-                    padding: EdgeInsets.all(32.0),
-                    child: CircularProgressIndicator(),
-                  ),
+                loading: () => Expanded(
+                  child: LoadingState(message: 'Loading executives...'),
                 ),
-                error: (error, stack) => Center(
-                  child: Padding(
-                    padding: const EdgeInsets.all(32.0),
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(
-                          Icons.error_outline,
-                          size: 48,
-                          color: Theme.of(context).colorScheme.error,
-                        ),
-                        const SizedBox(height: 16),
-                        Text(
-                          'Error loading executives: $error',
-                          style: TextStyle(
-                            color: Theme.of(context).colorScheme.error,
-                          ),
-                          textAlign: TextAlign.center,
-                        ),
-                      ],
-                    ),
+                error: (error, stack) => Expanded(
+                  child: ErrorState(
+                    title: 'Failed to load executives',
+                    message: error.toString(),
+                    onRetry: () {
+                      ref.invalidate(usersProvider);
+                    },
                   ),
                 ),
               );

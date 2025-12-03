@@ -1,6 +1,7 @@
 import 'package:admin_dashboard/routing/routes.dart';
 import 'package:admin_dashboard/ui/analytics/analytics.dart';
 import 'package:admin_dashboard/ui/widgets/dropdownmenu.dart';
+import 'package:admin_dashboard/ui/widgets/empty_state.dart';
 import 'package:admin_dashboard/viewmodel/data_viewmodel.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -120,62 +121,69 @@ class _FindExecutiveState extends ConsumerState<FindExecutive> {
               ));
 
               return executives.when(
-                data: (executivesList) => SafePaginatedCardGrid(
-                  cardHeight: 102,
-                  cardWidth: 230,
-                  cards: [
-                    for (var executive in executivesList)
-                      Container(
-                        padding: EdgeInsets.all(16),
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(8),
-                          border: Border.all(color: theme.colorScheme.tertiary),
-                        ),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              executive.name,
-                              style: theme.textTheme.bodyLarge,
+                data: (executivesList) {
+                  // Empty state
+                  if (executivesList.isEmpty) {
+                    return Expanded(
+                      child: _searchQuery.isNotEmpty
+                          ? SearchEmptyState(searchQuery: _searchQuery)
+                          : EmptyState(
+                              icon: Icons.person_search,
+                              title: 'No executives found',
+                              message:
+                                  'Sales executives will appear here once assigned to this area',
                             ),
-                            Text(
-                              executive.phone,
-                              style: theme.textTheme.bodyMedium?.copyWith(
-                                color: theme.colorScheme.tertiary,
+                    );
+                  }
+
+                  return SafePaginatedCardGrid(
+                    cardHeight: 102,
+                    cardWidth: 230,
+                    cards: [
+                      for (var executive in executivesList)
+                        Container(
+                          padding: EdgeInsets.all(16),
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(8),
+                            border:
+                                Border.all(color: theme.colorScheme.tertiary),
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                executive.name,
+                                style: theme.textTheme.bodyLarge,
                               ),
-                            ),
-                            SizedBox(height: 4),
-                            Text(
-                              executive.email ?? "N/A",
-                              style: theme.textTheme.bodyMedium?.copyWith(
-                                color: theme.colorScheme.tertiary,
+                              Text(
+                                executive.phone,
+                                style: theme.textTheme.bodyMedium?.copyWith(
+                                  color: theme.colorScheme.tertiary,
+                                ),
                               ),
-                            ),
-                          ],
+                              SizedBox(height: 4),
+                              Text(
+                                executive.email ?? "N/A",
+                                style: theme.textTheme.bodyMedium?.copyWith(
+                                  color: theme.colorScheme.tertiary,
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
-                      ),
-                  ],
-                ),
-                loading: () => Center(
-                  child: CircularProgressIndicator(),
-                ),
-                error: (error, stack) => Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(Icons.error_outline, size: 48, color: Colors.red),
-                      SizedBox(height: 16),
-                      Text(
-                        'Failed to load executives',
-                        style: theme.textTheme.titleMedium,
-                      ),
-                      SizedBox(height: 8),
-                      Text(
-                        error.toString(),
-                        style: theme.textTheme.bodySmall,
-                        textAlign: TextAlign.center,
-                      ),
                     ],
+                  );
+                },
+                loading: () => Expanded(
+                  child: LoadingState(message: 'Loading executives...'),
+                ),
+                error: (error, stack) => Expanded(
+                  child: ErrorState(
+                    title: 'Failed to load executives',
+                    message: error.toString(),
+                    onRetry: () {
+                      ref.invalidate(usersProvider);
+                    },
                   ),
                 ),
               );

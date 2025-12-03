@@ -110,7 +110,7 @@ final class UsersProvider
   }
 }
 
-String _$usersHash() => r'b090bf30b78fb4511303c2f8d4aae79858eb3ba0';
+String _$usersHash() => r'cc7852dc91278c3f92acac94192051a017a041e3';
 
 /// ViewModel for managing users, shops, and analytics data
 ///
@@ -242,7 +242,7 @@ final class UserByIdProvider
   }
 }
 
-String _$userByIdHash() => r'b54ee06455ab2c48168019e4f2d61cfa498d9602';
+String _$userByIdHash() => r'd70a84387ffbae6c011304bd2012ddc83866348c';
 
 /// Fetch a single user by ID
 ///
@@ -357,7 +357,7 @@ final class ShopsProvider
   }
 }
 
-String _$shopsHash() => r'ec22885e8d1482674cffbc679f639973d914233e';
+String _$shopsHash() => r'802d98965dbe858f0a05cc1d6d7a0c8c14387f65';
 
 /// Fetch shops/customers with optional filters
 ///
@@ -476,7 +476,7 @@ final class ShopByIdProvider
   }
 }
 
-String _$shopByIdHash() => r'07d460d993307295778e447a9586cb18d5743e23';
+String _$shopByIdHash() => r'9c18ac88dfd329641c4d84c54a5daefe90016f00';
 
 /// Fetch a single shop by shop_id
 ///
@@ -615,7 +615,7 @@ final class TopCustomersProvider
   }
 }
 
-String _$topCustomersHash() => r'a004834fdbe3f3a52fdbc2599ccaac087b2254f8';
+String _$topCustomersHash() => r'ca020bbc776d072d3e6ad849217061c839ce1877';
 
 /// Fetch top customers analytics
 ///
@@ -782,7 +782,7 @@ final class BestSellingProductsProvider
 }
 
 String _$bestSellingProductsHash() =>
-    r'ad8d3190e49dbd1936e7f927fbde3dde6f5e3835';
+    r'07885f6c66dee869b4b370969f4b8509b231c0e9';
 
 /// Fetch best selling products analytics
 ///
@@ -948,7 +948,7 @@ final class SalesReportProvider
   }
 }
 
-String _$salesReportHash() => r'9af286cdef7f85508884dbce1f1835de0e10e256';
+String _$salesReportHash() => r'8f80a3cfa37607098315d7586390d52c8197d5fc';
 
 /// Fetch sales report analytics
 ///
@@ -1066,7 +1066,7 @@ final class DashboardStatsProvider
   }
 }
 
-String _$dashboardStatsHash() => r'836f1fa8d87d245db617cabff1783158d2695282';
+String _$dashboardStatsHash() => r'ffa223256dd54dea1238c7afbd48c3deff28bcff';
 
 /// Get active sales executives count
 
@@ -1106,7 +1106,7 @@ final class ActiveSalesExecutivesCountProvider
 }
 
 String _$activeSalesExecutivesCountHash() =>
-    r'96bf8129e881a00262008be89dd262731b3b67b7';
+    r'5db9ba89c64b2eeb232a65c14f577c8b52480210';
 
 /// Get active area managers count
 
@@ -1145,7 +1145,7 @@ final class ActiveAreaManagersCountProvider
 }
 
 String _$activeAreaManagersCountHash() =>
-    r'8ec7b195eb853a0dfe479da39959afdf1c707788';
+    r'd54ec16e81af1b9c121c7e004bdb5b0a6788e7f9';
 
 /// Get active customers/shops count
 
@@ -1184,7 +1184,7 @@ final class ActiveCustomersCountProvider
 }
 
 String _$activeCustomersCountHash() =>
-    r'c3d872f5b8a3a9876bb96f6c93095888cbd7bdc7';
+    r'219351f63ca7bec7dd8b54cec2a7a9e3475fac0b';
 
 /// Get users by territory ID
 
@@ -1251,7 +1251,7 @@ final class UsersByTerritoryProvider
   }
 }
 
-String _$usersByTerritoryHash() => r'9310b7773f1e87337259fa10dc5fe35733ee409d';
+String _$usersByTerritoryHash() => r'1bc6a846d46cb45e5510b7365d5490431977c473';
 
 /// Get users by territory ID
 
@@ -1344,7 +1344,7 @@ final class ShopsByTerritoryProvider
   }
 }
 
-String _$shopsByTerritoryHash() => r'52d56befec5bfbc36bf31c245274d3667663994d';
+String _$shopsByTerritoryHash() => r'145929bace1ecc63e586ac9e385fda47124e8f1d';
 
 /// Get shops by territory ID (convenience provider)
 
@@ -1373,4 +1373,1188 @@ final class ShopsByTerritoryFamily extends $Family
 
   @override
   String toString() => r'shopsByTerritoryProvider';
+}
+
+/// Fetch orders with optional filtering and pagination
+///
+/// Parameters:
+/// - [status]: Filter by order status (e.g., 'pending', 'completed')
+/// - [search]: Search query for order ID, bill number, or shop name
+/// - [executiveId]: Filter by executive ID
+/// - [shopId]: Filter by shop ID
+/// - [fromDate]: Filter orders from this date
+/// - [toDate]: Filter orders to this date
+/// - [page]: Page number (default: 1)
+/// - [pageSize]: Items per page (default: 20)
+///
+/// Returns Map<String, dynamic> with items, total, page, page_size, pages
+
+@ProviderFor(orders)
+const ordersProvider = OrdersFamily._();
+
+/// Fetch orders with optional filtering and pagination
+///
+/// Parameters:
+/// - [status]: Filter by order status (e.g., 'pending', 'completed')
+/// - [search]: Search query for order ID, bill number, or shop name
+/// - [executiveId]: Filter by executive ID
+/// - [shopId]: Filter by shop ID
+/// - [fromDate]: Filter orders from this date
+/// - [toDate]: Filter orders to this date
+/// - [page]: Page number (default: 1)
+/// - [pageSize]: Items per page (default: 20)
+///
+/// Returns Map<String, dynamic> with items, total, page, page_size, pages
+
+final class OrdersProvider
+    extends
+        $FunctionalProvider<
+          AsyncValue<Map<String, dynamic>>,
+          Map<String, dynamic>,
+          FutureOr<Map<String, dynamic>>
+        >
+    with
+        $FutureModifier<Map<String, dynamic>>,
+        $FutureProvider<Map<String, dynamic>> {
+  /// Fetch orders with optional filtering and pagination
+  ///
+  /// Parameters:
+  /// - [status]: Filter by order status (e.g., 'pending', 'completed')
+  /// - [search]: Search query for order ID, bill number, or shop name
+  /// - [executiveId]: Filter by executive ID
+  /// - [shopId]: Filter by shop ID
+  /// - [fromDate]: Filter orders from this date
+  /// - [toDate]: Filter orders to this date
+  /// - [page]: Page number (default: 1)
+  /// - [pageSize]: Items per page (default: 20)
+  ///
+  /// Returns Map<String, dynamic> with items, total, page, page_size, pages
+  const OrdersProvider._({
+    required OrdersFamily super.from,
+    required ({
+      String? status,
+      String? search,
+      int? executiveId,
+      String? shopId,
+      DateTime? fromDate,
+      DateTime? toDate,
+      int page,
+      int pageSize,
+    })
+    super.argument,
+  }) : super(
+         retry: null,
+         name: r'ordersProvider',
+         isAutoDispose: true,
+         dependencies: null,
+         $allTransitiveDependencies: null,
+       );
+
+  @override
+  String debugGetCreateSourceHash() => _$ordersHash();
+
+  @override
+  String toString() {
+    return r'ordersProvider'
+        ''
+        '$argument';
+  }
+
+  @$internal
+  @override
+  $FutureProviderElement<Map<String, dynamic>> $createElement(
+    $ProviderPointer pointer,
+  ) => $FutureProviderElement(pointer);
+
+  @override
+  FutureOr<Map<String, dynamic>> create(Ref ref) {
+    final argument =
+        this.argument
+            as ({
+              String? status,
+              String? search,
+              int? executiveId,
+              String? shopId,
+              DateTime? fromDate,
+              DateTime? toDate,
+              int page,
+              int pageSize,
+            });
+    return orders(
+      ref,
+      status: argument.status,
+      search: argument.search,
+      executiveId: argument.executiveId,
+      shopId: argument.shopId,
+      fromDate: argument.fromDate,
+      toDate: argument.toDate,
+      page: argument.page,
+      pageSize: argument.pageSize,
+    );
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return other is OrdersProvider && other.argument == argument;
+  }
+
+  @override
+  int get hashCode {
+    return argument.hashCode;
+  }
+}
+
+String _$ordersHash() => r'409a17137a4d5077497a6f1d7cfef0c997323585';
+
+/// Fetch orders with optional filtering and pagination
+///
+/// Parameters:
+/// - [status]: Filter by order status (e.g., 'pending', 'completed')
+/// - [search]: Search query for order ID, bill number, or shop name
+/// - [executiveId]: Filter by executive ID
+/// - [shopId]: Filter by shop ID
+/// - [fromDate]: Filter orders from this date
+/// - [toDate]: Filter orders to this date
+/// - [page]: Page number (default: 1)
+/// - [pageSize]: Items per page (default: 20)
+///
+/// Returns Map<String, dynamic> with items, total, page, page_size, pages
+
+final class OrdersFamily extends $Family
+    with
+        $FunctionalFamilyOverride<
+          FutureOr<Map<String, dynamic>>,
+          ({
+            String? status,
+            String? search,
+            int? executiveId,
+            String? shopId,
+            DateTime? fromDate,
+            DateTime? toDate,
+            int page,
+            int pageSize,
+          })
+        > {
+  const OrdersFamily._()
+    : super(
+        retry: null,
+        name: r'ordersProvider',
+        dependencies: null,
+        $allTransitiveDependencies: null,
+        isAutoDispose: true,
+      );
+
+  /// Fetch orders with optional filtering and pagination
+  ///
+  /// Parameters:
+  /// - [status]: Filter by order status (e.g., 'pending', 'completed')
+  /// - [search]: Search query for order ID, bill number, or shop name
+  /// - [executiveId]: Filter by executive ID
+  /// - [shopId]: Filter by shop ID
+  /// - [fromDate]: Filter orders from this date
+  /// - [toDate]: Filter orders to this date
+  /// - [page]: Page number (default: 1)
+  /// - [pageSize]: Items per page (default: 20)
+  ///
+  /// Returns Map<String, dynamic> with items, total, page, page_size, pages
+
+  OrdersProvider call({
+    String? status,
+    String? search,
+    int? executiveId,
+    String? shopId,
+    DateTime? fromDate,
+    DateTime? toDate,
+    int page = 1,
+    int pageSize = 20,
+  }) => OrdersProvider._(
+    argument: (
+      status: status,
+      search: search,
+      executiveId: executiveId,
+      shopId: shopId,
+      fromDate: fromDate,
+      toDate: toDate,
+      page: page,
+      pageSize: pageSize,
+    ),
+    from: this,
+  );
+
+  @override
+  String toString() => r'ordersProvider';
+}
+
+/// Fetch single order by ID with items
+///
+/// Parameters:
+/// - [orderId]: The ID of the order to fetch
+///
+/// Returns Map<String, dynamic> with order details and items array
+
+@ProviderFor(orderById)
+const orderByIdProvider = OrderByIdFamily._();
+
+/// Fetch single order by ID with items
+///
+/// Parameters:
+/// - [orderId]: The ID of the order to fetch
+///
+/// Returns Map<String, dynamic> with order details and items array
+
+final class OrderByIdProvider
+    extends
+        $FunctionalProvider<
+          AsyncValue<Map<String, dynamic>>,
+          Map<String, dynamic>,
+          FutureOr<Map<String, dynamic>>
+        >
+    with
+        $FutureModifier<Map<String, dynamic>>,
+        $FutureProvider<Map<String, dynamic>> {
+  /// Fetch single order by ID with items
+  ///
+  /// Parameters:
+  /// - [orderId]: The ID of the order to fetch
+  ///
+  /// Returns Map<String, dynamic> with order details and items array
+  const OrderByIdProvider._({
+    required OrderByIdFamily super.from,
+    required int super.argument,
+  }) : super(
+         retry: null,
+         name: r'orderByIdProvider',
+         isAutoDispose: true,
+         dependencies: null,
+         $allTransitiveDependencies: null,
+       );
+
+  @override
+  String debugGetCreateSourceHash() => _$orderByIdHash();
+
+  @override
+  String toString() {
+    return r'orderByIdProvider'
+        ''
+        '($argument)';
+  }
+
+  @$internal
+  @override
+  $FutureProviderElement<Map<String, dynamic>> $createElement(
+    $ProviderPointer pointer,
+  ) => $FutureProviderElement(pointer);
+
+  @override
+  FutureOr<Map<String, dynamic>> create(Ref ref) {
+    final argument = this.argument as int;
+    return orderById(ref, argument);
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return other is OrderByIdProvider && other.argument == argument;
+  }
+
+  @override
+  int get hashCode {
+    return argument.hashCode;
+  }
+}
+
+String _$orderByIdHash() => r'2040119933d2be8b795eac9396cff438fdf6977c';
+
+/// Fetch single order by ID with items
+///
+/// Parameters:
+/// - [orderId]: The ID of the order to fetch
+///
+/// Returns Map<String, dynamic> with order details and items array
+
+final class OrderByIdFamily extends $Family
+    with $FunctionalFamilyOverride<FutureOr<Map<String, dynamic>>, int> {
+  const OrderByIdFamily._()
+    : super(
+        retry: null,
+        name: r'orderByIdProvider',
+        dependencies: null,
+        $allTransitiveDependencies: null,
+        isAutoDispose: true,
+      );
+
+  /// Fetch single order by ID with items
+  ///
+  /// Parameters:
+  /// - [orderId]: The ID of the order to fetch
+  ///
+  /// Returns Map<String, dynamic> with order details and items array
+
+  OrderByIdProvider call(int orderId) =>
+      OrderByIdProvider._(argument: orderId, from: this);
+
+  @override
+  String toString() => r'orderByIdProvider';
+}
+
+/// Fetch shop-executive assignments with optional filtering
+///
+/// Parameters:
+/// - [shopId]: Filter by shop ID
+/// - [executiveId]: Filter by executive ID
+/// - [status]: Filter by assignment status (e.g., 'active', 'inactive')
+/// - [territoryId]: Filter by territory ID
+/// - [page]: Page number (default: 1)
+/// - [pageSize]: Items per page (default: 20)
+///
+/// Returns Map<String, dynamic> with items, total, page, page_size, pages
+
+@ProviderFor(shopAssignments)
+const shopAssignmentsProvider = ShopAssignmentsFamily._();
+
+/// Fetch shop-executive assignments with optional filtering
+///
+/// Parameters:
+/// - [shopId]: Filter by shop ID
+/// - [executiveId]: Filter by executive ID
+/// - [status]: Filter by assignment status (e.g., 'active', 'inactive')
+/// - [territoryId]: Filter by territory ID
+/// - [page]: Page number (default: 1)
+/// - [pageSize]: Items per page (default: 20)
+///
+/// Returns Map<String, dynamic> with items, total, page, page_size, pages
+
+final class ShopAssignmentsProvider
+    extends
+        $FunctionalProvider<
+          AsyncValue<Map<String, dynamic>>,
+          Map<String, dynamic>,
+          FutureOr<Map<String, dynamic>>
+        >
+    with
+        $FutureModifier<Map<String, dynamic>>,
+        $FutureProvider<Map<String, dynamic>> {
+  /// Fetch shop-executive assignments with optional filtering
+  ///
+  /// Parameters:
+  /// - [shopId]: Filter by shop ID
+  /// - [executiveId]: Filter by executive ID
+  /// - [status]: Filter by assignment status (e.g., 'active', 'inactive')
+  /// - [territoryId]: Filter by territory ID
+  /// - [page]: Page number (default: 1)
+  /// - [pageSize]: Items per page (default: 20)
+  ///
+  /// Returns Map<String, dynamic> with items, total, page, page_size, pages
+  const ShopAssignmentsProvider._({
+    required ShopAssignmentsFamily super.from,
+    required ({
+      String? shopId,
+      int? executiveId,
+      String? status,
+      String? territoryId,
+      int page,
+      int pageSize,
+    })
+    super.argument,
+  }) : super(
+         retry: null,
+         name: r'shopAssignmentsProvider',
+         isAutoDispose: true,
+         dependencies: null,
+         $allTransitiveDependencies: null,
+       );
+
+  @override
+  String debugGetCreateSourceHash() => _$shopAssignmentsHash();
+
+  @override
+  String toString() {
+    return r'shopAssignmentsProvider'
+        ''
+        '$argument';
+  }
+
+  @$internal
+  @override
+  $FutureProviderElement<Map<String, dynamic>> $createElement(
+    $ProviderPointer pointer,
+  ) => $FutureProviderElement(pointer);
+
+  @override
+  FutureOr<Map<String, dynamic>> create(Ref ref) {
+    final argument =
+        this.argument
+            as ({
+              String? shopId,
+              int? executiveId,
+              String? status,
+              String? territoryId,
+              int page,
+              int pageSize,
+            });
+    return shopAssignments(
+      ref,
+      shopId: argument.shopId,
+      executiveId: argument.executiveId,
+      status: argument.status,
+      territoryId: argument.territoryId,
+      page: argument.page,
+      pageSize: argument.pageSize,
+    );
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return other is ShopAssignmentsProvider && other.argument == argument;
+  }
+
+  @override
+  int get hashCode {
+    return argument.hashCode;
+  }
+}
+
+String _$shopAssignmentsHash() => r'3ea387453300dab5e0389a5a2a55fcea1e29e75f';
+
+/// Fetch shop-executive assignments with optional filtering
+///
+/// Parameters:
+/// - [shopId]: Filter by shop ID
+/// - [executiveId]: Filter by executive ID
+/// - [status]: Filter by assignment status (e.g., 'active', 'inactive')
+/// - [territoryId]: Filter by territory ID
+/// - [page]: Page number (default: 1)
+/// - [pageSize]: Items per page (default: 20)
+///
+/// Returns Map<String, dynamic> with items, total, page, page_size, pages
+
+final class ShopAssignmentsFamily extends $Family
+    with
+        $FunctionalFamilyOverride<
+          FutureOr<Map<String, dynamic>>,
+          ({
+            String? shopId,
+            int? executiveId,
+            String? status,
+            String? territoryId,
+            int page,
+            int pageSize,
+          })
+        > {
+  const ShopAssignmentsFamily._()
+    : super(
+        retry: null,
+        name: r'shopAssignmentsProvider',
+        dependencies: null,
+        $allTransitiveDependencies: null,
+        isAutoDispose: true,
+      );
+
+  /// Fetch shop-executive assignments with optional filtering
+  ///
+  /// Parameters:
+  /// - [shopId]: Filter by shop ID
+  /// - [executiveId]: Filter by executive ID
+  /// - [status]: Filter by assignment status (e.g., 'active', 'inactive')
+  /// - [territoryId]: Filter by territory ID
+  /// - [page]: Page number (default: 1)
+  /// - [pageSize]: Items per page (default: 20)
+  ///
+  /// Returns Map<String, dynamic> with items, total, page, page_size, pages
+
+  ShopAssignmentsProvider call({
+    String? shopId,
+    int? executiveId,
+    String? status,
+    String? territoryId,
+    int page = 1,
+    int pageSize = 20,
+  }) => ShopAssignmentsProvider._(
+    argument: (
+      shopId: shopId,
+      executiveId: executiveId,
+      status: status,
+      territoryId: territoryId,
+      page: page,
+      pageSize: pageSize,
+    ),
+    from: this,
+  );
+
+  @override
+  String toString() => r'shopAssignmentsProvider';
+}
+
+/// Fetch shop visit status for a specific shop
+///
+/// Parameters:
+/// - [shopId]: The ID of the shop to fetch visit status for
+///
+/// Returns Map<String, dynamic> with visit statistics
+
+@ProviderFor(shopVisitStatus)
+const shopVisitStatusProvider = ShopVisitStatusFamily._();
+
+/// Fetch shop visit status for a specific shop
+///
+/// Parameters:
+/// - [shopId]: The ID of the shop to fetch visit status for
+///
+/// Returns Map<String, dynamic> with visit statistics
+
+final class ShopVisitStatusProvider
+    extends
+        $FunctionalProvider<
+          AsyncValue<Map<String, dynamic>>,
+          Map<String, dynamic>,
+          FutureOr<Map<String, dynamic>>
+        >
+    with
+        $FutureModifier<Map<String, dynamic>>,
+        $FutureProvider<Map<String, dynamic>> {
+  /// Fetch shop visit status for a specific shop
+  ///
+  /// Parameters:
+  /// - [shopId]: The ID of the shop to fetch visit status for
+  ///
+  /// Returns Map<String, dynamic> with visit statistics
+  const ShopVisitStatusProvider._({
+    required ShopVisitStatusFamily super.from,
+    required String super.argument,
+  }) : super(
+         retry: null,
+         name: r'shopVisitStatusProvider',
+         isAutoDispose: true,
+         dependencies: null,
+         $allTransitiveDependencies: null,
+       );
+
+  @override
+  String debugGetCreateSourceHash() => _$shopVisitStatusHash();
+
+  @override
+  String toString() {
+    return r'shopVisitStatusProvider'
+        ''
+        '($argument)';
+  }
+
+  @$internal
+  @override
+  $FutureProviderElement<Map<String, dynamic>> $createElement(
+    $ProviderPointer pointer,
+  ) => $FutureProviderElement(pointer);
+
+  @override
+  FutureOr<Map<String, dynamic>> create(Ref ref) {
+    final argument = this.argument as String;
+    return shopVisitStatus(ref, argument);
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return other is ShopVisitStatusProvider && other.argument == argument;
+  }
+
+  @override
+  int get hashCode {
+    return argument.hashCode;
+  }
+}
+
+String _$shopVisitStatusHash() => r'c60538ea83da7f77e3e2a33402c1a3759b99f568';
+
+/// Fetch shop visit status for a specific shop
+///
+/// Parameters:
+/// - [shopId]: The ID of the shop to fetch visit status for
+///
+/// Returns Map<String, dynamic> with visit statistics
+
+final class ShopVisitStatusFamily extends $Family
+    with $FunctionalFamilyOverride<FutureOr<Map<String, dynamic>>, String> {
+  const ShopVisitStatusFamily._()
+    : super(
+        retry: null,
+        name: r'shopVisitStatusProvider',
+        dependencies: null,
+        $allTransitiveDependencies: null,
+        isAutoDispose: true,
+      );
+
+  /// Fetch shop visit status for a specific shop
+  ///
+  /// Parameters:
+  /// - [shopId]: The ID of the shop to fetch visit status for
+  ///
+  /// Returns Map<String, dynamic> with visit statistics
+
+  ShopVisitStatusProvider call(String shopId) =>
+      ShopVisitStatusProvider._(argument: shopId, from: this);
+
+  @override
+  String toString() => r'shopVisitStatusProvider';
+}
+
+/// Fetch shop analytics summary with optional filtering
+///
+/// Parameters:
+/// - [territoryId]: Filter by territory ID
+/// - [status]: Filter by shop status
+/// - [minRating]: Minimum rating filter (1-5)
+/// - [maxRating]: Maximum rating filter (1-5)
+/// - [fromDate]: Filter from this date
+/// - [toDate]: Filter to this date
+///
+/// Returns Map<String, dynamic> with shop analytics summary
+
+@ProviderFor(shopAnalyticsSummary)
+const shopAnalyticsSummaryProvider = ShopAnalyticsSummaryFamily._();
+
+/// Fetch shop analytics summary with optional filtering
+///
+/// Parameters:
+/// - [territoryId]: Filter by territory ID
+/// - [status]: Filter by shop status
+/// - [minRating]: Minimum rating filter (1-5)
+/// - [maxRating]: Maximum rating filter (1-5)
+/// - [fromDate]: Filter from this date
+/// - [toDate]: Filter to this date
+///
+/// Returns Map<String, dynamic> with shop analytics summary
+
+final class ShopAnalyticsSummaryProvider
+    extends
+        $FunctionalProvider<
+          AsyncValue<Map<String, dynamic>>,
+          Map<String, dynamic>,
+          FutureOr<Map<String, dynamic>>
+        >
+    with
+        $FutureModifier<Map<String, dynamic>>,
+        $FutureProvider<Map<String, dynamic>> {
+  /// Fetch shop analytics summary with optional filtering
+  ///
+  /// Parameters:
+  /// - [territoryId]: Filter by territory ID
+  /// - [status]: Filter by shop status
+  /// - [minRating]: Minimum rating filter (1-5)
+  /// - [maxRating]: Maximum rating filter (1-5)
+  /// - [fromDate]: Filter from this date
+  /// - [toDate]: Filter to this date
+  ///
+  /// Returns Map<String, dynamic> with shop analytics summary
+  const ShopAnalyticsSummaryProvider._({
+    required ShopAnalyticsSummaryFamily super.from,
+    required ({
+      int? territoryId,
+      String? status,
+      int? minRating,
+      int? maxRating,
+      DateTime? fromDate,
+      DateTime? toDate,
+    })
+    super.argument,
+  }) : super(
+         retry: null,
+         name: r'shopAnalyticsSummaryProvider',
+         isAutoDispose: true,
+         dependencies: null,
+         $allTransitiveDependencies: null,
+       );
+
+  @override
+  String debugGetCreateSourceHash() => _$shopAnalyticsSummaryHash();
+
+  @override
+  String toString() {
+    return r'shopAnalyticsSummaryProvider'
+        ''
+        '$argument';
+  }
+
+  @$internal
+  @override
+  $FutureProviderElement<Map<String, dynamic>> $createElement(
+    $ProviderPointer pointer,
+  ) => $FutureProviderElement(pointer);
+
+  @override
+  FutureOr<Map<String, dynamic>> create(Ref ref) {
+    final argument =
+        this.argument
+            as ({
+              int? territoryId,
+              String? status,
+              int? minRating,
+              int? maxRating,
+              DateTime? fromDate,
+              DateTime? toDate,
+            });
+    return shopAnalyticsSummary(
+      ref,
+      territoryId: argument.territoryId,
+      status: argument.status,
+      minRating: argument.minRating,
+      maxRating: argument.maxRating,
+      fromDate: argument.fromDate,
+      toDate: argument.toDate,
+    );
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return other is ShopAnalyticsSummaryProvider && other.argument == argument;
+  }
+
+  @override
+  int get hashCode {
+    return argument.hashCode;
+  }
+}
+
+String _$shopAnalyticsSummaryHash() =>
+    r'0c9c36141a2be52a0eca312685df8d56f8f499b8';
+
+/// Fetch shop analytics summary with optional filtering
+///
+/// Parameters:
+/// - [territoryId]: Filter by territory ID
+/// - [status]: Filter by shop status
+/// - [minRating]: Minimum rating filter (1-5)
+/// - [maxRating]: Maximum rating filter (1-5)
+/// - [fromDate]: Filter from this date
+/// - [toDate]: Filter to this date
+///
+/// Returns Map<String, dynamic> with shop analytics summary
+
+final class ShopAnalyticsSummaryFamily extends $Family
+    with
+        $FunctionalFamilyOverride<
+          FutureOr<Map<String, dynamic>>,
+          ({
+            int? territoryId,
+            String? status,
+            int? minRating,
+            int? maxRating,
+            DateTime? fromDate,
+            DateTime? toDate,
+          })
+        > {
+  const ShopAnalyticsSummaryFamily._()
+    : super(
+        retry: null,
+        name: r'shopAnalyticsSummaryProvider',
+        dependencies: null,
+        $allTransitiveDependencies: null,
+        isAutoDispose: true,
+      );
+
+  /// Fetch shop analytics summary with optional filtering
+  ///
+  /// Parameters:
+  /// - [territoryId]: Filter by territory ID
+  /// - [status]: Filter by shop status
+  /// - [minRating]: Minimum rating filter (1-5)
+  /// - [maxRating]: Maximum rating filter (1-5)
+  /// - [fromDate]: Filter from this date
+  /// - [toDate]: Filter to this date
+  ///
+  /// Returns Map<String, dynamic> with shop analytics summary
+
+  ShopAnalyticsSummaryProvider call({
+    int? territoryId,
+    String? status,
+    int? minRating,
+    int? maxRating,
+    DateTime? fromDate,
+    DateTime? toDate,
+  }) => ShopAnalyticsSummaryProvider._(
+    argument: (
+      territoryId: territoryId,
+      status: status,
+      minRating: minRating,
+      maxRating: maxRating,
+      fromDate: fromDate,
+      toDate: toDate,
+    ),
+    from: this,
+  );
+
+  @override
+  String toString() => r'shopAnalyticsSummaryProvider';
+}
+
+/// Fetch outstanding payments list with optional filtering
+///
+/// Parameters:
+/// - [status]: Filter by payment status (current, upcoming, overdue)
+/// - [fromDate]: Filter from due date
+/// - [toDate]: Filter to due date
+/// - [minAmount]: Minimum amount filter
+/// - [maxAmount]: Maximum amount filter
+/// - [shopSearch]: Search by shop name
+/// - [page]: Page number for pagination
+/// - [pageSize]: Number of items per page
+///
+/// Returns Map<String, dynamic> with outstanding payments list
+
+@ProviderFor(outstandingPayments)
+const outstandingPaymentsProvider = OutstandingPaymentsFamily._();
+
+/// Fetch outstanding payments list with optional filtering
+///
+/// Parameters:
+/// - [status]: Filter by payment status (current, upcoming, overdue)
+/// - [fromDate]: Filter from due date
+/// - [toDate]: Filter to due date
+/// - [minAmount]: Minimum amount filter
+/// - [maxAmount]: Maximum amount filter
+/// - [shopSearch]: Search by shop name
+/// - [page]: Page number for pagination
+/// - [pageSize]: Number of items per page
+///
+/// Returns Map<String, dynamic> with outstanding payments list
+
+final class OutstandingPaymentsProvider
+    extends
+        $FunctionalProvider<
+          AsyncValue<Map<String, dynamic>>,
+          Map<String, dynamic>,
+          FutureOr<Map<String, dynamic>>
+        >
+    with
+        $FutureModifier<Map<String, dynamic>>,
+        $FutureProvider<Map<String, dynamic>> {
+  /// Fetch outstanding payments list with optional filtering
+  ///
+  /// Parameters:
+  /// - [status]: Filter by payment status (current, upcoming, overdue)
+  /// - [fromDate]: Filter from due date
+  /// - [toDate]: Filter to due date
+  /// - [minAmount]: Minimum amount filter
+  /// - [maxAmount]: Maximum amount filter
+  /// - [shopSearch]: Search by shop name
+  /// - [page]: Page number for pagination
+  /// - [pageSize]: Number of items per page
+  ///
+  /// Returns Map<String, dynamic> with outstanding payments list
+  const OutstandingPaymentsProvider._({
+    required OutstandingPaymentsFamily super.from,
+    required ({
+      String? status,
+      DateTime? fromDate,
+      DateTime? toDate,
+      double? minAmount,
+      double? maxAmount,
+      String? shopSearch,
+      int? page,
+      int? pageSize,
+    })
+    super.argument,
+  }) : super(
+         retry: null,
+         name: r'outstandingPaymentsProvider',
+         isAutoDispose: true,
+         dependencies: null,
+         $allTransitiveDependencies: null,
+       );
+
+  @override
+  String debugGetCreateSourceHash() => _$outstandingPaymentsHash();
+
+  @override
+  String toString() {
+    return r'outstandingPaymentsProvider'
+        ''
+        '$argument';
+  }
+
+  @$internal
+  @override
+  $FutureProviderElement<Map<String, dynamic>> $createElement(
+    $ProviderPointer pointer,
+  ) => $FutureProviderElement(pointer);
+
+  @override
+  FutureOr<Map<String, dynamic>> create(Ref ref) {
+    final argument =
+        this.argument
+            as ({
+              String? status,
+              DateTime? fromDate,
+              DateTime? toDate,
+              double? minAmount,
+              double? maxAmount,
+              String? shopSearch,
+              int? page,
+              int? pageSize,
+            });
+    return outstandingPayments(
+      ref,
+      status: argument.status,
+      fromDate: argument.fromDate,
+      toDate: argument.toDate,
+      minAmount: argument.minAmount,
+      maxAmount: argument.maxAmount,
+      shopSearch: argument.shopSearch,
+      page: argument.page,
+      pageSize: argument.pageSize,
+    );
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return other is OutstandingPaymentsProvider && other.argument == argument;
+  }
+
+  @override
+  int get hashCode {
+    return argument.hashCode;
+  }
+}
+
+String _$outstandingPaymentsHash() =>
+    r'168910bcfd9599395ec2f18d836403ef81e8d6fd';
+
+/// Fetch outstanding payments list with optional filtering
+///
+/// Parameters:
+/// - [status]: Filter by payment status (current, upcoming, overdue)
+/// - [fromDate]: Filter from due date
+/// - [toDate]: Filter to due date
+/// - [minAmount]: Minimum amount filter
+/// - [maxAmount]: Maximum amount filter
+/// - [shopSearch]: Search by shop name
+/// - [page]: Page number for pagination
+/// - [pageSize]: Number of items per page
+///
+/// Returns Map<String, dynamic> with outstanding payments list
+
+final class OutstandingPaymentsFamily extends $Family
+    with
+        $FunctionalFamilyOverride<
+          FutureOr<Map<String, dynamic>>,
+          ({
+            String? status,
+            DateTime? fromDate,
+            DateTime? toDate,
+            double? minAmount,
+            double? maxAmount,
+            String? shopSearch,
+            int? page,
+            int? pageSize,
+          })
+        > {
+  const OutstandingPaymentsFamily._()
+    : super(
+        retry: null,
+        name: r'outstandingPaymentsProvider',
+        dependencies: null,
+        $allTransitiveDependencies: null,
+        isAutoDispose: true,
+      );
+
+  /// Fetch outstanding payments list with optional filtering
+  ///
+  /// Parameters:
+  /// - [status]: Filter by payment status (current, upcoming, overdue)
+  /// - [fromDate]: Filter from due date
+  /// - [toDate]: Filter to due date
+  /// - [minAmount]: Minimum amount filter
+  /// - [maxAmount]: Maximum amount filter
+  /// - [shopSearch]: Search by shop name
+  /// - [page]: Page number for pagination
+  /// - [pageSize]: Number of items per page
+  ///
+  /// Returns Map<String, dynamic> with outstanding payments list
+
+  OutstandingPaymentsProvider call({
+    String? status,
+    DateTime? fromDate,
+    DateTime? toDate,
+    double? minAmount,
+    double? maxAmount,
+    String? shopSearch,
+    int? page,
+    int? pageSize,
+  }) => OutstandingPaymentsProvider._(
+    argument: (
+      status: status,
+      fromDate: fromDate,
+      toDate: toDate,
+      minAmount: minAmount,
+      maxAmount: maxAmount,
+      shopSearch: shopSearch,
+      page: page,
+      pageSize: pageSize,
+    ),
+    from: this,
+  );
+
+  @override
+  String toString() => r'outstandingPaymentsProvider';
+}
+
+/// Fetch outstanding payments summary with totals and counts
+///
+/// Returns Map<String, dynamic> with summary statistics
+
+@ProviderFor(outstandingSummary)
+const outstandingSummaryProvider = OutstandingSummaryProvider._();
+
+/// Fetch outstanding payments summary with totals and counts
+///
+/// Returns Map<String, dynamic> with summary statistics
+
+final class OutstandingSummaryProvider
+    extends
+        $FunctionalProvider<
+          AsyncValue<Map<String, dynamic>>,
+          Map<String, dynamic>,
+          FutureOr<Map<String, dynamic>>
+        >
+    with
+        $FutureModifier<Map<String, dynamic>>,
+        $FutureProvider<Map<String, dynamic>> {
+  /// Fetch outstanding payments summary with totals and counts
+  ///
+  /// Returns Map<String, dynamic> with summary statistics
+  const OutstandingSummaryProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'outstandingSummaryProvider',
+        isAutoDispose: true,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$outstandingSummaryHash();
+
+  @$internal
+  @override
+  $FutureProviderElement<Map<String, dynamic>> $createElement(
+    $ProviderPointer pointer,
+  ) => $FutureProviderElement(pointer);
+
+  @override
+  FutureOr<Map<String, dynamic>> create(Ref ref) {
+    return outstandingSummary(ref);
+  }
+}
+
+String _$outstandingSummaryHash() =>
+    r'35575c2a93861b394fbce3528ce694f65600c91e';
+
+/// Fetch single outstanding payment by ID
+///
+/// Parameters:
+/// - [id]: Outstanding payment ID
+///
+/// Returns Map<String, dynamic> with payment details
+
+@ProviderFor(outstandingById)
+const outstandingByIdProvider = OutstandingByIdFamily._();
+
+/// Fetch single outstanding payment by ID
+///
+/// Parameters:
+/// - [id]: Outstanding payment ID
+///
+/// Returns Map<String, dynamic> with payment details
+
+final class OutstandingByIdProvider
+    extends
+        $FunctionalProvider<
+          AsyncValue<Map<String, dynamic>>,
+          Map<String, dynamic>,
+          FutureOr<Map<String, dynamic>>
+        >
+    with
+        $FutureModifier<Map<String, dynamic>>,
+        $FutureProvider<Map<String, dynamic>> {
+  /// Fetch single outstanding payment by ID
+  ///
+  /// Parameters:
+  /// - [id]: Outstanding payment ID
+  ///
+  /// Returns Map<String, dynamic> with payment details
+  const OutstandingByIdProvider._({
+    required OutstandingByIdFamily super.from,
+    required int super.argument,
+  }) : super(
+         retry: null,
+         name: r'outstandingByIdProvider',
+         isAutoDispose: true,
+         dependencies: null,
+         $allTransitiveDependencies: null,
+       );
+
+  @override
+  String debugGetCreateSourceHash() => _$outstandingByIdHash();
+
+  @override
+  String toString() {
+    return r'outstandingByIdProvider'
+        ''
+        '($argument)';
+  }
+
+  @$internal
+  @override
+  $FutureProviderElement<Map<String, dynamic>> $createElement(
+    $ProviderPointer pointer,
+  ) => $FutureProviderElement(pointer);
+
+  @override
+  FutureOr<Map<String, dynamic>> create(Ref ref) {
+    final argument = this.argument as int;
+    return outstandingById(ref, argument);
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return other is OutstandingByIdProvider && other.argument == argument;
+  }
+
+  @override
+  int get hashCode {
+    return argument.hashCode;
+  }
+}
+
+String _$outstandingByIdHash() => r'f0ec460994c69263a1c0f5596006ef6f15a6d94b';
+
+/// Fetch single outstanding payment by ID
+///
+/// Parameters:
+/// - [id]: Outstanding payment ID
+///
+/// Returns Map<String, dynamic> with payment details
+
+final class OutstandingByIdFamily extends $Family
+    with $FunctionalFamilyOverride<FutureOr<Map<String, dynamic>>, int> {
+  const OutstandingByIdFamily._()
+    : super(
+        retry: null,
+        name: r'outstandingByIdProvider',
+        dependencies: null,
+        $allTransitiveDependencies: null,
+        isAutoDispose: true,
+      );
+
+  /// Fetch single outstanding payment by ID
+  ///
+  /// Parameters:
+  /// - [id]: Outstanding payment ID
+  ///
+  /// Returns Map<String, dynamic> with payment details
+
+  OutstandingByIdProvider call(int id) =>
+      OutstandingByIdProvider._(argument: id, from: this);
+
+  @override
+  String toString() => r'outstandingByIdProvider';
 }

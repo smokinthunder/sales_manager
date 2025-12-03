@@ -1,5 +1,5 @@
+import 'package:admin_dashboard/domain/models/outstanding/outstanding_status.dart';
 import 'package:admin_dashboard/routing/routes.dart';
-import 'package:admin_dashboard/ui/outstanding/outstanding.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 

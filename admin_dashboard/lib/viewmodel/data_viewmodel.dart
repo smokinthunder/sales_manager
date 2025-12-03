@@ -442,3 +442,388 @@ Future<List<Shop>> shopsByTerritory(
 }) async {
   return ref.watch(shopsProvider(territoryId: territoryId, status: status).future);
 }
+
+// ==================== ORDER PROVIDERS ====================
+
+/// Fetch orders with optional filtering and pagination
+/// 
+/// Parameters:
+/// - [status]: Filter by order status (e.g., 'pending', 'completed')
+/// - [search]: Search query for order ID, bill number, or shop name
+/// - [executiveId]: Filter by executive ID
+/// - [shopId]: Filter by shop ID
+/// - [fromDate]: Filter orders from this date
+/// - [toDate]: Filter orders to this date
+/// - [page]: Page number (default: 1)
+/// - [pageSize]: Items per page (default: 20)
+/// 
+/// Returns Map<String, dynamic> with items, total, page, page_size, pages
+@riverpod
+Future<Map<String, dynamic>> orders(
+  Ref ref, {
+  String? status,
+  String? search,
+  int? executiveId,
+  String? shopId,
+  DateTime? fromDate,
+  DateTime? toDate,
+  int page = 1,
+  int pageSize = 20,
+}) async {
+  final logger = LoggerService();
+  logger.info(
+    'ViewModel: Fetching orders - status: $status, search: $search, page: $page',
+    'DATA_VM',
+  );
+
+  final repository = ref.read(dataRepositoryProvider.notifier);
+  final result = await repository.getOrders(
+    status: status,
+    search: search,
+    executiveId: executiveId,
+    shopId: shopId,
+    fromDate: fromDate,
+    toDate: toDate,
+    page: page,
+    pageSize: pageSize,
+  );
+
+  return switch (result) {
+    Ok(value: final data) => () {
+      logger.info(
+        'ViewModel: Successfully fetched ${data['total']} orders',
+        'DATA_VM',
+      );
+      return data;
+    }(),
+    Error(error: final error) => () {
+      logger.error(
+        'ViewModel: Failed to fetch orders - ${error.toString()}',
+        'DATA_VM',
+      );
+      throw error;
+    }(),
+  };
+}
+
+/// Fetch single order by ID with items
+/// 
+/// Parameters:
+/// - [orderId]: The ID of the order to fetch
+/// 
+/// Returns Map<String, dynamic> with order details and items array
+@riverpod
+Future<Map<String, dynamic>> orderById(
+  Ref ref,
+  int orderId,
+) async {
+  final logger = LoggerService();
+  logger.info(
+    'ViewModel: Fetching order by ID: $orderId',
+    'DATA_VM',
+  );
+
+  final repository = ref.read(dataRepositoryProvider.notifier);
+  final result = await repository.getOrderById(orderId);
+
+  return switch (result) {
+    Ok(value: final order) => () {
+      logger.info(
+        'ViewModel: Successfully fetched order ${order['order_id']}',
+        'DATA_VM',
+      );
+      return order;
+    }(),
+    Error(error: final error) => () {
+      logger.error(
+        'ViewModel: Failed to fetch order $orderId - ${error.toString()}',
+        'DATA_VM',
+      );
+      throw error;
+    }(),
+  };
+}
+
+// ==================== SHOP ASSIGNMENT PROVIDERS ====================
+
+/// Fetch shop-executive assignments with optional filtering
+/// 
+/// Parameters:
+/// - [shopId]: Filter by shop ID
+/// - [executiveId]: Filter by executive ID
+/// - [status]: Filter by assignment status (e.g., 'active', 'inactive')
+/// - [territoryId]: Filter by territory ID
+/// - [page]: Page number (default: 1)
+/// - [pageSize]: Items per page (default: 20)
+/// 
+/// Returns Map<String, dynamic> with items, total, page, page_size, pages
+@riverpod
+Future<Map<String, dynamic>> shopAssignments(
+  Ref ref, {
+  String? shopId,
+  int? executiveId,
+  String? status,
+  String? territoryId,
+  int page = 1,
+  int pageSize = 20,
+}) async {
+  final logger = LoggerService();
+  logger.info(
+    'ViewModel: Fetching shop assignments - shop: $shopId, executive: $executiveId, status: $status',
+    'DATA_VM',
+  );
+
+  final repository = ref.read(dataRepositoryProvider.notifier);
+  final result = await repository.getShopAssignments(
+    shopId: shopId,
+    executiveId: executiveId,
+    status: status,
+    territoryId: territoryId,
+    page: page,
+    pageSize: pageSize,
+  );
+
+  return switch (result) {
+    Ok(value: final data) => () {
+      logger.info(
+        'ViewModel: Successfully fetched ${data['total']} shop assignments',
+        'DATA_VM',
+      );
+      return data;
+    }(),
+    Error(error: final error) => () {
+      logger.error(
+        'ViewModel: Failed to fetch shop assignments - ${error.toString()}',
+        'DATA_VM',
+      );
+      throw error;
+    }(),
+  };
+}
+
+// ==================== VISIT STATUS PROVIDERS ====================
+
+/// Fetch shop visit status for a specific shop
+/// 
+/// Parameters:
+/// - [shopId]: The ID of the shop to fetch visit status for
+/// 
+/// Returns Map<String, dynamic> with visit statistics
+@riverpod
+Future<Map<String, dynamic>> shopVisitStatus(
+  Ref ref,
+  String shopId,
+) async {
+  final logger = LoggerService();
+  logger.info(
+    'ViewModel: Fetching visit status for shop: $shopId',
+    'DATA_VM',
+  );
+
+  final repository = ref.read(dataRepositoryProvider.notifier);
+  final result = await repository.getShopVisitStatus(shopId);
+
+  return switch (result) {
+    Ok(value: final data) => () {
+      logger.info(
+        'ViewModel: Successfully fetched visit status for shop $shopId',
+        'DATA_VM',
+      );
+      return data;
+    }(),
+    Error(error: final error) => () {
+      logger.error(
+        'ViewModel: Failed to fetch visit status for shop $shopId - ${error.toString()}',
+        'DATA_VM',
+      );
+      throw error;
+    }(),
+  };
+}
+
+// ==================== ANALYTICS PROVIDERS ====================
+
+/// Fetch shop analytics summary with optional filtering
+/// 
+/// Parameters:
+/// - [territoryId]: Filter by territory ID
+/// - [status]: Filter by shop status
+/// - [minRating]: Minimum rating filter (1-5)
+/// - [maxRating]: Maximum rating filter (1-5)
+/// - [fromDate]: Filter from this date
+/// - [toDate]: Filter to this date
+/// 
+/// Returns Map<String, dynamic> with shop analytics summary
+@riverpod
+Future<Map<String, dynamic>> shopAnalyticsSummary(
+  Ref ref, {
+  int? territoryId,
+  String? status,
+  int? minRating,
+  int? maxRating,
+  DateTime? fromDate,
+  DateTime? toDate,
+}) async {
+  final logger = LoggerService();
+  logger.info(
+    'ViewModel: Fetching shop analytics summary - territory: $territoryId, rating: $minRating-$maxRating',
+    'DATA_VM',
+  );
+
+  final repository = ref.read(dataRepositoryProvider.notifier);
+  final result = await repository.getShopAnalyticsSummary(
+    territoryId: territoryId,
+    status: status,
+    minRating: minRating,
+    maxRating: maxRating,
+    fromDate: fromDate,
+    toDate: toDate,
+  );
+
+  return switch (result) {
+    Ok(value: final data) => () {
+      logger.info(
+        'ViewModel: Successfully fetched shop analytics summary',
+        'DATA_VM',
+      );
+      return data;
+    }(),
+    Error(error: final error) => () {
+      logger.error(
+        'ViewModel: Failed to fetch shop analytics summary - ${error.toString()}',
+        'DATA_VM',
+      );
+      throw error;
+    }(),
+  };
+}
+
+// ==================== OUTSTANDING PAYMENTS PROVIDERS ====================
+
+/// Fetch outstanding payments list with optional filtering
+/// 
+/// Parameters:
+/// - [status]: Filter by payment status (current, upcoming, overdue)
+/// - [fromDate]: Filter from due date
+/// - [toDate]: Filter to due date
+/// - [minAmount]: Minimum amount filter
+/// - [maxAmount]: Maximum amount filter
+/// - [shopSearch]: Search by shop name
+/// - [page]: Page number for pagination
+/// - [pageSize]: Number of items per page
+/// 
+/// Returns Map<String, dynamic> with outstanding payments list
+@riverpod
+Future<Map<String, dynamic>> outstandingPayments(
+  Ref ref, {
+  String? status,
+  DateTime? fromDate,
+  DateTime? toDate,
+  double? minAmount,
+  double? maxAmount,
+  String? shopSearch,
+  int? page,
+  int? pageSize,
+}) async {
+  final logger = LoggerService();
+  logger.info(
+    'ViewModel: Fetching outstanding payments - status: $status, search: $shopSearch',
+    'DATA_VM',
+  );
+
+  final repository = ref.read(dataRepositoryProvider.notifier);
+  final result = await repository.getOutstandingPayments(
+    status: status,
+    fromDate: fromDate,
+    toDate: toDate,
+    minAmount: minAmount,
+    maxAmount: maxAmount,
+    shopSearch: shopSearch,
+    page: page,
+    pageSize: pageSize,
+  );
+
+  return switch (result) {
+    Ok(value: final data) => () {
+      logger.info(
+        'ViewModel: Successfully fetched outstanding payments',
+        'DATA_VM',
+      );
+      return data;
+    }(),
+    Error(error: final error) => () {
+      logger.error(
+        'ViewModel: Failed to fetch outstanding payments - ${error.toString()}',
+        'DATA_VM',
+      );
+      throw error;
+    }(),
+  };
+}
+
+/// Fetch outstanding payments summary with totals and counts
+/// 
+/// Returns Map<String, dynamic> with summary statistics
+@riverpod
+Future<Map<String, dynamic>> outstandingSummary(Ref ref) async {
+  final logger = LoggerService();
+  logger.info(
+    'ViewModel: Fetching outstanding payments summary',
+    'DATA_VM',
+  );
+
+  final repository = ref.read(dataRepositoryProvider.notifier);
+  final result = await repository.getOutstandingSummary();
+
+  return switch (result) {
+    Ok(value: final data) => () {
+      logger.info(
+        'ViewModel: Successfully fetched outstanding summary',
+        'DATA_VM',
+      );
+      return data;
+    }(),
+    Error(error: final error) => () {
+      logger.error(
+        'ViewModel: Failed to fetch outstanding summary - ${error.toString()}',
+        'DATA_VM',
+      );
+      throw error;
+    }(),
+  };
+}
+
+/// Fetch single outstanding payment by ID
+/// 
+/// Parameters:
+/// - [id]: Outstanding payment ID
+/// 
+/// Returns Map<String, dynamic> with payment details
+@riverpod
+Future<Map<String, dynamic>> outstandingById(Ref ref, int id) async {
+  final logger = LoggerService();
+  logger.info(
+    'ViewModel: Fetching outstanding payment ID: $id',
+    'DATA_VM',
+  );
+
+  final repository = ref.read(dataRepositoryProvider.notifier);
+  final result = await repository.getOutstandingById(id);
+
+  return switch (result) {
+    Ok(value: final data) => () {
+      logger.info(
+        'ViewModel: Successfully fetched outstanding payment $id',
+        'DATA_VM',
+      );
+      return data;
+    }(),
+    Error(error: final error) => () {
+      logger.error(
+        'ViewModel: Failed to fetch outstanding payment $id - ${error.toString()}',
+        'DATA_VM',
+      );
+      throw error;
+    }(),
+  };
+}

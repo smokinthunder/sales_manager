@@ -48,7 +48,7 @@ final class DataRepositoryProvider
   DataRepository create() => DataRepository();
 }
 
-String _$dataRepositoryHash() => r'ce63fb8f829f8a189e4b2c419406cd4ad1420a84';
+String _$dataRepositoryHash() => r'c9fa902d111f243862fba13d440ea1fdf5d0b819';
 
 /// Data repository for managing users, shops, and analytics
 ///

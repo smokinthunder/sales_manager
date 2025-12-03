@@ -355,4 +355,411 @@ class DataRepository extends _$DataRepository {
       return Result.error(Exception('An unexpected error occurred while fetching sales report'));
     }
   }
+
+  // ==================== Order Operations ====================
+
+  /// Fetch orders with optional filtering and pagination
+  /// 
+  /// Parameters:
+  /// - [status]: Filter by order status (e.g., 'pending', 'completed')
+  /// - [search]: Search query for order ID, bill number, or shop name
+  /// - [executiveId]: Filter by executive ID
+  /// - [shopId]: Filter by shop ID
+  /// - [fromDate]: Filter orders from this date
+  /// - [toDate]: Filter orders to this date
+  /// - [page]: Page number (default: 1)
+  /// - [pageSize]: Items per page (default: 20)
+  /// 
+  /// Returns Result<Map<String, dynamic>> with items, total, page, page_size, pages
+  Future<Result<Map<String, dynamic>>> getOrders({
+    String? status,
+    String? search,
+    int? executiveId,
+    String? shopId,
+    DateTime? fromDate,
+    DateTime? toDate,
+    int page = 1,
+    int pageSize = 20,
+  }) async {
+    try {
+      _logger.info(
+        'Fetching orders - status: $status, search: $search, executive: $executiveId, shop: $shopId, page: $page',
+        'DATA_REPO',
+      );
+
+      final result = await _remoteDataService.getOrders(
+        status: status,
+        search: search,
+        executiveId: executiveId,
+        shopId: shopId,
+        fromDate: fromDate,
+        toDate: toDate,
+        page: page,
+        pageSize: pageSize,
+      );
+
+      switch (result) {
+        case Ok(value: final data):
+          _logger.info(
+            'Successfully fetched ${data['total']} orders',
+            'DATA_REPO',
+          );
+          return result;
+        case Error(error: final error):
+          _logger.error(
+            'Failed to fetch orders: ${error.toString()}',
+            'DATA_REPO',
+          );
+          return result;
+      }
+    } catch (e, stackTrace) {
+      _logger.error(
+        'Unexpected error fetching orders: $e',
+        'DATA_REPO',
+        stackTrace,
+      );
+      return Result.error(Exception('An unexpected error occurred while fetching orders'));
+    }
+  }
+
+  /// Fetch single order by ID with items
+  /// 
+  /// Parameters:
+  /// - [orderId]: The ID of the order to fetch
+  /// 
+  /// Returns Result<Map<String, dynamic>> with order details and items array
+  Future<Result<Map<String, dynamic>>> getOrderById(int orderId) async {
+    try {
+      _logger.info(
+        'Fetching order with ID: $orderId',
+        'DATA_REPO',
+      );
+
+      final result = await _remoteDataService.getOrderById(orderId);
+
+      switch (result) {
+        case Ok(value: final order):
+          _logger.info(
+            'Successfully fetched order: ${order['order_id']}',
+            'DATA_REPO',
+          );
+          return result;
+        case Error(error: final error):
+          _logger.error(
+            'Failed to fetch order $orderId: ${error.toString()}',
+            'DATA_REPO',
+          );
+          return result;
+      }
+    } catch (e, stackTrace) {
+      _logger.error(
+        'Unexpected error fetching order $orderId: $e',
+        'DATA_REPO',
+        stackTrace,
+      );
+      return Result.error(Exception('An unexpected error occurred while fetching order'));
+    }
+  }
+
+  // ==================== Shop Assignment Operations ====================
+
+  /// Fetch shop-executive assignments with optional filtering
+  /// 
+  /// Parameters:
+  /// - [shopId]: Filter by shop ID
+  /// - [executiveId]: Filter by executive ID
+  /// - [status]: Filter by assignment status (e.g., 'active', 'inactive')
+  /// - [territoryId]: Filter by territory ID
+  /// - [page]: Page number (default: 1)
+  /// - [pageSize]: Items per page (default: 20)
+  /// 
+  /// Returns Result<Map<String, dynamic>> with items, total, page, page_size, pages
+  Future<Result<Map<String, dynamic>>> getShopAssignments({
+    String? shopId,
+    int? executiveId,
+    String? status,
+    String? territoryId,
+    int page = 1,
+    int pageSize = 20,
+  }) async {
+    try {
+      _logger.info(
+        'Fetching shop assignments - shop: $shopId, executive: $executiveId, status: $status, territory: $territoryId',
+        'DATA_REPO',
+      );
+
+      final result = await _remoteDataService.getShopAssignments(
+        shopId: shopId,
+        executiveId: executiveId,
+        status: status,
+        territoryId: territoryId,
+        page: page,
+        pageSize: pageSize,
+      );
+
+      switch (result) {
+        case Ok(value: final data):
+          _logger.info(
+            'Successfully fetched ${data['total']} shop assignments',
+            'DATA_REPO',
+          );
+          return result;
+        case Error(error: final error):
+          _logger.error(
+            'Failed to fetch shop assignments: ${error.toString()}',
+            'DATA_REPO',
+          );
+          return result;
+      }
+    } catch (e, stackTrace) {
+      _logger.error(
+        'Unexpected error fetching shop assignments: $e',
+        'DATA_REPO',
+        stackTrace,
+      );
+      return Result.error(Exception('An unexpected error occurred while fetching shop assignments'));
+    }
+  }
+
+  // ==================== Visit Status Operations ====================
+
+  /// Fetch shop visit status for a specific shop
+  /// 
+  /// Parameters:
+  /// - [shopId]: The ID of the shop to fetch visit status for
+  /// 
+  /// Returns Result<Map<String, dynamic>> with visit statistics
+  Future<Result<Map<String, dynamic>>> getShopVisitStatus(String shopId) async {
+    try {
+      _logger.info(
+        'Fetching visit status for shop: $shopId',
+        'DATA_REPO',
+      );
+
+      final result = await _remoteDataService.getShopVisitStatus(shopId);
+
+      switch (result) {
+        case Ok():
+          _logger.info(
+            'Successfully fetched visit status for shop $shopId',
+            'DATA_REPO',
+          );
+          return result;
+        case Error(error: final error):
+          _logger.error(
+            'Failed to fetch visit status for shop $shopId: ${error.toString()}',
+            'DATA_REPO',
+          );
+          return result;
+      }
+    } catch (e, stackTrace) {
+      _logger.error(
+        'Unexpected error fetching visit status for shop $shopId: $e',
+        'DATA_REPO',
+        stackTrace,
+      );
+      return Result.error(Exception('An unexpected error occurred while fetching visit status'));
+    }
+  }
+
+  // ==================== Analytics Operations ====================
+
+  /// Fetch shop analytics summary with optional filtering
+  /// 
+  /// Parameters:
+  /// - [territoryId]: Filter by territory ID
+  /// - [status]: Filter by shop status
+  /// - [minRating]: Minimum rating filter (1-5)
+  /// - [maxRating]: Maximum rating filter (1-5)
+  /// - [fromDate]: Filter from this date
+  /// - [toDate]: Filter to this date
+  /// 
+  /// Returns Result<Map<String, dynamic>> with shop analytics summary
+  Future<Result<Map<String, dynamic>>> getShopAnalyticsSummary({
+    int? territoryId,
+    String? status,
+    int? minRating,
+    int? maxRating,
+    DateTime? fromDate,
+    DateTime? toDate,
+  }) async {
+    try {
+      _logger.info(
+        'Fetching shop analytics summary - territory: $territoryId, rating: $minRating-$maxRating',
+        'DATA_REPO',
+      );
+
+      final result = await _remoteDataService.getShopAnalyticsSummary(
+        territoryId: territoryId,
+        status: status,
+        minRating: minRating,
+        maxRating: maxRating,
+        fromDate: fromDate,
+        toDate: toDate,
+      );
+
+      switch (result) {
+        case Ok():
+          _logger.info(
+            'Successfully fetched shop analytics summary',
+            'DATA_REPO',
+          );
+          return result;
+        case Error(error: final error):
+          _logger.error(
+            'Failed to fetch shop analytics summary: ${error.toString()}',
+            'DATA_REPO',
+          );
+          return result;
+      }
+    } catch (e, stackTrace) {
+      _logger.error(
+        'Unexpected error fetching shop analytics summary: $e',
+        'DATA_REPO',
+        stackTrace,
+      );
+      return Result.error(Exception('An unexpected error occurred while fetching shop analytics summary'));
+    }
+  }
+
+  // ==================== Outstanding Payments Operations ====================
+
+  /// Fetch outstanding payments list with filtering
+  /// 
+  /// Parameters:
+  /// - [status]: Filter by payment status (current, upcoming, overdue)
+  /// - [fromDate]: Filter from due date
+  /// - [toDate]: Filter to due date
+  /// - [minAmount]: Minimum amount filter
+  /// - [maxAmount]: Maximum amount filter
+  /// - [shopSearch]: Search by shop name
+  /// - [page]: Page number for pagination
+  /// - [pageSize]: Number of items per page
+  /// 
+  /// Returns Result<Map<String, dynamic>> with outstanding payments list
+  Future<Result<Map<String, dynamic>>> getOutstandingPayments({
+    String? status,
+    DateTime? fromDate,
+    DateTime? toDate,
+    double? minAmount,
+    double? maxAmount,
+    String? shopSearch,
+    int? page,
+    int? pageSize,
+  }) async {
+    try {
+      _logger.info(
+        'Fetching outstanding payments - status: $status, search: $shopSearch',
+        'DATA_REPO',
+      );
+
+      final result = await _remoteDataService.getOutstandingPayments(
+        status: status,
+        fromDate: fromDate,
+        toDate: toDate,
+        minAmount: minAmount,
+        maxAmount: maxAmount,
+        shopSearch: shopSearch,
+        page: page,
+        pageSize: pageSize,
+      );
+
+      switch (result) {
+        case Ok():
+          _logger.info(
+            'Successfully fetched outstanding payments',
+            'DATA_REPO',
+          );
+          return result;
+        case Error(error: final error):
+          _logger.error(
+            'Failed to fetch outstanding payments: ${error.toString()}',
+            'DATA_REPO',
+          );
+          return result;
+      }
+    } catch (e, stackTrace) {
+      _logger.error(
+        'Unexpected error fetching outstanding payments: $e',
+        'DATA_REPO',
+        stackTrace,
+      );
+      return Result.error(Exception('An unexpected error occurred while fetching outstanding payments'));
+    }
+  }
+
+  /// Fetch outstanding payments summary with totals and counts
+  /// 
+  /// Returns Result<Map<String, dynamic>> with summary statistics
+  Future<Result<Map<String, dynamic>>> getOutstandingSummary() async {
+    try {
+      _logger.info(
+        'Fetching outstanding payments summary',
+        'DATA_REPO',
+      );
+
+      final result = await _remoteDataService.getOutstandingSummary();
+
+      switch (result) {
+        case Ok():
+          _logger.info(
+            'Successfully fetched outstanding summary',
+            'DATA_REPO',
+          );
+          return result;
+        case Error(error: final error):
+          _logger.error(
+            'Failed to fetch outstanding summary: ${error.toString()}',
+            'DATA_REPO',
+          );
+          return result;
+      }
+    } catch (e, stackTrace) {
+      _logger.error(
+        'Unexpected error fetching outstanding summary: $e',
+        'DATA_REPO',
+        stackTrace,
+      );
+      return Result.error(Exception('An unexpected error occurred while fetching outstanding summary'));
+    }
+  }
+
+  /// Fetch single outstanding payment by ID
+  /// 
+  /// Parameters:
+  /// - [id]: Outstanding payment ID
+  /// 
+  /// Returns Result<Map<String, dynamic>> with payment details
+  Future<Result<Map<String, dynamic>>> getOutstandingById(int id) async {
+    try {
+      _logger.info(
+        'Fetching outstanding payment ID: $id',
+        'DATA_REPO',
+      );
+
+      final result = await _remoteDataService.getOutstandingById(id);
+
+      switch (result) {
+        case Ok():
+          _logger.info(
+            'Successfully fetched outstanding payment $id',
+            'DATA_REPO',
+          );
+          return result;
+        case Error(error: final error):
+          _logger.error(
+            'Failed to fetch outstanding payment $id: ${error.toString()}',
+            'DATA_REPO',
+          );
+          return result;
+      }
+    } catch (e, stackTrace) {
+      _logger.error(
+        'Unexpected error fetching outstanding payment $id: $e',
+        'DATA_REPO',
+        stackTrace,
+      );
+      return Result.error(Exception('An unexpected error occurred while fetching outstanding payment'));
+    }
+  }
 }

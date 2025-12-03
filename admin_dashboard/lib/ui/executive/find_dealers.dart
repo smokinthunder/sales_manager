@@ -1,6 +1,7 @@
 import 'package:admin_dashboard/routing/routes.dart';
 import 'package:admin_dashboard/ui/analytics/analytics.dart';
 import 'package:admin_dashboard/ui/widgets/dropdownmenu.dart';
+import 'package:admin_dashboard/ui/widgets/empty_state.dart';
 import 'package:admin_dashboard/viewmodel/data_viewmodel.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -136,53 +137,39 @@ class _FindDealersState extends ConsumerState<FindDealers> {
                                   false))
                           .toList();
 
+                  // Empty state
+                  if (filteredShops.isEmpty) {
+                    return Expanded(
+                      child: _searchQuery.isNotEmpty
+                          ? SearchEmptyState(searchQuery: _searchQuery)
+                          : EmptyState(
+                              icon: Icons.store_outlined,
+                              title: 'No dealers found',
+                              message:
+                                  'Shops/Dealers will appear here once they are assigned',
+                            ),
+                    );
+                  }
+
                   return SafePaginatedCardGrid(
                     cardHeight: 220,
                     cardWidth: 224,
                     cards: [
                       for (var shop in filteredShops)
-                        ShopStateCard(
-                          orderReceived: false, // TODO: Requires orders API
-                          shopVisited:
-                              false, // TODO: Requires visits/tracking API
-                          executiveName:
-                              "N/A", // TODO: Requires shop-executive relationship API
-                          executivePhoneNo:
-                              "N/A", // TODO: Requires shop-executive relationship API
-                          shopName: shop.name,
-                          shopLocation:
-                              shop.address ?? shop.locationName ?? "N/A",
-                        ),
+                        ShopStateCardWrapper(shop: shop),
                     ],
                   );
                 },
-                loading: () => const Center(
-                  child: Padding(
-                    padding: EdgeInsets.all(32.0),
-                    child: CircularProgressIndicator(),
-                  ),
+                loading: () => Expanded(
+                  child: LoadingState(message: 'Loading dealers...'),
                 ),
-                error: (error, stack) => Center(
-                  child: Padding(
-                    padding: const EdgeInsets.all(32.0),
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(
-                          Icons.error_outline,
-                          size: 48,
-                          color: Theme.of(context).colorScheme.error,
-                        ),
-                        const SizedBox(height: 16),
-                        Text(
-                          'Error loading shops: $error',
-                          style: TextStyle(
-                            color: Theme.of(context).colorScheme.error,
-                          ),
-                          textAlign: TextAlign.center,
-                        ),
-                      ],
-                    ),
+                error: (error, stack) => Expanded(
+                  child: ErrorState(
+                    title: 'Failed to load dealers',
+                    message: error.toString(),
+                    onRetry: () {
+                      ref.invalidate(shopsProvider);
+                    },
                   ),
                 ),
               );
@@ -221,6 +208,131 @@ class _FindDealersState extends ConsumerState<FindDealers> {
           child: Text(value, style: theme.textTheme.bodyLarge, maxLines: 1),
         ),
       ],
+    );
+  }
+}
+
+/// Wrapper widget that fetches assignment and visit status for a shop
+class ShopStateCardWrapper extends ConsumerWidget {
+  const ShopStateCardWrapper({super.key, required this.shop});
+  
+  final dynamic shop; // Shop model
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    // Fetch shop assignment to get executive info
+    final assignmentAsync = ref.watch(
+      shopAssignmentsProvider(
+        shopId: shop.shopId,
+        status: 'active',
+        pageSize: 1,
+      ),
+    );
+    
+    // Fetch visit status for this shop
+    final visitStatusAsync = ref.watch(
+      shopVisitStatusProvider(shop.shopId),
+    );
+
+    return assignmentAsync.when(
+      data: (assignmentData) {
+        final assignments = assignmentData['items'] as List;
+        final assignment = assignments.isNotEmpty ? assignments.first : null;
+        
+        return visitStatusAsync.when(
+          data: (visitData) {
+            final daysSinceVisit = visitData['days_since_visit'] as int?;
+            final ordersThisMonth = visitData['orders_this_month'] as int? ?? 0;
+            
+            return ShopStateCard(
+              orderReceived: ordersThisMonth > 0,
+              shopVisited: daysSinceVisit != null && daysSinceVisit <= 7,
+              executiveName: assignment?['executive_name'] ?? "N/A",
+              executivePhoneNo: assignment?['executive_phone'] ?? "N/A",
+              shopName: shop.name,
+              shopLocation: shop.address ?? shop.locationName ?? "N/A",
+            );
+          },
+          loading: () => ShopStateCard(
+            orderReceived: false,
+            shopVisited: false,
+            executiveName: assignment?['executive_name'] ?? "N/A",
+            executivePhoneNo: assignment?['executive_phone'] ?? "N/A",
+            shopName: shop.name,
+            shopLocation: shop.address ?? shop.locationName ?? "N/A",
+          ),
+          error: (_, __) => ShopStateCard(
+            orderReceived: false,
+            shopVisited: false,
+            executiveName: assignment?['executive_name'] ?? "N/A",
+            executivePhoneNo: assignment?['executive_phone'] ?? "N/A",
+            shopName: shop.name,
+            shopLocation: shop.address ?? shop.locationName ?? "N/A",
+          ),
+        );
+      },
+      loading: () => visitStatusAsync.when(
+        data: (visitData) {
+          final daysSinceVisit = visitData['days_since_visit'] as int?;
+          final ordersThisMonth = visitData['orders_this_month'] as int? ?? 0;
+          
+          return ShopStateCard(
+            orderReceived: ordersThisMonth > 0,
+            shopVisited: daysSinceVisit != null && daysSinceVisit <= 7,
+            executiveName: "...",
+            executivePhoneNo: "...",
+            shopName: shop.name,
+            shopLocation: shop.address ?? shop.locationName ?? "N/A",
+          );
+        },
+        loading: () => ShopStateCard(
+          orderReceived: false,
+          shopVisited: false,
+          executiveName: "...",
+          executivePhoneNo: "...",
+          shopName: shop.name,
+          shopLocation: shop.address ?? shop.locationName ?? "N/A",
+        ),
+        error: (_, __) => ShopStateCard(
+          orderReceived: false,
+          shopVisited: false,
+          executiveName: "N/A",
+          executivePhoneNo: "N/A",
+          shopName: shop.name,
+          shopLocation: shop.address ?? shop.locationName ?? "N/A",
+        ),
+      ),
+      error: (_, __) => visitStatusAsync.when(
+        data: (visitData) {
+          final daysSinceVisit = visitData['days_since_visit'] as int?;
+          final ordersThisMonth = visitData['orders_this_month'] as int? ?? 0;
+          
+          return ShopStateCard(
+            orderReceived: ordersThisMonth > 0,
+            shopVisited: daysSinceVisit != null && daysSinceVisit <= 7,
+            executiveName: "N/A",
+            executivePhoneNo: "N/A",
+            shopName: shop.name,
+            shopLocation: shop.address ?? shop.locationName ?? "N/A",
+          );
+        },
+        loading: () => ShopStateCard(
+          orderReceived: false,
+          shopVisited: false,
+          executiveName: "N/A",
+          executivePhoneNo: "N/A",
+          shopName: shop.name,
+          shopLocation: shop.address ?? shop.locationName ?? "N/A",
+        ),
+        error: (_, __) => ShopStateCard(
+          orderReceived: false,
+          shopVisited: false,
+          executiveName: "N/A",
+          executivePhoneNo: "N/A",
+          shopName: shop.name,
+          shopLocation: shop.address ?? shop.locationName ?? "N/A",
+        ),
+      ),
     );
   }
 }
