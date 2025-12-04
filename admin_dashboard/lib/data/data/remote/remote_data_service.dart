@@ -521,29 +521,26 @@ class RemoteDataService {
   // ===== OUTSTANDING PAYMENTS API =====
 
   /// Fetch outstanding payments list with filtering
-  Future<Result<Map<String, dynamic>>> getOutstandingPayments({
-    String? status,
+  Future<Result<List<Map<String, dynamic>>>> getOutstandingPayments({
     DateTime? fromDate,
     DateTime? toDate,
     double? minAmount,
     double? maxAmount,
     String? shopSearch,
     int? page,
-    int? pageSize,
   }) async {
     const endpoint = '/api/v1/outstanding/';
     final queryParameters = {
-      if (status != null) 'status': status,
+      'tenant_id': tenantId,
       if (fromDate != null) 'from_date': fromDate.toIso8601String().split('T')[0],
       if (toDate != null) 'to_date': toDate.toIso8601String().split('T')[0],
       if (minAmount != null) 'min_amount': minAmount,
       if (maxAmount != null) 'max_amount': maxAmount,
       if (shopSearch != null) 'shop_search': shopSearch,
       if (page != null) 'page': page,
-      if (pageSize != null) 'page_size': pageSize,
     };
 
-    logger.info('Fetching outstanding payments list - status: $status', 'REMOTE_DATA_SERVICE');
+    logger.info('Fetching outstanding payments list', 'REMOTE_DATA_SERVICE');
 
     try {
       final response = await dio.get(
@@ -551,8 +548,18 @@ class RemoteDataService {
         queryParameters: queryParameters,
       );
 
+      // API returns a list directly, not wrapped in a map
+      final rawData = response.data;
+      if (rawData is! List) {
+        throw Exception('Expected a list, got ${rawData.runtimeType}');
+      }
+
+      final List<Map<String, dynamic>> outstandingPayments = rawData
+          .map((item) => item as Map<String, dynamic>)
+          .toList();
+
       logger.info('Successfully fetched outstanding payments list', 'REMOTE_DATA_SERVICE');
-      return Result.ok(response.data as Map<String, dynamic>);
+      return Result.ok(outstandingPayments);
     } on DioException catch (e, stackTrace) {
       final errorMessage = _parseError(e);
       logger.error(
@@ -571,11 +578,12 @@ class RemoteDataService {
   /// Fetch single outstanding payment by ID
   Future<Result<Map<String, dynamic>>> getOutstandingPaymentById(int paymentId) async {
     final endpoint = '/api/v1/outstanding/$paymentId';
+    final queryParameters = {'tenant_id': tenantId};
 
     logger.info('Fetching outstanding payment with ID: $paymentId', 'REMOTE_DATA_SERVICE');
 
     try {
-      final response = await dio.get(endpoint);
+      final response = await dio.get(endpoint, queryParameters: queryParameters);
 
       logger.info('Successfully fetched outstanding payment: ${response.data['id']}', 'REMOTE_DATA_SERVICE');
       return Result.ok(response.data as Map<String, dynamic>);
@@ -597,11 +605,12 @@ class RemoteDataService {
   /// Fetch outstanding payments summary
   Future<Result<Map<String, dynamic>>> getOutstandingSummary() async {
     const endpoint = '/api/v1/outstanding/summary';
+    final queryParameters = {'tenant_id': tenantId};
 
     logger.info('Fetching outstanding payments summary', 'REMOTE_DATA_SERVICE');
 
     try {
-      final response = await dio.get(endpoint);
+      final response = await dio.get(endpoint, queryParameters: queryParameters);
 
       logger.info('Successfully fetched outstanding summary', 'REMOTE_DATA_SERVICE');
       return Result.ok(response.data as Map<String, dynamic>);

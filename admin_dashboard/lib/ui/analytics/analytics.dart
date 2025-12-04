@@ -295,7 +295,7 @@ class SafePaginatedCardGrid extends StatefulWidget {
     super.key,
     required this.cards,
     this.cardWidth = 260,
-    this.cardHeight = 190,
+    this.cardHeight = 220,
     this.spacing = 20,
     this.rowsPerPage = 4,
     this.backgroundColor,

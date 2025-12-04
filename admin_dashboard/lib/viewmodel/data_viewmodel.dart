@@ -703,44 +703,39 @@ Future<Map<String, dynamic>> shopAnalyticsSummary(
 /// Fetch outstanding payments list with optional filtering
 /// 
 /// Parameters:
-/// - [status]: Filter by payment status (current, upcoming, overdue)
 /// - [fromDate]: Filter from due date
 /// - [toDate]: Filter to due date
 /// - [minAmount]: Minimum amount filter
 /// - [maxAmount]: Maximum amount filter
 /// - [shopSearch]: Search by shop name
 /// - [page]: Page number for pagination
-/// - [pageSize]: Number of items per page
 /// 
-/// Returns Map<String, dynamic> with outstanding payments list
+/// Returns List<Map<String, dynamic>> with outstanding payments list
+/// Status filtering is done on the client side
 @riverpod
-Future<Map<String, dynamic>> outstandingPayments(
+Future<List<Map<String, dynamic>>> outstandingPayments(
   Ref ref, {
-  String? status,
   DateTime? fromDate,
   DateTime? toDate,
   double? minAmount,
   double? maxAmount,
   String? shopSearch,
   int? page,
-  int? pageSize,
 }) async {
   final logger = LoggerService();
   logger.info(
-    'ViewModel: Fetching outstanding payments - status: $status, search: $shopSearch',
+    'ViewModel: Fetching outstanding payments - search: $shopSearch',
     'DATA_VM',
   );
 
   final repository = ref.read(dataRepositoryProvider.notifier);
   final result = await repository.getOutstandingPayments(
-    status: status,
     fromDate: fromDate,
     toDate: toDate,
     minAmount: minAmount,
     maxAmount: maxAmount,
     shopSearch: shopSearch,
     page: page,
-    pageSize: pageSize,
   );
 
   return switch (result) {

@@ -1,6 +1,5 @@
 import 'package:admin_dashboard/domain/models/outstanding/outstanding_payment.dart';
 import 'package:admin_dashboard/domain/models/outstanding/outstanding_status.dart';
-import 'package:admin_dashboard/domain/models/outstanding/outstanding_summary.dart';
 import 'package:admin_dashboard/routing/routes.dart';
 import 'package:admin_dashboard/ui/analytics/analytics.dart';
 import 'package:admin_dashboard/ui/widgets/dropdownmenu.dart';
@@ -26,17 +25,12 @@ class _OutstandingState extends ConsumerState<Outstanding> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
-    // Fetch outstanding payments based on selected status
+    // Fetch all outstanding payments - filtering will be done on client side
     final paymentsAsync = ref.watch(
       outstandingPaymentsProvider(
-        status: selectedStatus.toApiString(),
         shopSearch: searchQuery.isEmpty ? null : searchQuery,
-        pageSize: 100,
       ),
     );
-
-    // Fetch summary for status tabs
-    final summaryAsync = ref.watch(outstandingSummaryProvider);
 
     return Container(
       padding: const EdgeInsets.all(32),
@@ -94,10 +88,19 @@ class _OutstandingState extends ConsumerState<Outstanding> {
               ),
             ],
           ),
-          // Status tabs with counts
-          summaryAsync.when(
-            data: (summaryData) {
-              final summary = OutstandingSummary.fromJson(summaryData);
+          // Status tabs with counts - calculated from payments data
+          paymentsAsync.when(
+            data: (paymentsData) {
+              // Calculate counts for each status from the payments
+              final allPayments = (paymentsData as List)
+                  .map((item) => OutstandingPayment.fromJson(item as Map<String, dynamic>))
+                  .toList();
+              
+              final statusCounts = {
+                for (var status in OutstandingStatus.values)
+                  status: allPayments.where((p) => p.status == status).length,
+              };
+
               return Container(
                 padding: const EdgeInsets.all(4),
                 decoration: BoxDecoration(
@@ -135,7 +138,7 @@ class _OutstandingState extends ConsumerState<Outstanding> {
                                     ),
                                   ),
                                   Text(
-                                    '${_getStatusCount(summary, e)} payments',
+                                    '${statusCounts[e] ?? 0} payments',
                                     style: TextStyle(
                                       color: selectedStatus == e
                                           ? Colors.black.withOpacity(0.7)
@@ -237,8 +240,13 @@ class _OutstandingState extends ConsumerState<Outstanding> {
           // Payments list
           paymentsAsync.when(
             data: (paymentsData) {
-              final payments = (paymentsData['items'] as List)
-                  .map((item) => OutstandingPayment.fromJson(item))
+              final allPayments = (paymentsData as List)
+                  .map((item) => OutstandingPayment.fromJson(item as Map<String, dynamic>))
+                  .toList();
+
+              // Filter by selected status on client side
+              final payments = allPayments
+                  .where((payment) => payment.status == selectedStatus)
                   .toList();
 
               // Apply sorting
@@ -307,17 +315,6 @@ class _OutstandingState extends ConsumerState<Outstanding> {
         ],
       ),
     );
-  }
-
-  int _getStatusCount(OutstandingSummary summary, OutstandingStatus status) {
-    switch (status) {
-      case OutstandingStatus.current:
-        return summary.currentCount;
-      case OutstandingStatus.upcoming:
-        return summary.upcomingCount;
-      case OutstandingStatus.overdue:
-        return summary.overdueCount;
-    }
   }
 }
 

@@ -41,15 +41,17 @@ class OutstandingPayment {
   /// Create OutstandingPayment from JSON
   factory OutstandingPayment.fromJson(Map<String, dynamic> json) {
     return OutstandingPayment(
-      id: json['id'] as int,
-      shopId: json['shop_id'] as String,
-      shopName: json['shop_name'] as String,
-      amount: (json['amount'] as num).toDouble(),
+      id: json['id'] as int? ?? 0,
+      shopId: json['shop_id'] as String? ?? '',
+      shopName: json['shop_name'] as String? ?? '',
+      amount: json['amount'] != null 
+          ? (json['amount'] as num).toDouble() 
+          : 0.0,
       originalAmount: json['original_amount'] != null
           ? (json['original_amount'] as num).toDouble()
           : null,
-      dueDate: json['due_date'] as String,
-      status: OutstandingStatus.fromString(json['status'] as String),
+      dueDate: json['due_date'] as String? ?? '',
+      status: OutstandingStatus.fromString(json['status'] as String? ?? 'current'),
       daysOverdue: json['days_overdue'] as int? ?? 0,
       lastPaymentDate: json['last_payment_date'] as String?,
       salesExecutiveId: json['sales_executive_id'] as int?,
@@ -57,8 +59,8 @@ class OutstandingPayment {
       territoryId: json['territory_id'] as String?,
       territoryName: json['territory_name'] as String?,
       notes: json['notes'] as String?,
-      createdAt: json['created_at'] as String,
-      updatedAt: json['updated_at'] as String,
+      createdAt: json['created_at'] as String? ?? '',
+      updatedAt: json['updated_at'] as String? ?? '',
     );
   }
 

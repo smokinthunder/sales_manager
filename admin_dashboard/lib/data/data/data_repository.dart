@@ -627,41 +627,35 @@ class DataRepository extends _$DataRepository {
   /// Fetch outstanding payments list with filtering
   /// 
   /// Parameters:
-  /// - [status]: Filter by payment status (current, upcoming, overdue)
   /// - [fromDate]: Filter from due date
   /// - [toDate]: Filter to due date
   /// - [minAmount]: Minimum amount filter
   /// - [maxAmount]: Maximum amount filter
   /// - [shopSearch]: Search by shop name
   /// - [page]: Page number for pagination
-  /// - [pageSize]: Number of items per page
   /// 
-  /// Returns Result<Map<String, dynamic>> with outstanding payments list
-  Future<Result<Map<String, dynamic>>> getOutstandingPayments({
-    String? status,
+  /// Returns Result<List<Map<String, dynamic>>> with outstanding payments list
+  Future<Result<List<Map<String, dynamic>>>> getOutstandingPayments({
     DateTime? fromDate,
     DateTime? toDate,
     double? minAmount,
     double? maxAmount,
     String? shopSearch,
     int? page,
-    int? pageSize,
   }) async {
     try {
       _logger.info(
-        'Fetching outstanding payments - status: $status, search: $shopSearch',
+        'Fetching outstanding payments - search: $shopSearch',
         'DATA_REPO',
       );
 
       final result = await _remoteDataService.getOutstandingPayments(
-        status: status,
         fromDate: fromDate,
         toDate: toDate,
         minAmount: minAmount,
         maxAmount: maxAmount,
         shopSearch: shopSearch,
         page: page,
-        pageSize: pageSize,
       );
 
       switch (result) {

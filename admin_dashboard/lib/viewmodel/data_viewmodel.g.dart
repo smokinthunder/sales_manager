@@ -2187,16 +2187,15 @@ final class ShopAnalyticsSummaryFamily extends $Family
 /// Fetch outstanding payments list with optional filtering
 ///
 /// Parameters:
-/// - [status]: Filter by payment status (current, upcoming, overdue)
 /// - [fromDate]: Filter from due date
 /// - [toDate]: Filter to due date
 /// - [minAmount]: Minimum amount filter
 /// - [maxAmount]: Maximum amount filter
 /// - [shopSearch]: Search by shop name
 /// - [page]: Page number for pagination
-/// - [pageSize]: Number of items per page
 ///
-/// Returns Map<String, dynamic> with outstanding payments list
+/// Returns List<Map<String, dynamic>> with outstanding payments list
+/// Status filtering is done on the client side
 
 @ProviderFor(outstandingPayments)
 const outstandingPaymentsProvider = OutstandingPaymentsFamily._();
@@ -2204,51 +2203,47 @@ const outstandingPaymentsProvider = OutstandingPaymentsFamily._();
 /// Fetch outstanding payments list with optional filtering
 ///
 /// Parameters:
-/// - [status]: Filter by payment status (current, upcoming, overdue)
 /// - [fromDate]: Filter from due date
 /// - [toDate]: Filter to due date
 /// - [minAmount]: Minimum amount filter
 /// - [maxAmount]: Maximum amount filter
 /// - [shopSearch]: Search by shop name
 /// - [page]: Page number for pagination
-/// - [pageSize]: Number of items per page
 ///
-/// Returns Map<String, dynamic> with outstanding payments list
+/// Returns List<Map<String, dynamic>> with outstanding payments list
+/// Status filtering is done on the client side
 
 final class OutstandingPaymentsProvider
     extends
         $FunctionalProvider<
-          AsyncValue<Map<String, dynamic>>,
-          Map<String, dynamic>,
-          FutureOr<Map<String, dynamic>>
+          AsyncValue<List<Map<String, dynamic>>>,
+          List<Map<String, dynamic>>,
+          FutureOr<List<Map<String, dynamic>>>
         >
     with
-        $FutureModifier<Map<String, dynamic>>,
-        $FutureProvider<Map<String, dynamic>> {
+        $FutureModifier<List<Map<String, dynamic>>>,
+        $FutureProvider<List<Map<String, dynamic>>> {
   /// Fetch outstanding payments list with optional filtering
   ///
   /// Parameters:
-  /// - [status]: Filter by payment status (current, upcoming, overdue)
   /// - [fromDate]: Filter from due date
   /// - [toDate]: Filter to due date
   /// - [minAmount]: Minimum amount filter
   /// - [maxAmount]: Maximum amount filter
   /// - [shopSearch]: Search by shop name
   /// - [page]: Page number for pagination
-  /// - [pageSize]: Number of items per page
   ///
-  /// Returns Map<String, dynamic> with outstanding payments list
+  /// Returns List<Map<String, dynamic>> with outstanding payments list
+  /// Status filtering is done on the client side
   const OutstandingPaymentsProvider._({
     required OutstandingPaymentsFamily super.from,
     required ({
-      String? status,
       DateTime? fromDate,
       DateTime? toDate,
       double? minAmount,
       double? maxAmount,
       String? shopSearch,
       int? page,
-      int? pageSize,
     })
     super.argument,
   }) : super(
@@ -2271,34 +2266,30 @@ final class OutstandingPaymentsProvider
 
   @$internal
   @override
-  $FutureProviderElement<Map<String, dynamic>> $createElement(
+  $FutureProviderElement<List<Map<String, dynamic>>> $createElement(
     $ProviderPointer pointer,
   ) => $FutureProviderElement(pointer);
 
   @override
-  FutureOr<Map<String, dynamic>> create(Ref ref) {
+  FutureOr<List<Map<String, dynamic>>> create(Ref ref) {
     final argument =
         this.argument
             as ({
-              String? status,
               DateTime? fromDate,
               DateTime? toDate,
               double? minAmount,
               double? maxAmount,
               String? shopSearch,
               int? page,
-              int? pageSize,
             });
     return outstandingPayments(
       ref,
-      status: argument.status,
       fromDate: argument.fromDate,
       toDate: argument.toDate,
       minAmount: argument.minAmount,
       maxAmount: argument.maxAmount,
       shopSearch: argument.shopSearch,
       page: argument.page,
-      pageSize: argument.pageSize,
     );
   }
 
@@ -2314,35 +2305,32 @@ final class OutstandingPaymentsProvider
 }
 
 String _$outstandingPaymentsHash() =>
-    r'168910bcfd9599395ec2f18d836403ef81e8d6fd';
+    r'9d155d08dfab1af9733e574fd209700ba4981df5';
 
 /// Fetch outstanding payments list with optional filtering
 ///
 /// Parameters:
-/// - [status]: Filter by payment status (current, upcoming, overdue)
 /// - [fromDate]: Filter from due date
 /// - [toDate]: Filter to due date
 /// - [minAmount]: Minimum amount filter
 /// - [maxAmount]: Maximum amount filter
 /// - [shopSearch]: Search by shop name
 /// - [page]: Page number for pagination
-/// - [pageSize]: Number of items per page
 ///
-/// Returns Map<String, dynamic> with outstanding payments list
+/// Returns List<Map<String, dynamic>> with outstanding payments list
+/// Status filtering is done on the client side
 
 final class OutstandingPaymentsFamily extends $Family
     with
         $FunctionalFamilyOverride<
-          FutureOr<Map<String, dynamic>>,
+          FutureOr<List<Map<String, dynamic>>>,
           ({
-            String? status,
             DateTime? fromDate,
             DateTime? toDate,
             double? minAmount,
             double? maxAmount,
             String? shopSearch,
             int? page,
-            int? pageSize,
           })
         > {
   const OutstandingPaymentsFamily._()
@@ -2357,36 +2345,31 @@ final class OutstandingPaymentsFamily extends $Family
   /// Fetch outstanding payments list with optional filtering
   ///
   /// Parameters:
-  /// - [status]: Filter by payment status (current, upcoming, overdue)
   /// - [fromDate]: Filter from due date
   /// - [toDate]: Filter to due date
   /// - [minAmount]: Minimum amount filter
   /// - [maxAmount]: Maximum amount filter
   /// - [shopSearch]: Search by shop name
   /// - [page]: Page number for pagination
-  /// - [pageSize]: Number of items per page
   ///
-  /// Returns Map<String, dynamic> with outstanding payments list
+  /// Returns List<Map<String, dynamic>> with outstanding payments list
+  /// Status filtering is done on the client side
 
   OutstandingPaymentsProvider call({
-    String? status,
     DateTime? fromDate,
     DateTime? toDate,
     double? minAmount,
     double? maxAmount,
     String? shopSearch,
     int? page,
-    int? pageSize,
   }) => OutstandingPaymentsProvider._(
     argument: (
-      status: status,
       fromDate: fromDate,
       toDate: toDate,
       minAmount: minAmount,
       maxAmount: maxAmount,
       shopSearch: shopSearch,
       page: page,
-      pageSize: pageSize,
     ),
     from: this,
   );
