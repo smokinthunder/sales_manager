@@ -179,31 +179,33 @@ class _FindExecutiveState extends ConsumerState<FindExecutive> {
             ],
           ),
           // Sales Executives List with real data
-          Expanded(
-            child: Consumer(
-              builder: (context, ref, child) {
-                final executives = ref.watch(usersProvider(
-                  role: 'sales_executive',
-                  status: 'active',
-                  search: _searchQuery.isEmpty ? null : _searchQuery,
-                ));
+          Consumer(
+            builder: (context, ref, child) {
+              final executives = ref.watch(usersProvider(
+                role: 'sales_executive',
+                status: 'active',
+                search: _searchQuery.isEmpty ? null : _searchQuery,
+              ));
 
-                return executives.when(
+              return executives.when(
                 data: (executivesList) {
                   // Empty state
                   if (executivesList.isEmpty) {
-                    return _searchQuery.isNotEmpty
-                        ? SearchEmptyState(searchQuery: _searchQuery)
-                        : EmptyState(
-                            icon: Icons.person_search,
-                            title: 'No executives found',
-                            message:
-                                'Sales executives will appear here once assigned to this area',
-                          );
+                    return SizedBox(
+                      height: 400,
+                      child: _searchQuery.isNotEmpty
+                          ? SearchEmptyState(searchQuery: _searchQuery)
+                          : EmptyState(
+                              icon: Icons.person_search,
+                              title: 'No executives found',
+                              message:
+                                  'Sales executives will appear here once assigned to this area',
+                            ),
+                    );
                   }
 
                   return SafePaginatedCardGrid(
-                    cardHeight: 102,
+                    cardHeight: 150,
                     cardWidth: 230,
                     cards: [
                       for (var executive in executivesList)
@@ -240,17 +242,22 @@ class _FindExecutiveState extends ConsumerState<FindExecutive> {
                     ],
                   );
                 },
-                loading: () => LoadingState(message: 'Loading executives...'),
-                error: (error, stack) => ErrorState(
-                  title: 'Failed to load executives',
-                  message: error.toString(),
-                  onRetry: () {
-                    ref.invalidate(usersProvider);
-                  },
+                loading: () => SizedBox(
+                  height: 400,
+                  child: LoadingState(message: 'Loading executives...'),
+                ),
+                error: (error, stack) => SizedBox(
+                  height: 400,
+                  child: ErrorState(
+                    title: 'Failed to load executives',
+                    message: error.toString(),
+                    onRetry: () {
+                      ref.invalidate(usersProvider);
+                    },
+                  ),
                 ),
               );
-              },
-            ),
+            },
           ),
         ],
       ),
