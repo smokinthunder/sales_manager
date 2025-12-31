@@ -1,0 +1,11 @@
+# backend/Dockerfile.seeder
+FROM mysql:8.0
+
+# Create the directory
+WORKDIR /seed_data
+
+# COPY all SQL files from the current directory (backend) into the container
+COPY *.sql /seed_data/
+
+# Verify the files are there during build
+RUN ls -la /seed_data/
