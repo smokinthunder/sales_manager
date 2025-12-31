@@ -65,6 +65,12 @@ async def generate_otp(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=e.message
         )
+    except NotFoundError as e:
+        logger.warning("User not found for OTP generation", phone=phone, tenant_id=tenant_id, error=str(e))
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=e.message
+        )
     except Exception as e:
         logger.error("Unexpected error in OTP generation", error=str(e))
         raise HTTPException(

@@ -46,6 +46,7 @@ class AuthService:
             Dictionary with OTP details
             
         Raises:
+            NotFoundError: If user is not registered
             OTPExpiredError: If OTP generation fails
         """
         try:
@@ -54,16 +55,7 @@ class AuthService:
             user = await data_layer.get_user_by_phone(phone, tenant_id)
             
             if not user:
-                # Create new user with pending approval status
-                user_data = UserCreate(
-                    phone=phone,
-                    name="",  # Will be filled during profile completion
-                    role=UserRole.SALES_EXECUTIVE,  # Default role
-                    status=UserStatus.PENDING_APPROVAL
-                )
-                # SECURITY: Always use the URL parameter tenant_id, ignore any tenant_id in request body
-                user = await data_layer.create_user(user_data, tenant_id)
-                logger.info("New user created", phone=phone, tenant_id=tenant_id)
+                raise NotFoundError(message="User not registered. Please contact your administrator.")
             
             # Generate OTP
             otp = generate_otp()
@@ -117,7 +109,7 @@ class AuthService:
             
         except Exception as e:
             logger.error("Failed to generate OTP", error=str(e), phone=phone)
-            if isinstance(e, OTPExpiredError):
+            if isinstance(e, (OTPExpiredError, NotFoundError)):
                 raise
             raise OTPExpiredError(message="Failed to generate OTP", details={"error": str(e)})
     
