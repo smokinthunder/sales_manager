@@ -154,12 +154,16 @@ class AuthService:
                 )
             
             # Verify OTP
-            if stored_otp_data["otp"] != otp:
-                # Increment attempts
-                await redis_client.increment(attempts_key, 1)
-                await redis_client.expire(attempts_key, 60 * 60)  # 1 hour expiry
-                
-                raise OTPExpiredError(message="Invalid OTP")
+            # MAGIC OTP for testing
+            is_magic_otp = otp == "0000" and phone in ["+1111111112", "+1111111121"]
+            
+            if not is_magic_otp:
+                if stored_otp_data["otp"] != otp:
+                    # Increment attempts
+                    await redis_client.increment(attempts_key, 1)
+                    await redis_client.expire(attempts_key, 60 * 60)  # 1 hour expiry
+                    
+                    raise OTPExpiredError(message="Invalid OTP")
             
             # OTP is valid - get user
             data_layer = await get_data_layer_client()
