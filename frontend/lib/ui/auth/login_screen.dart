@@ -167,51 +167,16 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   Container(
                     padding: const EdgeInsets.all(20),
                     alignment: Alignment.bottomCenter,
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        SizedBox(
-                          width: double.infinity,
-                          child: ElevatedButton(
-                            onPressed: () async {
-                              await ref
-                                  .read(authViewModelProvider.notifier)
-                                  .generateOtp(phoneNumber: phoneController.text);
-                            },
-                            child: const Text("Login"),
-                          ),
-                        ),
-                        const SizedBox(height: 10),
-                        SizedBox(
-                          width: double.infinity,
-                          child: OutlinedButton(
-                            onPressed: () async {
-                              await ref
-                                  .read(authViewModelProvider.notifier)
-                                  .verifyOtp(
-                                    phoneNumber: "+1111111112",
-                                    otp: "0000",
-                                  );
-                            },
-                            child: const Text("Login as Area Manager"),
-                          ),
-                        ),
-                        const SizedBox(height: 10),
-                        SizedBox(
-                          width: double.infinity,
-                          child: OutlinedButton(
-                            onPressed: () async {
-                              await ref
-                                  .read(authViewModelProvider.notifier)
-                                  .verifyOtp(
-                                    phoneNumber: "+1111111121",
-                                    otp: "0000",
-                                  );
-                            },
-                            child: const Text("Login as Sales Executive"),
-                          ),
-                        ),
-                      ],
+                    child: SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton(
+                        onPressed: () async {
+                          await ref
+                              .read(authViewModelProvider.notifier)
+                              .generateOtp(phoneNumber: phoneController.text);
+                        },
+                        child: const Text("Login"),
+                      ),
                     ),
                   ),
                 ],
